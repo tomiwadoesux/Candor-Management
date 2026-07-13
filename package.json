@@ -1,0 +1,39 @@
+{
+  "name": "candor",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
+  },
+  "dependencies": {
+    "@react-three/drei": "^10.7.6",
+    "@react-three/fiber": "^9.3.0",
+    "framer-motion": "^12.42.2",
+    "gsap": "^3.14.1",
+    "lucide-react": "^0.544.0",
+    "next": "15.3.3",
+    "next-transition-router": "^0.2.11",
+    "node": "^24.9.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "split-type": "^0.3.4",
+    "tailwind": "^4.0.0",
+    "tailwindcss": "^4.1.11",
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "@chromatic-com/storybook": "^4.1.1",
+    "@eslint/eslintrc": "^3",
+    "@storybook/nextjs": "^9.1.8",
+    "@tailwindcss/postcss": "^4",
+    "eslint": "^9",
+    "eslint-config-next": "15.3.3",
+    "eslint-plugin-storybook": "^9.1.8",
+    "storybook": "^9.1.8"
+  }
+}

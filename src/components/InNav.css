@@ -1,0 +1,243 @@
+/* logos */
+.logo,
+.menu-logo {
+  position: absolute;
+  top: 2em;
+  left: 2em;
+}
+
+.logo a,
+.menu-logo a {
+  text-decoration: none;
+  text-transform: uppercase;
+  color: #000;
+  font-family: "Schabo";
+  font-size: 60px;
+  font-weight: lighter;
+}
+
+.menu-logo a {
+  color: #fff;
+}
+
+/* menu icon SVG */
+.menu-icon {
+  position: relative;
+  cursor: pointer;
+  /* below the search panel (z-50) so it tucks behind it when sliding away */
+  z-index: 45;
+  /* matches the search bar height so the island reads as one block */
+  width: 46px;
+  height: 46px;
+  background-color: #00749e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-icon svg {
+  display: block;
+}
+
+#dbear2,
+#mbear2,
+#bbear2 {
+  opacity: 0;
+}
+
+/* menu shell */
+.menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #0c0c0c;
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.04), transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.03), transparent 60%);
+  clip-path: polygon(100% 0%, 100% 0%, 100% 100%, 100% 100%);
+  pointer-events: none;
+  z-index: 40;
+  color: #fff;
+  overflow: hidden;
+}
+
+.menu-inner {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  padding: 6.5em 4em 2em 4em;
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  gap: 3em;
+}
+
+/* topbar */
+.menu-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 1em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.menu-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* category grid */
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4em;
+  align-content: start;
+}
+
+.nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5em;
+}
+
+.nav-group-title {
+  font-family: "DM Sans", sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0;
+  font-weight: 500;
+}
+
+.nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+}
+
+.nav-item a {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  text-decoration: none;
+  color: #fff;
+  font-size: 38px;
+  line-height: 1.1;
+  font-weight: 300;
+  letter-spacing: -0.5px;
+  transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.nav-item-arrow {
+  display: inline-block;
+  font-size: 18px;
+  opacity: 0;
+  transform: translateX(-12px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.nav-item-label {
+  display: inline-block;
+  transition: transform 0.35s ease;
+}
+
+.nav-item a:hover {
+  color: #fff;
+}
+
+.nav-item a:hover .nav-item-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.nav-item a:hover .nav-item-label {
+  transform: translateX(4px);
+}
+
+/* meta */
+.menu-meta {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4em;
+  padding-top: 1.5em;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.meta-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+}
+
+.meta-line {
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+}
+
+.meta-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: rgba(255, 255, 255, 0.4);
+  margin-bottom: 0.6em;
+}
+
+/* huge wordmark */
+.nav-wordmark {
+  font-family: "Gwyner Condensed", "Bitter", serif;
+  font-weight: 300;
+  text-align: center;
+  font-size: 22vw;
+  line-height: 0.85;
+  letter-spacing: -0.04em;
+  color: rgba(255, 255, 255, 0.06);
+  user-select: none;
+  perspective: 800px;
+  display: flex;
+  justify-content: center;
+}
+
+.nav-wordmark span {
+  display: inline-block;
+  transform-origin: bottom center;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .menu-icon {
+    position: relative;
+  }
+
+  .menu-inner {
+    padding: 5em 1.5em 1.5em 1.5em;
+    gap: 2em;
+  }
+
+  .menu-grid {
+    grid-template-columns: 1fr;
+    gap: 2em;
+  }
+
+  .nav-item a {
+    font-size: 28px;
+  }
+
+  .menu-meta {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5em;
+  }
+
+  .nav-wordmark {
+    font-size: 36vw;
+  }
+}
