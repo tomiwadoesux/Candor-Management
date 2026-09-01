@@ -104,7 +104,7 @@
 }
 
 .nav-group-title {
-  font-family: "DM Sans", sans-serif;
+  font-family: var(--font-body);
   font-size: 11px;
   letter-spacing: 0.3em;
   text-transform: uppercase;

@@ -1,12 +1,17 @@
 "use client"; // if using Next.js 13+
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import BlackLogo from "./black-logo";
-import NavMenu from "./NavMenu";
 
-import Search from "./Search";
 import { SearchProvider, useSearch } from "./SearchContext";
-import InNav from "./InNav";
+
+// Search (framer-motion) and InNav (gsap + MorphSVG plugins) are the heaviest
+// libraries in the shared bundle, yet they only power the bottom search/menu
+// island — not needed for first paint. Defer them so framer-motion and the gsap
+// plugins drop out of every page's First Load JS and load after hydration.
+const Search = dynamic(() => import("./Search"), { ssr: false });
+const InNav = dynamic(() => import("./InNav"), { ssr: false });
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);

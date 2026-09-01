@@ -1,0 +1,69 @@
+/* Board tabs on a model page.
+ *
+ * Idle the brackets sit together ahead of the word — [ ] Campaigns — and
+ * selecting one opens them around it: [ Campaigns ].
+ *
+ * The move is two plain CSS transitions and nothing measures anything at
+ * runtime. The label lives in a grid track that grows from 0fr to 1fr, which
+ * is what pushes the closing bracket out to the right; at the same time the
+ * label slides back by the width of "] ", so the two pass through each other
+ * and the word ends up between the brackets. The track is never given
+ * overflow: hidden, so at 0fr the label simply spills out of its zero-width
+ * box and reads as sitting after the brackets rather than being clipped away.
+ *
+ * That spill is also why there is a sizer: an invisible copy of the label that
+ * holds the link's width open, with the animated version floating above it.
+ * Without it the row would lay the links out as if each were only "[ ]" wide
+ * and the last label would run off the edge. It also means switching tabs
+ * never reflows the row.
+ */
+
+/* h4, not just .tab-link: globals.css sets h4 { font-weight: 500 } and a bare
+   class would win or lose on stylesheet order. */
+h4.tab-link {
+  position: relative;
+  font-weight: 400;
+}
+
+.tab-link__sizer {
+  visibility: hidden;
+}
+
+.tab-link__live {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+}
+
+.tab-link__well {
+  display: inline-grid;
+  grid-template-columns: 0fr;
+  /* Constant in both states: the hairline that makes the idle pair read as
+     "[ ]" rather than "[]", and the breathing room inside the selected pair. */
+  padding-inline: 0.15em;
+  transition: grid-template-columns 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.tab-link__label {
+  min-width: 0;
+  white-space: nowrap;
+  /* Parks the word just past the closing bracket while the track is closed. */
+  transform: translateX(0.8em);
+  transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.tab-link[data-active="true"] .tab-link__well {
+  grid-template-columns: 1fr;
+}
+
+.tab-link[data-active="true"] .tab-link__label {
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab-link__well,
+  .tab-link__label {
+    transition: none;
+  }
+}

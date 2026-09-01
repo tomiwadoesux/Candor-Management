@@ -1,6 +1,15 @@
 /* ✅ All imports must come first */
-@import url("https://fonts.bunny.net/css2?family=dm+sans:wght@400;500;600;700;900&family=bitter:wght@400;500;600;700;900&display=swap");
+@import url("https://fonts.bunny.net/css2?family=bitter:wght@400;500;600;700;900&display=swap");
+@import url("https://fonts.bunny.net/css2?family=inter:wght@300;400;500;600;700&display=swap");
 @import "tailwindcss";
+
+@font-face {
+  font-family: "Arno Pro";
+  src: url("/fonts/arnopro-regular.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
 @font-face {
   font-family: "Gwyner Condensed";
@@ -11,18 +20,30 @@
 }
 
 :root {
+  /* This is a light-themed site: every section uses explicit light backgrounds
+     (bg-white / #fafafa), headings use mix-blend-exclusion, and the footer sets
+     its own white-on-dark. So we force the light scheme — without this, a system
+     dark-mode preference flipped --foreground to near-white, turning every body
+     text that inherits it (measurements, News copy, etc.) invisible on white. */
+  color-scheme: light;
   --background: #fafafa;
   --foreground: #0c0c0c;
-  --font-body: "DM Sans", system-ui, sans-serif;
-  --font-header: "DM Sans", system-ui, sans-serif;
-  --font-h1: "Gwyner Condensed", "Bitter", serif;
+  /* One sans across the site: Inter. Only --font-h1 (the display face)
+     differs. Arno is a single Regular cut subset to Latin: no bold and no
+     italic, so anything under it asking for either gets the browser's
+     synthetic version. */
+  --font-body: "Inter", Arial, sans-serif;
+  --font-header: "Inter", Arial, sans-serif;
+  --font-h1: "Arno Pro", "Bitter", serif;
+  --font-sub: "Inter", Arial, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0c0c0c;
-    --foreground: #fafafa;
-  }
+
+/* Opt-in override for text that runs in the display face rather than Inter.
+   A class, because the `h1, h2` rule below reaches headings by element and
+   anything else has to ask for the face by name. */
+.font-display {
+  font-family: var(--font-h1);
 }
 
 body {
@@ -34,23 +55,31 @@ body {
 }
 
 h1,
-h2,
-h3 {
+h2 {
   font-family: var(--font-h1);
   /* font-weight: 500; */
   margin: 0;
   line-height: 1;
 }
 
+h3 {
+  font-family: var(--font-sub);
+  margin: 0;
+  line-height: 1;
+}
+
 h4,
-h5,
+h5 {
+  font-family: var(--font-sub);
+  font-weight: 500;
+  margin: 0;
+}
+
 h6,
 p {
   font-family: var(--font-body);
   font-weight: 500;
   margin: 0;
-
-
 }
 
 strong,
@@ -157,6 +186,33 @@ b {
 
 @media (prefers-reduced-motion: reduce) {
   .search-caret {
+    animation: none;
+  }
+}
+
+/* One-shot bounce for the download-card arrow: a quick dip down and a small
+   settle back up. Re-triggered by remounting the arrow group on each click. */
+@keyframes download-arrow {
+  0% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(2.5px);
+  }
+  70% {
+    transform: translateY(-1.5px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.animate-download-arrow {
+  animation: download-arrow 0.5s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-download-arrow {
     animation: none;
   }
 }

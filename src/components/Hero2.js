@@ -5,7 +5,6 @@ import { gsap } from "gsap";
 import { Draggable } from "gsap/Draggable";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Scale } from "lucide-react";
 
 gsap.registerPlugin(Draggable);
 
@@ -43,6 +42,10 @@ export default function Hero2() {
   const zoomRef = useRef(null);
   const router = useRouter();
   const nextIdRef = useRef(0);
+  // Scroll-driven "separation" amount (0 at rest). The zoom loop writes it; the
+  // magnet loop reads it and drifts each card outward, so the two effects share
+  // one card transform instead of fighting over it.
+  const sepRef = useRef(0);
 
   const config = {
     gridSize: 5000,
@@ -112,16 +115,35 @@ export default function Hero2() {
       const MAGNET_RADIUS = 280;
       const MAGNET_STRENGTH = 0.22;
 
+      // Each card's offset from the grid centre — the direction it drifts as the
+      // intro zoom progresses. Proportional to distance, so the whole field
+      // dilates about the centre while card sizes stay put => the gaps between
+      // cards visibly open up (they pull apart, not just scale as one block).
+      const gridCX = grid.offsetWidth / 2;
+      const gridCY = grid.offsetHeight / 2;
+
       cards.forEach((card) => {
-        cardState.set(card, { tx: 0, ty: 0, cx: 0, cy: 0 });
+        cardState.set(card, {
+          tx: 0,
+          ty: 0,
+          cx: 0,
+          cy: 0,
+          dirX: card.offsetLeft + card.offsetWidth / 2 - gridCX,
+          dirY: card.offsetTop + card.offsetHeight / 2 - gridCY,
+        });
       });
 
       const animateMagnets = () => {
+        const sep = sepRef.current; // 0 at rest, grows with the intro scroll
         cards.forEach((card) => {
           const s = cardState.get(card);
           s.cx += (s.tx - s.cx) * 0.12;
           s.cy += (s.ty - s.cy) * 0.12;
-          card.style.transform = `translate3d(${s.cx}px, ${s.cy}px, 0)`;
+          // Magnet hover offset + outward separation, combined into one
+          // transform so the two never clobber each other's card.style.transform.
+          const sx = s.cx + s.dirX * sep;
+          const sy = s.cy + s.dirY * sep;
+          card.style.transform = `translate3d(${sx}px, ${sy}px, 0)`;
         });
         requestAnimationFrame(animateMagnets);
       };
@@ -185,6 +207,10 @@ export default function Hero2() {
       const blur = Math.max(0, (sp - 0.1) / 0.9) * 14; // capped — heavy blur tanks the frame rate
       el.style.transform = `scale(${scale})`;
       el.style.filter = blur > 0.3 ? `blur(${blur}px)` : "none";
+      // Separation is front-loaded (pow < 1) so the gaps start opening from the
+      // very first scroll — ahead of the back-loaded zoom — reading as the field
+      // pulling apart, then flying past. The magnet loop applies it per card.
+      sepRef.current = Math.pow(sp, 0.7) * 0.6;
       // No opacity fade — the field stays fully opaque so no black shows through.
       raf = requestAnimationFrame(render);
     };

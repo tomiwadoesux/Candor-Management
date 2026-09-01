@@ -1,0 +1,206 @@
+/* Model profile chrome.
+ *
+ * The pictures in the pinned hero — the big frame, the polaroid strip, the
+ * narrow-screen face — are clipped away from the bottom up as the board of
+ * work scrolls over them. The board carries no background of its own, so
+ * without this the profile's photographs sit behind the tiles and show through
+ * every gap between them.
+ *
+ * --hero-clip is 0 while the board is still below the fold and 1 once it has
+ * reached the top; ModelProfileView drives it from the board's own position,
+ * scrubbed by scroll, so scrolling back up brings the pictures back.
+ *
+ * clip-path rather than height or opacity: it takes the picture away without
+ * touching the layout around it, and it composites, so the scrub stays cheap.
+ */
+
+.hero-clip {
+  clip-path: inset(0 0 calc(var(--hero-clip, 0) * 100%) 0);
+}
+
+/* The polaroid strip leaves a different way: it scales out of its own centre
+   rather than being wiped from the bottom. Four small pictures in a row read
+   as a set, and a clip travelling up through all four at once looks like a
+   shutter closing on them; shrinking lets each one go on its own.
+   
+   Unlike the clip this needs no scrubbing — it is a plain CSS transition on
+   the same threshold, with a short stagger across the row so the strip
+   empties left to right. */
+.hero-scale {
+  transform: scale(1);
+  transform-origin: center;
+  transition: transform 480ms cubic-bezier(0.65, 0, 0.35, 1) var(--out, 0ms);
+  will-change: transform;
+}
+
+[data-shifted="true"] .hero-scale {
+  transform: scale(0);
+}
+
+/* No scroll-linked clipping when motion is turned down — the pictures simply
+   stay put. They read as part of the profile rather than as an effect. */
+@media (prefers-reduced-motion: reduce) {
+  .hero-clip {
+    clip-path: none;
+  }
+
+  .hero-scale {
+    transition: none;
+  }
+}
+
+/* ------------------------------------------------- hero text, sliding left --
+
+   On scroll the name, bio, measurements and button leave their centred
+   positions and go flush to the page's left edge — the same 16px the wordmark
+   and the board sit on.
+
+   Each block is moved by a transform, not by re-laying it out: --shift is the
+   distance from where the block rests to that edge, measured once by
+   ModelProfileView and again on resize. The motion itself is a plain CSS
+   transition, so nothing runs per frame.
+
+   They run at different speeds so the stack unfolds rather than sliding as one
+   slab. The wordmark is not part of this — it stays where it is. */
+
+/* easeInOutCubic, not the expo-ish ease-out this had before. That curve threw
+   the blocks 87% of the way in its first 100ms, which is what read as too
+   quick however long the duration was — the distance was gone before the eye
+   caught it. This one leaves and lands soft and spends its time in the middle
+   of the move, so the same trip reads as smooth without taking longer than it
+   has to. */
+.hero-slide {
+  transform: translateX(0);
+  transition: transform var(--slide, 720ms) cubic-bezier(0.65, 0, 0.35, 1);
+  will-change: transform;
+}
+
+/* Spread far enough apart that the stack arrives in order rather than as one
+   slab. */
+.hero-slide--name {
+  --slide: 700ms;
+}
+.hero-slide--facts {
+  --slide: 820ms;
+}
+.hero-slide--bio {
+  --slide: 940ms;
+}
+.hero-slide--button {
+  --slide: 1060ms;
+}
+
+[data-shifted="true"] .hero-slide {
+  transform: translateX(var(--shift, 0px));
+}
+
+/* ------------------------------------------------------------- the bio ----
+
+   Two things are going on in the bio that are not going on anywhere else.
+
+   First, its right edge steps in as it goes down — longest line on top, each
+   one after it a little shorter. That is a float with a triangular
+   shape-outside: it takes no width at the top of the paragraph and its full
+   width at the bottom, so every successive line has less room to run into. The
+   text is not re-measured or hyphenated; the wrap just happens inside a
+   narrowing column. */
+.hero-slide--bio {
+  text-align: left;
+}
+
+.hero-slide--bio::before {
+  content: "";
+  float: right;
+  width: 26%;
+  height: 5.6em;
+  shape-outside: polygon(100% 0, 100% 100%, 0 100%);
+}
+
+/* Once the lines are cut the shape has done its job, and leaving it in would
+   only give the frozen lines something to collide with. */
+.hero-slide--bio[data-split="true"]::before {
+  content: none;
+}
+
+/* Second, going flush left is a move rather than a switch. text-align cannot
+   transition, so centring by alignment would snap the lines into place under
+   the block's own slide. Instead the paragraph is set left and each line is
+   offset right by half its own slack — which looks identical at rest — and
+   the offsets run out to zero on the same beat the block travels. Every line
+   has a different distance to cover, so the ragged edge unfolds as it lands.
+   ModelProfileView splits the lines and measures --line-shift. */
+/* fit-content, not a full-width block: the offset that fakes the centring is
+   half the line's own slack, so the line has to be as wide as its text and no
+   wider. nowrap keeps a line that was cut to fit from re-wrapping on a
+   sub-pixel rounding difference. */
+.hero-line {
+  display: block;
+  width: fit-content;
+  white-space: nowrap;
+  transform: translateX(var(--line-shift, 0px));
+  transition: transform var(--slide, 940ms) cubic-bezier(0.65, 0, 0.35, 1);
+  will-change: transform;
+}
+
+[data-shifted="true"] .hero-line {
+  transform: translateX(0);
+}
+
+[data-measuring="true"] .hero-line {
+  transform: none !important;
+  transition: none !important;
+}
+
+/* --shift is measured off the resting position, so the measuring pass has to
+   see the blocks untransformed — and must not animate its way back. */
+[data-measuring="true"] .hero-slide {
+  transform: none !important;
+  transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-slide {
+    transition: none;
+  }
+}
+
+/* The bio is cut at four lines; this is what says so. Inert for now — it marks
+   the truncation as a decision rather than text that simply ran out. */
+.hero-more {
+  font-style: italic;
+  opacity: 0.55;
+  cursor: pointer;
+}
+
+.hero-more:hover {
+  opacity: 0.8;
+}
+
+/* ------------------------------------------------- holding the board back --
+
+   The board is in normal flow, so it rises with the scroll — which means it
+   was already arriving while the polaroid strip was still shrinking, and the
+   two moves read as one muddle. Holding it down and releasing it after a delay
+   lets the strip finish first.
+
+   The delay is measured off the strip: its scale-out is 480ms eased with a
+   70ms stagger, so the last of the four passes 85% gone at roughly 540ms. The
+   delay lives on the shifted rule alone, so scrolling back up returns the
+   board immediately instead of waiting the same beat out. */
+.board-hold {
+  transform: translateY(22vh);
+  transition: transform 760ms cubic-bezier(0.65, 0, 0.35, 1);
+  will-change: transform;
+}
+
+[data-shifted="true"] .board-hold {
+  transform: translateY(0);
+  transition-delay: 540ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .board-hold {
+    transform: none;
+    transition: none;
+  }
+}

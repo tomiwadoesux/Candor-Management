@@ -1,29 +1,71 @@
+"use client";
+
+import Link from "next/link";
+import { initialCaps } from "./FitText";
+
+// The model behind the campaign currently on the board. Placeholder until the
+// campaigns data lands — one entry here feeds every width.
+const NAME = ["OWOLABI", "MOSIMABALE"];
+const COPY =
+  "Amet minim mollit non deserunt ullamco est sit aliqua dolor do hdfjuh iudwygyer iyutvd uyvtwd fi uyv udguvef uyvutsv fdyuevfyefvy, consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua enim ad minim veniam.";
+
+// Name, copy and the portfolio button — the same block at every width; only
+// the display size of the name changes.
+function Caption({ nameClass = "text-5xl", className = "" }) {
+  return (
+    <div className={`flex flex-col ${className}`}>
+      <h1 className={`uppercase leading-none tracking-wider ${nameClass}`}>
+        {NAME.map((word) => (
+          // Raised initials, as the name is set on /models. An em bump rather
+          // than the rail's fixed 10px, so the step stays proportional at this
+          // display size.
+          <span key={word} className="block">
+            {initialCaps(word, "0.16em")}
+          </span>
+        ))}
+      </h1>
+
+      {/* Inter, and a step down from the name's face: the copy is a caption
+          under the headline, not a second heading. */}
+      <p className="max-w-[52ch] pt-3 text-[13px] leading-[1.5] text-[#0c0c0c]/70">
+        {COPY}
+      </p>
+
+      {/* Same filled accent button as the model card on a profile — the
+          bracket pair is the site's button shape. */}
+      <Link
+        href="/models"
+        className="mt-5 w-fit cursor-pointer bg-[#00749E] px-1 py-1 text-white"
+      >
+        <h4 className="text-xs font-bold uppercase">[ models portfolio ]</h4>
+      </Link>
+    </div>
+  );
+}
+
 export default function News() {
   return (
-    <section className="">
-      <div className=" pt-14 md:pt-28 lg:pt-24hidden md:block px-11 ">
-        <div className="flex justify-center pb-6">
-          <h1 className="text-center text-black text-5xl md:text-7xl lg:text-8xl font-normal">campaigns</h1>
-        </div>
-        <div className="flex flex-col md:flex-row gap-5">
-          <div className="hidden lg:flex flex-1 items-center justify-center">
-            <div className="flex flex-col">
-              <h1 className="text-5xl text-left lg:text-5xl uppercase tracking-wider  ">
-                OWOLABI
-                <br /> MOSIMABALE
-              </h1>
-              <h4 className="">
-                Amet minim mollit non deserunt ullamco est sit aliqua dolor do
-                hdfjuh iudwygyer iyutvd uyvtwd fi uyv udguvef uyvutsv
-                fdyuevfyefvy
-              </h4>
-            </div>
+    <section className="px-4 pt-14 md:pt-28">
+      <div className="flex justify-center pb-6">
+        <h1 className="text-center text-5xl font-normal text-black md:text-7xl lg:text-8xl">
+          campaigns
+        </h1>
+      </div>
+
+      {/* md and up: two boards side by side, with the caption taking the third
+          column from lg. gap-4 matches the page's px-4 edge, so the gutters
+          between the boards read the same as the page margin. */}
+      <div className="hidden md:block">
+        <div className="flex flex-row gap-4">
+          <div className="hidden flex-1 items-center lg:flex">
+            <Caption nameClass="text-5xl" />
           </div>
-          <div className=" flex-1">
-            <div className="bg-black/40 flex items-center justify-end aspect-4/5">
-              <button className="w-10 h-10 bg-black flex items-center justify-center hover:bg-gray-800 transition">
+
+          <div className="flex-1">
+            <div className="flex aspect-4/5 items-center justify-end bg-black/40">
+              <button className="flex h-10 w-10 items-center justify-center bg-black transition hover:bg-gray-800">
                 <svg
-                  className="w-6 h-6 text-white"
+                  className="h-6 w-6 text-white"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -38,11 +80,14 @@ export default function News() {
               </button>
             </div>
           </div>
-          <div className=" pt-11 flex-1">
-            <div className="bg-black/40 flex items-center justify-start aspect-4/5">
-              <button className="w-10 h-10 relative -top-11 bg-black flex items-center justify-center hover:bg-gray-800 transition">
+
+          {/* The second board hangs lower than the first — the step is what
+              keeps the pair from reading as one wide picture. */}
+          <div className="flex-1 pt-11">
+            <div className="flex aspect-4/5 items-center justify-start bg-black/40">
+              <button className="relative -top-11 flex h-10 w-10 items-center justify-center bg-black transition hover:bg-gray-800">
                 <svg
-                  className="w-6 h-6 text-white"
+                  className="h-6 w-6 text-white"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -58,70 +103,50 @@ export default function News() {
             </div>
           </div>
         </div>
-        <div className="hidden md:flex lg:hidden flex-col pt-5 ">
-          <h1 className="text-5xl text-left luppercase tracking-wider  ">
-            OWOLABI
-            <br /> MOSIMABALE
-          </h1>
-          <h4 className="w-[65%] pt-2 text-sm md:text-base">
-            Amet minim mollit non deserunt ullamco est sit aliqua dolor do
-            hdfjuh iudwygyer iyutvd uyvtwd fi uyv udguvef uyvutsv fdyuevfyefvy
-          </h4>
-        </div>
+
+        {/* Below lg there is no third column, so the caption sits under the
+            boards instead of beside them. */}
+        <Caption className="pt-5 lg:hidden" nameClass="text-5xl" />
       </div>
-      <div className=" pt-14 md:pt-28 lg:pt-24px-4 md:px-14 md:hidden">
-        <div className="flex justify-center pb-4">
-          <h1 className="text-center text-black text-5xl md:text-7xl lg:text-8xl font-normal">campaigns</h1>
-        </div>
-        <div className="flex flex-col">
-          <div>
-            <div className="bg-black/40 flex items-end justify-end aspect-4/5">
-              <div className="flex flex-row gap-6">
-                <button className="w-8 h-8 bg-black flex items-center justify-center hover:bg-gray-800 transition">
-                  <svg
-                    className="w-6 h-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2.5}
-                      d="M15 19l-7-7 7-7"
-                    />
-                  </svg>
-                </button>
-                <button className="w-8 h-8 bg-black flex items-center justify-center hover:bg-gray-800 transition">
-                  <svg
-                    className="w-6 h-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2.5}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div className=" flex-col pt-5 ">
-              <h1 className="text-3xl text-left uppercase tracking-widest   ">
-                OWOLABI
-                <br /> MOSIMABALE
-              </h1>
-              <h4 className="w-[90%] pt-3 text-sm md:text-base">
-                Amet minim mollit non deserunt ullamco est sit aliqua dolor do
-                hdfjuh iudwygyer iyutvd uyvtwd fi uyv udguvef uyvutsv
-                fdyuevfyefvy
-              </h4>
-            </div>
+
+      {/* Mobile: a single board, both arrows on it, caption underneath. */}
+      <div className="pt-14 md:hidden">
+        <div className="flex aspect-4/5 items-end justify-end bg-black/40">
+          <div className="flex flex-row gap-4">
+            <button className="flex h-8 w-8 items-center justify-center bg-black transition hover:bg-gray-800">
+              <svg
+                className="h-6 w-6 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2.5}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+            </button>
+            <button className="flex h-8 w-8 items-center justify-center bg-black transition hover:bg-gray-800">
+              <svg
+                className="h-6 w-6 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2.5}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </button>
           </div>
         </div>
+
+        <Caption className="pt-5" nameClass="text-3xl" />
       </div>
     </section>
   );

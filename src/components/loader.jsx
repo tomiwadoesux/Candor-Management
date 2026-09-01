@@ -1,304 +1,166 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
-import gsap from "gsap";
-import { CustomEase } from "gsap/CustomEase";
-import { projectsData } from "./projects.js";
-import "../styles/loader-styles.css";
+import { useEffect, useState } from "react";
 
-gsap.registerPlugin(CustomEase);
-CustomEase.create("hop", "0.9, 0, 0.1, 1");
+const LINE_H = 26; // px per list line
+const BEAT = 300; // ms per fill/drain step
+
+const LEFT_LINES = [
+  "Ayotomiwa Durojaye",
+  "Chioma Nwosu",
+  "Marcus Adeyemi",
+  "Zainab Hassan",
+  "Sofia Okonkwo",
+  "Emeka Eze",
+  "Amara Obi",
+  "Isabella Adesina",
+];
+
+const RIGHT_LINES = [
+  "Lagos, Nigeria",
+  "Harmony Studios — Montreal",
+  "Manchester, UK",
+  "Neue Haus — Brooklyn",
+  "Dallas, USA",
+  "High Pavilion — Portland",
+  "Elevation — Denver",
+  "Berlin, DE",
+];
+
+// Local lightweight images (webp first, then the smallest jpegs) — the
+// montage flickers through these; all preloaded on mount so cuts never blank.
+const IMAGE_POOL = [
+  "/images/06.webp",
+  "/images/17.webp",
+  "/images/22.webp",
+  "/images/23.webp",
+  "/images/51.webp",
+  "/images/64.webp",
+  "/images/img4.jpeg",
+  "/images/img14.jpeg",
+  "/images/img16.jpeg",
+  "/images/img19.jpeg",
+  "/images/img20.jpeg",
+  "/images/img2.jpeg",
+];
+
+// Tight scatter around the center like the reference — top, flanks, bottom,
+// middle — each flickering on its own clock so the montage never syncs up.
+const SLOTS = [
+  { left: "46%", top: "19%", big: true, interval: 520, offset: 0 },
+  { left: "36%", top: "43%", interval: 640, offset: 2 },
+  { left: "59%", top: "46%", interval: 580, offset: 4 },
+  { left: "48%", top: "66%", big: true, interval: 700, offset: 6 },
+  { left: "51%", top: "38%", interval: 460, offset: 3 },
+];
+
+// Fill-then-drain: lines fade in one by one going down (left) / up (right),
+// hold briefly when full, then disappear one by one from where they started.
+function FillDrainList({ items, fromBottom = false, tick, align }) {
+  const n = items.length;
+  const cycle = 2 * n + 2; // n fill beats, 2 hold beats, n drain beats
+  const t = tick % cycle;
+  let start = 0;
+  let end = n;
+  if (t < n) end = t + 1; // filling
+  else if (t >= n + 2) start = t - (n + 1); // draining
+  return (
+    <div className="relative" style={{ height: n * LINE_H }}>
+      {items.map((txt, j) => {
+        const slot = fromBottom ? n - 1 - j : j;
+        const on = j >= start && j < end;
+        return (
+          <div
+            key={j}
+            className="absolute left-0 right-0 whitespace-nowrap uppercase text-[9px] tracking-[0.18em] text-black/50 md:text-[10px]"
+            style={{
+              top: slot * LINE_H,
+              height: LINE_H,
+              lineHeight: `${LINE_H}px`,
+              textAlign: align,
+              opacity: on ? 1 : 0,
+              transform: on ? "translateY(0)" : "translateY(5px)",
+              transition: "opacity 0.26s ease, transform 0.26s ease",
+            }}
+          >
+            {txt}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function Slot({ conf, active }) {
+  const [i, setI] = useState(conf.offset % IMAGE_POOL.length);
+  useEffect(() => {
+    if (!active) return;
+    const t = setInterval(
+      () => setI((v) => (v + 1) % IMAGE_POOL.length),
+      conf.interval
+    );
+    return () => clearInterval(t);
+  }, [active, conf.interval]);
+
+  return (
+    <div
+      className="absolute -translate-x-1/2 overflow-hidden bg-neutral-200"
+      style={{
+        left: conf.left,
+        top: conf.top,
+        width: conf.big ? 112 : 96,
+        height: conf.big ? 140 : 120,
+      }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={IMAGE_POOL[i]}
+        alt=""
+        className="h-full w-full object-cover"
+        draggable={false}
+      />
+    </div>
+  );
+}
 
 export default function Loader() {
-  const containerRef = useRef(null);
+  const [active, setActive] = useState(true);
+  const [tick, setTick] = useState(0);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!containerRef.current) return;
-
-      const projectsContainer = containerRef.current.querySelector(".projects");
-      const locationsContainer = containerRef.current.querySelector(
-        ".locations"
-      );
-      const gridImages = gsap.utils.toArray(".img");
-      const heroImage = containerRef.current.querySelector(".img.hero-img");
-
-      if (!projectsContainer || !locationsContainer) return;
-
-      const allImageSources = Array.from(
-        { length: 35 },
-        (_, i) => `/images/img${i + 1}.jpeg`
-      );
-
-      const getRandomImageSet = () => {
-        const shuffled = [...allImageSources].sort(() => 0.5 - Math.random());
-        return shuffled.slice(0, 9);
-      };
-
-      function initializeDynamicContent() {
-        projectsContainer.innerHTML = "";
-        locationsContainer.innerHTML = "";
-
-        projectsData.forEach((project) => {
-          const projectItem = document.createElement("div");
-          projectItem.className = "project-item";
-
-          const projectName = document.createElement("p");
-          projectName.textContent = project.name;
-
-          const directorName = document.createElement("p");
-          directorName.textContent = project.director;
-
-          projectItem.appendChild(projectName);
-          projectItem.appendChild(directorName);
-
-          projectsContainer.appendChild(projectItem);
-        });
-
-        projectsData.forEach((project) => {
-          const locationItem = document.createElement("div");
-          locationItem.className = "location-item";
-
-          const locationName = document.createElement("p");
-          locationName.textContent = project.location;
-
-          locationItem.appendChild(locationName);
-          locationsContainer.appendChild(locationItem);
-        });
-      }
-
-      function startImageRotation() {
-        const totalCycles = 20;
-
-        for (let cycle = 0; cycle < totalCycles; cycle++) {
-          const randomImages = getRandomImageSet();
-
-          gsap.to(
-            {},
-            {
-              duration: 0,
-              delay: cycle * 0.15,
-              onComplete: () => {
-                gridImages.forEach((img, index) => {
-                  const imgElement = img.querySelector("img");
-
-                  if (cycle === totalCycles - 1 && img === heroImage) {
-                    imgElement.src = "/images/img5.jpeg";
-                    gsap.set(".hero-img img", { scale: 2 });
-                  } else {
-                    imgElement.src = randomImages[index];
-                  }
-                });
-              },
-            }
-          );
-        }
-      }
-
-      function setupInitialStates() {
-        // Boxes are fully open (no clip wipe) but invisible — they fade in.
-        gsap.set(".img", {
-          clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
-          opacity: 0,
-        });
-
-        // List rows start invisible and nudged down so they drop in top-to-bottom.
-        gsap.set(
-          [
-            ".projects-header",
-            ".project-item",
-            ".locations-header",
-            ".location-item",
-          ],
-          { opacity: 0, y: 20 }
-        );
-      }
-
-      function createAnimationTimelines() {
-        const tl = gsap.timeline({ delay: 0.3 });
-
-        // 1. Boxes appear individually with opacity.
-        tl.to(
-          ".img",
-          {
-            opacity: 1,
-            duration: 0.4,
-            stagger: 0.08,
-            ease: "power2.out",
-            onStart: () => {
-              setTimeout(startImageRotation, 300);
-            },
-          },
-          0
-        );
-
-        // 2. Lists drop in top-to-bottom, fast — starting early, alongside the boxes.
-        tl.to(
-          [".projects-header", ".project-item"],
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.2,
-            stagger: 0.05,
-            ease: "power2.out",
-          },
-          0.15
-        );
-
-        tl.to(
-          [".locations-header", ".location-item"],
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.2,
-            stagger: 0.05,
-            ease: "power2.out",
-          },
-          0.15
-        );
-
-        // Brighten the rows to white as they settle.
-        tl.to(".project-item", {
-          color: "#fff",
-          duration: 0.15,
-          stagger: 0.05,
-        });
-
-        tl.to(
-          ".location-item",
-          {
-            color: "#fff",
-            duration: 0.15,
-            stagger: 0.05,
-          },
-          "<"
-        );
-
-        // 3. Clear the lists — left and right columns leave top-to-bottom, together.
-        const exit = "+=0.6";
-
-        tl.to(
-          [".projects-header", ".project-item"],
-          {
-            opacity: 0,
-            duration: 0.2,
-            stagger: 0.04,
-          },
-          exit
-        );
-
-        tl.to(
-          [".locations-header", ".location-item"],
-          {
-            opacity: 0,
-            duration: 0.2,
-            stagger: 0.04,
-          },
-          exit
-        );
-
-        tl.to(
-          ".overlay",
-          {
-            opacity: 0,
-            duration: 0.4,
-          },
-          "-=0.1"
-        );
-
-        // 4. Close the boxes and hand off to the page.
-        tl.to(
-          ".img",
-          {
-            clipPath: "polygon(0% 0%, 100% 0%, 100% 0%, 0% 0%)",
-            duration: 0.8,
-            stagger: 0.05,
-            ease: "hop",
-          },
-          "+=0.1"
-        );
-
-        tl.to(
-          ".loader-wrapper",
-          {
-            opacity: 0,
-            duration: 0.3,
-            pointerEvents: "none",
-          },
-          "-=0.2"
-        );
-      }
-
-      function init() {
-        initializeDynamicContent();
-        setupInitialStates();
-        createAnimationTimelines();
-      }
-
-      init();
-    }, 100);
-
-    return () => clearTimeout(timer);
+    const reduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+    setActive(!reduced);
+    // Warm every montage image so slot swaps are hard cuts, never blanks.
+    IMAGE_POOL.forEach((src) => {
+      const im = new window.Image();
+      im.src = src;
+    });
+    if (reduced) {
+      setTick(LEFT_LINES.length); // hold both lists fully visible
+      return;
+    }
+    const t = setInterval(() => setTick((v) => v + 1), BEAT);
+    return () => clearInterval(t);
   }, []);
 
   return (
-    <div ref={containerRef} className="loader-wrapper">
-      <div className="overlay">
-        {/* Projects Section */}
-        <div className="projects">
-          <div className="projects-header">
-            <p>Project</p>
-            <p>Director</p>
-          </div>
-        </div>
-
-        {/* Empty center lane — reserves space for the image grid */}
-        <div className="grid-spacer" aria-hidden="true"></div>
-
-        {/* Locations Section */}
-        <div className="locations">
-          <div className="locations-header">
-            <p>Location</p>
-          </div>
-        </div>
+    <div className="fixed inset-0 z-[100] overflow-hidden bg-[#fafafa]">
+      {/* Left list — fills top-to-bottom, then drains from the top */}
+      <div className="absolute left-[8%] top-1/2 w-[19%] -translate-y-1/2">
+        <FillDrainList items={LEFT_LINES} tick={tick} align="right" />
       </div>
 
-      {/* Image Grid */}
-      <div className="image-grid">
-        <div className="grid-row">
-          <div className="img">
-            <img src="/images/img1.jpeg" alt="Grid 1" />
-          </div>
-          <div className="img">
-            <img src="/images/img2.jpeg" alt="Grid 2" />
-          </div>
-          <div className="img">
-            <img src="/images/img3.jpeg" alt="Grid 3" />
-          </div>
-        </div>
-        <div className="grid-row">
-          <div className="img">
-            <img src="/images/img4.jpeg" alt="Grid 4" />
-          </div>
-          <div className="img">
-            <img src="/images/img5.jpeg" alt="Grid 5" />
-          </div>
-          <div className="img">
-            <img src="/images/img6.jpeg" alt="Grid 6" />
-          </div>
-        </div>
-        <div className="grid-row">
-          <div className="img">
-            <img src="/images/img7.jpeg" alt="Grid 7" />
-          </div>
-          <div className="img">
-            <img src="/images/img8.jpeg" alt="Grid 8" />
-          </div>
-          <div className="img hero-img">
-            <img src="/images/img5.jpeg" alt="Hero" />
-          </div>
-        </div>
+      {/* Right list — mirror: fills bottom-to-top, drains from the bottom */}
+      <div className="absolute right-[8%] top-1/2 w-[19%] -translate-y-1/2">
+        <FillDrainList items={RIGHT_LINES} tick={tick} fromBottom align="left" />
       </div>
+
+      {/* Flickering montage cluster */}
+      {SLOTS.map((conf, i) => (
+        <Slot key={i} conf={conf} active={active} />
+      ))}
     </div>
   );
 }

@@ -1,0 +1,201 @@
+/* Layout for the morphing gallery board (see components/MorphGallery.jsx)
+   and the shared modal shell its callers use.
+
+   The board is justified rows, not a column grid: lib/packRows.js works out
+   which pictures share a row and what fraction of the row's width each one
+   takes, and hands that down as --share. Everything here does is turn those
+   fractions into widths. --gap is the space between tiles in a row; --gaps is
+   how many of those a row has (one fewer than its tiles), so the shares divide
+   the width that is actually left for pictures. */
+
+.morph-board {
+  --gap: 1rem;
+  display: flex;
+  flex-direction: column;
+  /* Row gap. The old board ran a 7rem gap between rows and still left holes
+     inside them; with the rows packed the space between them is the only air
+     the board needs, so it can be much tighter. */
+  gap: 3rem;
+}
+
+/* `align-items: flex-start` keeps every tile in a row flush to the same top
+   line. It rarely has to do anything — widths are proportional to aspect, so
+   the tiles come out the same height anyway — but a rounding difference or a
+   two-line caption would otherwise pull one out of line. */
+.morph-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gap);
+}
+
+.morph-tile {
+  width: calc(var(--share) * (100% - var(--gap) * var(--gaps)));
+  flex: none;
+  min-width: 0;
+}
+
+/* --ar is the photo's own width/height, so nothing is ever cropped: the box is
+   the picture's shape, and its share of the row decides how big it lands. */
+.morph-tile__box {
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--ar);
+  overflow: hidden;
+}
+
+/* The scaled layer sits inside the box and never affects layout, which is what
+   keeps the box measurable while the animation is mid-flight. */
+.morph-tile__media {
+  position: absolute;
+  inset: 0;
+  transform: scale(var(--p));
+  transform-origin: var(--origin);
+  will-change: transform;
+}
+
+.morph-tile__caption {
+  opacity: clamp(0, calc((var(--p) - 0.6) / 0.4), 1);
+}
+
+/* Phones: rows wrap to two-up. A row of four portraits at a quarter of a
+   390px screen would be a postage stamp, and the shares stop being useful at
+   that width — pairs keep the pictures readable.
+
+   flex rather than a fixed width, so the basis puts two on a line but a tile
+   left over on the last line grows to fill it instead of sitting in half a row
+   of white. That is the same hole the packer removes on desktop, and wrapping
+   would otherwise reintroduce it on every odd row. */
+@media (max-width: 767px) {
+  .morph-board {
+    --gap: 0.75rem;
+    gap: 2rem;
+  }
+
+  .morph-row {
+    flex-wrap: wrap;
+  }
+
+  .morph-tile {
+    width: auto;
+    flex: 1 1 calc((100% - var(--gap)) / 2);
+  }
+}
+
+/* ---------------------------------------------------------------- modal -- */
+
+.morph-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+}
+
+.morph-modal[data-open="false"] {
+  pointer-events: none;
+}
+
+.morph-modal__scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(250, 250, 250, 0.92);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  transition: opacity 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.morph-modal[data-open="true"] .morph-modal__scrim {
+  opacity: 1;
+}
+
+.morph-modal__panel {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2rem;
+  width: min(1100px, 100%);
+  max-height: calc(100dvh - 2.5rem);
+  overflow: auto;
+  padding: 2rem;
+  background: #fafafa;
+  box-shadow: 0 24px 80px rgba(12, 12, 12, 0.14);
+  outline: none;
+
+  /* Comes up from slightly under and behind, matching the grid's own
+     scale-from-rest language rather than sliding in from an edge. */
+  opacity: 0;
+  transform: translateY(12px) scale(0.985);
+  transition: opacity 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.morph-modal[data-open="true"] .morph-modal__panel {
+  opacity: 1;
+  transform: none;
+}
+
+.morph-modal__media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.morph-modal__media img {
+  max-height: min(62dvh, 720px);
+  width: auto;
+}
+
+.morph-modal__close {
+  position: absolute;
+  top: 1rem;
+  right: 1.25rem;
+  z-index: 1;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.morph-modal__close:hover {
+  opacity: 0.55;
+}
+
+/* The image-only variant (Lightbox) stays one column at every width — there
+   is no meta panel to sit beside the picture. */
+.morph-modal__panel--plain {
+  width: min(1100px, 100%);
+}
+
+.morph-modal__panel--plain .morph-modal__media img {
+  max-height: min(80dvh, 900px);
+}
+
+@media (min-width: 768px) {
+  .morph-modal {
+    padding: 2.5rem;
+  }
+
+  .morph-modal__panel {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    align-items: center;
+    gap: 3rem;
+    padding: 2.5rem;
+  }
+
+  .morph-modal__panel--plain {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .morph-modal__scrim,
+  .morph-modal__panel {
+    transition: none;
+  }
+
+  .morph-modal__panel {
+    transform: none;
+  }
+}

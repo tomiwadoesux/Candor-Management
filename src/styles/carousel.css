@@ -1,0 +1,40 @@
+/* Fonts for the WebGL carousel. The family names here have to match the strings
+   in components/carousel/ring/params.js — nameFont, idxFont and textFont are
+   looked up by name at runtime, not imported, so renaming a family here silently
+   falls back to a system face. Files live under /carousel/ rather than the public
+   root so the eighteen numbered .webp cards can't collide with the site's own
+   assets. */
+
+@font-face {
+  font-family: "Satoshi";
+  src: url("/carousel/Satoshi-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Satoshi";
+  src: url("/carousel/Satoshi-Medium.otf") format("opentype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Numbers, years and the load counter. */
+@font-face {
+  font-family: "Geist";
+  src: url("/carousel/Geist-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* The intro heading and the cursor tag, both rasterised to canvas. */
+@font-face {
+  font-family: "PP Neue Montreal";
+  src: url("/carousel/ppneuemontreal-book.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}

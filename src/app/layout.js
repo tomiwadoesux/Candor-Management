@@ -2,6 +2,7 @@
 import "../styles/globals.css";
 import { HoveredModelProvider } from "../components/HoveredModelContext";
 import ModelImageCursor from "../components/ModelImageCursor";
+import SmoothScroll from "../components/SmoothScroll";
 import TransitionProvider from "@/providers/TransitionProvider";
 
 export const metadata = {
@@ -13,6 +14,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className="antialiased">
+        <SmoothScroll />
         <TransitionProvider>
           <HoveredModelProvider>
             {children}

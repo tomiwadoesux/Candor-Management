@@ -1,0 +1,399 @@
+/* Fullscreen film player — /video.
+ *
+ * One project fills the screen. The chrome is a single hairline row of labels
+ * along the bottom, with the playback line running the full width of the
+ * screen beneath them. No panel, no bar, no scrim: everything sits straight on
+ * the frame.
+ *
+ * ── The blend ────────────────────────────────────────────────────────────────
+ * The chrome never picks a colour. It is painted white and composited with
+ * mix-blend-mode: difference, so it comes out white over the black letterbox
+ * rails and dark over a bright frame — one set of labels that stays legible
+ * across a cut from a night exterior to a white studio. Because difference
+ * needs a backdrop inside the same stacking context, the stage and the chrome
+ * are siblings under .film, which isolates and paints the black itself.
+ *
+ * That is also why the blend is set on the row rather than on the whole
+ * overlay: the credits panel has to stay unblended to be readable.
+ *
+ * ── The grid ─────────────────────────────────────────────────────────────────
+ * The row is three equal columns with a tick closing the last one, so the
+ * name, the house and the transport fall on even thirds and the tick shuts the
+ * measure. Every one of them hangs off its own column line behind a 4px
+ * square, and all of them are bottom-aligned — the name is set in the display
+ * face at nearly three times the label size and still sits on their baseline.
+ *
+ * The playback line is not one of those columns. It is bottom-anchored across
+ * the whole screen, edge to edge and under every label — a rule the page sits
+ * on rather than a control in the row.
+ */
+
+.film {
+  --pad: 1.25rem;
+  --tick: 4px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #000;
+  /* Keeps difference blending off the rest of the document — without it the
+     chrome would composite against whatever the page behind happens to be. */
+  isolation: isolate;
+  font-family: var(--font-body);
+}
+
+/* ── Stage ─────────────────────────────────────────────────────────────────── */
+
+.film__stage {
+  position: absolute;
+  display: block;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  background: #000;
+  cursor: pointer;
+}
+
+/* contain, not cover: the letterbox rails are the design — they are what the
+   blended chrome reads white against. */
+.film__media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  /* The poster and the film are stacked on the same black stage and
+     cross-faded, so the opening frame can dissolve into the moving image. */
+  transition: opacity 420ms var(--ease);
+}
+
+/* ── Chrome ────────────────────────────────────────────────────────────────── */
+
+.film__chrome {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: var(--pad);
+  /* The overlay is a full-screen sheet so the row can hang off the bottom edge;
+     only the controls themselves take clicks, so the stage underneath stays one
+     big play/pause target. The padding is the page margin the row honours and
+     the playback line deliberately does not. */
+  pointer-events: none;
+}
+
+/* Difference blending has exactly one blind spot: a backdrop already sitting
+   near mid grey, where the inverse lands more or less back on top of it and
+   the labels go soft. This band pulls the footage away from that middle under
+   the row, which is the only place the chrome is. Over the letterbox rails it
+   is black on black and cannot be seen, so the design keeps reading as bare
+   labels on the frame rather than a scrim. */
+.film__chrome::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 12rem;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0));
+}
+
+/* Holds the row and the panel that opens above it, so the panel can be placed
+   off the row's own height instead of a guessed offset. */
+.film__foot {
+  position: relative;
+  z-index: 2;
+}
+
+.film-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) auto;
+  /* end, not start: the row sits on the bottom edge, so the title grows up
+     out of the same line the single-line labels sit on. */
+  align-items: end;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+  color: #fff;
+  mix-blend-mode: difference;
+}
+
+/* Every cell is a square on the column line, then the label 13px later. */
+.film-cell {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.8rem;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+}
+
+/* Buttons and links take clicks; the title is an inert container. */
+button.film-cell,
+a.film-cell {
+  pointer-events: auto;
+}
+
+button.film-cell,
+a.film-cell {
+  cursor: pointer;
+}
+
+/* The marker slot: a fixed 10px box every mark centres in, so a 4px square, a
+   triangle and a cross all sit on one axis and none of them moves the label. */
+.film-cell__mark {
+  flex: none;
+  display: flex;
+  align-items: center;
+  /* flex-start, not centre: the marker's left edge *is* the column line. */
+  justify-content: flex-start;
+  width: 10px;
+  height: 10px;
+  /* Centres the 10px slot on the 1.35 line box beside it. */
+  margin-bottom: 0.22em;
+  /* em-based, so beside the name it rides the display face's line box instead
+     of the label's. */
+  font-size: 0.6875rem;
+  transform-origin: left center;
+  transition: transform 260ms var(--ease);
+}
+
+/* The house hover: the marker swells and the word steps aside by a hair.
+   Nothing reflows — the gap is fixed and the translate is transform-only. */
+.film-cell__label {
+  transition: transform 260ms var(--ease);
+}
+
+button.film-cell:hover .film-cell__mark,
+a.film-cell:hover .film-cell__mark,
+button.film-cell:focus-visible .film-cell__mark,
+a.film-cell:focus-visible .film-cell__mark {
+  transform: scale(1.5);
+}
+
+button.film-cell:hover .film-cell__label,
+a.film-cell:hover .film-cell__label,
+button.film-cell:focus-visible .film-cell__label,
+a.film-cell:focus-visible .film-cell__label {
+  transform: translateX(3px);
+}
+
+/* currentColor, so the ring inverts with the label it belongs to. */
+.film-cell:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 5px;
+}
+
+/* The line is the full width of the screen, so a ring around it would trace
+   the whole bottom edge. It shows focus by standing up to its hover height
+   instead — see the rule above, which :focus-visible shares. */
+.film-scrub:focus-visible {
+  outline: none;
+}
+
+/* A long name can outrun a third of the screen, so it keeps a gutter and wraps
+   rather than closing on the next marker. Nothing else in the row can push its
+   neighbours either — the cells all carry min-width: 0. */
+.film-cell--title {
+  padding-right: 1.5rem;
+}
+
+/* The display face, and the only thing on the frame set in it: everything else
+   is an 11px sans label, so the serif is what separates the person from the
+   apparatus around them. Left in the case the roster stores it in — a name in
+   caps would read as another label. */
+.film-title {
+  margin: 0;
+  font-family: var(--font-h1);
+  font-size: 1.75rem;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: 0.005em;
+  /* Pulls the serif's baseline onto the line the 11px labels sit on: the
+     display face carries far more descender room than they do. */
+  margin-bottom: -0.08em;
+}
+
+/* ── Playback line ─────────────────────────────────────────────────────────── */
+
+/* Sits on the bottom edge of the screen rather than in the row: absolute
+   against the chrome's padding box, so the page margin the labels honour does
+   not apply and the rule reaches both edges. Blended on its own account, since
+   it is no longer inside the row that carries the blend, and above the row's
+   z-index so a click near the bottom edge always finds the track. */
+.film-scrub {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  height: 3px;
+  border: 0;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.32);
+  color: #fff;
+  mix-blend-mode: difference;
+  cursor: pointer;
+  pointer-events: auto;
+  /* Bottom-anchored, so the hover growth opens upward off the screen edge on
+     its own — no margin correction to keep it seated. */
+  transition: height 200ms var(--ease);
+}
+
+.film-scrub:hover,
+.film-scrub:focus-visible {
+  height: 6px;
+}
+
+.film-scrub__fill {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  transform-origin: left center;
+  /* scaleX rather than width so a timeupdate never touches layout, and a short
+     linear ride between ticks — they only arrive about four times a second. */
+  transform: scaleX(var(--progress, 0));
+  transition: transform 180ms linear;
+}
+
+/* Closes the last column the way every other one opens. */
+.film-tick--end {
+  align-self: end;
+}
+
+/* ── Credits ───────────────────────────────────────────────────────────────── */
+
+/* No label on the frame opens this any more — C does, Esc closes it, and the
+   panel lists the keys itself. It opens upward off the page margin the row
+   starts on: bottom: 100% clears whatever height the row happens to be. */
+.film-credits {
+  position: absolute;
+  bottom: calc(100% + 0.9rem);
+  left: 0;
+  width: min(22rem, 66vw);
+  padding: 0.9rem 1.1rem 1rem;
+  background: rgba(4, 4, 4, 0.88);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  opacity: 0;
+  transform: translateY(6px);
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 260ms var(--ease), transform 260ms var(--ease),
+    visibility 0s linear 260ms;
+}
+
+.film-credits[data-open="true"] {
+  opacity: 1;
+  transform: none;
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+
+.film-credits__row {
+  display: grid;
+  grid-template-columns: 5.75rem 1fr;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.film-credits__row + .film-credits__row {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.film-credits__role {
+  opacity: 0.5;
+}
+
+/* ── Narrow screens ────────────────────────────────────────────────────────── */
+
+/* Three columns stop being readable long before the media does. Below this the
+   name takes a line of its own and the labels become one flexible row — same
+   markers, same order, no new vocabulary. The line is untouched: it is on the
+   screen's bottom edge at every width. */
+@media (max-width: 1024px) {
+  .film-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.1rem 1.5rem;
+  }
+
+  .film-cell {
+    align-items: center;
+  }
+
+  .film-cell__mark {
+    margin-bottom: 0;
+  }
+
+  .film-cell--title {
+    flex: 1 0 100%;
+    align-items: flex-start;
+    padding-right: 0;
+  }
+
+  .film-cell--title .film-cell__mark {
+    margin-top: 0.34em;
+  }
+
+  .film-tick--end {
+    display: none;
+  }
+
+}
+
+@media (max-width: 640px) {
+  .film {
+    --pad: 0.875rem;
+  }
+
+  .film-title {
+    font-size: 1.375rem;
+  }
+
+  /* Two bands: the title on its own line, then the labels spread across the
+     one under it. */
+  .film-bar {
+    justify-content: space-between;
+    gap: 0.9rem 0.75rem;
+  }
+
+  /* Generic first: the override below has the same specificity, so it only
+     wins by coming after it. */
+  .film-cell {
+    order: 2;
+    gap: 0.55rem;
+  }
+
+  .film-cell--title {
+    order: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .film__media,
+  .film-cell__mark,
+  .film-cell__label,
+  .film-scrub,
+  .film-scrub__fill,
+  .film-credits {
+    transition-duration: 1ms;
+  }
+}

@@ -1,25 +1,16 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import Footer from "../components/footer";
+import SphereFooter from "../components/SphereFooter";
 import Header from "../components/header";
 import Hero2 from "../components/Hero2";
-import BlackLogo from "../components/black-logo";
+import LogoAnimation from "../components/LogoAnimation";
 import Loader from "../components/loader.jsx";
 import Body from "../components/body";
-import NewFaces from "../components/NewFaces";
 import Showcase2 from "../components/Showcase2";
-import Gridd from "../components/gridd";
 import Choose from "../components/Choose";
-import News from "../components/News";
 import Look from "@/components/Look";
-import Runaway from "./Runaway/page";
-
-if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger);
-}
+import SectionSnap from "../components/SectionSnap";
 
 export default function Home() {
   const [hasSeenIntro, setHasSeenIntro] = useState(true);
@@ -127,12 +118,28 @@ export default function Home() {
     let topGap = 40;
     let barFound = false;
     let barEl = null;
+    let barRO = null;
+    // The closing sphere section and the menu inside its chrome. Both arrive
+    // late (the section mounts its scene on approach), so they're looked up
+    // each frame until they exist and cached from then on.
+    let sphereEl = null;
+    let sphereMenuEl = null;
     const measureBar = () => {
       const bar = document.querySelector("[data-bottombar]");
       if (!bar) return;
       if (barEl !== bar) {
         bar.addEventListener("pointermove", markActive);
         bar.addEventListener("pointerdown", markActive);
+        // The bar's content (Search / InNav) is lazy-loaded, so its width can
+        // grow after first paint — re-measure whenever its box size changes so
+        // the CANDOR dock keeps matching the bar width. (Transforms don't
+        // affect box size, so our own transform toggling won't retrigger it.)
+        if (typeof ResizeObserver !== "undefined") {
+          barRO = new ResizeObserver(() => {
+            barFound = false;
+          });
+          barRO.observe(bar);
+        }
       }
       barEl = bar;
       const prev = bar.style.transform;
@@ -152,6 +159,13 @@ export default function Home() {
       barFound = false;
     };
     window.addEventListener("resize", remeasure);
+    // The wordmark uses a custom font that loads after first paint. If the logo
+    // was measured with the fallback font, its width (and thus the docked scale,
+    // the docked position, and the models pin line derived from it) is wrong.
+    // Re-measure once the real fonts are ready so the numbers are always exact.
+    if (typeof document !== "undefined" && document.fonts) {
+      document.fonts.ready.then(remeasure).catch(() => {});
+    }
     // Returning from a background tab: reset timing so the first frame back
     // can't see a huge dt or a stale idle timer.
     const onVisible = () => {
@@ -163,7 +177,7 @@ export default function Home() {
 
     const frame = () => {
       const vh = window.innerHeight;
-      const H = vh; // release point (matches the intro track's 100vh spacer)
+      const H = vh; // intro completion point (titles fully landed)
       const y = window.scrollY;
       if (!barFound) measureBar();
 
@@ -215,7 +229,7 @@ export default function Home() {
           // above — it still drifts up from the first scroll and lands in the
           // exact same docked spot at sp=1, just more slowly along the way.
           const qRise = sp;
-          const targetScale = (barW / nat.w) * 0.55; // 55% of the bar width
+          const targetScale = (barW / nat.w) * 0.62; // 62% of the bar width
           const S = 1 + (targetScale - 1) * q;
           const centeredTop = (vh - nat.h) / 2;
           const targetTop = centeredTop + (topGap - centeredTop) * qRise;
@@ -226,7 +240,9 @@ export default function Home() {
           // CANDOR eases left, meeting as one centered line: CANDOR models. ---
           let logoShiftX = 0;
           if (dockTitle) {
-            // Natural (untransformed) rect; only strip when a transform is on.
+            const sticky = dockTitle.closest("[data-dock-sticky]");
+            // Natural (untransformed) size of the heading — strip the transform
+            // to read it, then restore.
             let dr;
             const curT = dockTitle.style.transform;
             if (curT && curT !== "none") {
@@ -236,33 +252,62 @@ export default function Home() {
             } else {
               dr = dockTitle.getBoundingClientRect();
             }
-            const startT = vh * 0.6; // docking begins (natural top hits here)
-            const endT = Math.max(topGap + 8, vh * 0.08); // fully docked here
-            const d = Math.min(
-              1,
-              Math.max(0, (startT - dr.top) / (startT - endT))
-            );
-            const de = d * d * (3 - 2 * d); // smoothstep
-            if (de > 0 && dr.height > 0) {
+            if (sticky && dr.height > 0) {
               const candorW = nat.w * targetScale;
               const candorH = nat.h * targetScale;
               const gapPx = 14; // space between CANDOR and models
-              const s = candorH / dr.height; // shrink to logo height
-              const mW = dr.width * s;
+              // CANDOR and models share the same font & size, so tie models'
+              // scale directly to CANDOR's (robust — no reliance on the two
+              // line-boxes measuring identically). 0.95 keeps models just a
+              // hair smaller so CANDOR still reads as the lead wordmark.
+              const s = targetScale * 0.95;
+              const mW = dr.width * s; // docked width
+              const mH = dr.height * s; // docked height
               const shift = (mW + gapPx) / 2; // recenters the pair as one line
-              logoShiftX = -shift * de;
+
+              // Pin line: set the wrapper's sticky `top` so the heading's docked
+              // box centres on CANDOR's centre. The browser holds this natively
+              // (position: sticky) and releases it at the section's end, so the
+              // steady pinned state has NO per-frame vertical transform chasing
+              // the scroll — it can't jitter.
+              const dockTop = topGap + candorH / 2 - mH / 2;
+              setStyle(sticky, "top", `${dockTop.toFixed(2)}px`);
+
+              // Dock-in progress from how close the sticky row is to its pin
+              // line; it reaches (and holds) 1 once stuck.
+              const wr = sticky.getBoundingClientRect();
+              const startTop = vh * 0.6;
+              const d = Math.min(
+                1,
+                Math.max(0, (startTop - wr.top) / (startTop - dockTop))
+              );
+              const de = d * d * (3 - 2 * d); // smoothstep
+
+              // Release: once the section scrolls the stuck row back up past its
+              // pin line (section ending), ease CANDOR back to centre. models
+              // itself rides up natively with the sticky release.
+              const relSpan = candorH * 2.5;
+              const r = Math.min(1, Math.max(0, (dockTop - wr.top) / relSpan));
+              const rel = r * r * (3 - 2 * r); // smoothstep
+
+              // "pin" = how present models is beside CANDOR: grows as it docks,
+              // fades as it releases, so CANDOR and models track each other
+              // horizontally and un-form cleanly.
+              const pin = de * (1 - rel);
+              logoShiftX = -shift * pin;
               const candorCX = window.innerWidth / 2;
-              const targetCX = candorCX - shift + candorW / 2 + gapPx + mW / 2;
-              const targetCY = topGap + candorH / 2;
-              const natCX = dr.left + dr.width / 2;
-              const natCY = dr.top + dr.height / 2;
+              const candorCXNow = candorCX - shift * pin;
+              const targetCX = candorCXNow + candorW / 2 + gapPx + mW / 2;
+
+              // Horizontal slide + scale only — vertical is native sticky. The
+              // heading is flex-centred and scales about its top-centre, so its
+              // centre stays at candorCX; translate it to sit beside CANDOR.
               const sc = 1 + (s - 1) * de;
-              const dx = (targetCX - natCX) * de;
-              const dy = (targetCY - natCY) * de;
+              const dx = (targetCX - candorCX) * de;
               setStyle(
                 dockTitle,
                 "transform",
-                `translate(${dx.toFixed(2)}px, ${dy.toFixed(2)}px) scale(${sc.toFixed(4)})`
+                `translate(${dx.toFixed(2)}px, 0px) scale(${sc.toFixed(4)})`
               );
             } else {
               setStyle(dockTitle, "transform", "");
@@ -279,10 +324,37 @@ export default function Home() {
         }
       }
 
+      // --- Chrome handover to the closing sphere. The page ends on the
+      // sphere board, which carries its own chrome, so as that section rises
+      // into view the bottom search island scales away and the menu scales in
+      // at the sphere's top-right corner. Both sides read this one progress,
+      // so the two can never be present at once or arrive out of step. ---
+      let gate = 0;
+      if (!sphereEl) sphereEl = document.querySelector("[data-sphere-footer]");
+      if (sphereEl) {
+        // 0 as the section's first sliver appears, 1 once it covers 60% of
+        // the screen — well before it's the only thing on it.
+        const gp = Math.min(
+          1,
+          Math.max(0, (vh - sphereEl.getBoundingClientRect().top) / (vh * 0.6))
+        );
+        gate = gp * gp * (3 - 2 * gp); // smoothstep
+      }
+      if (!sphereMenuEl)
+        sphereMenuEl = document.querySelector("[data-sphere-menu]");
+      if (sphereMenuEl) {
+        setStyle(sphereMenuEl, "opacity", gate.toFixed(3));
+        setStyle(
+          sphereMenuEl,
+          "transform",
+          gate > 0.999 ? "" : `scale(${(0.7 + 0.3 * gate).toFixed(4)})`
+        );
+        setStyle(sphereMenuEl, "pointerEvents", gate > 0.5 ? "auto" : "none");
+      }
+
       // Bottom search island: hidden at rest, fades straight in (no rise)
       // within the first ~6% of the intro, and fades straight back out on the
-      // way up. No transform — a transformed ancestor would become the
-      // containing block for the fixed search/menu overlays.
+      // way up — then scales out for good once the sphere takes the chrome.
       if (barEl) {
         const bv = Math.min(1, sp / 0.06);
         // The open search panel locks body scroll — always counts as active,
@@ -291,13 +363,27 @@ export default function Home() {
         const dimTarget = now - lastActive > 6000 ? 0.35 : 1;
         dim = approach(dim, dimTarget, 260, dt);
         if (Math.abs(dimTarget - dim) < 0.002) dim = dimTarget;
-        setStyle(barEl, "opacity", (bv * dim).toFixed(3));
-        setStyle(barEl, "pointerEvents", bv > 0.5 ? "auto" : "none");
+        setStyle(barEl, "opacity", (bv * dim * (1 - gate)).toFixed(3));
+        setStyle(
+          barEl,
+          "pointerEvents",
+          bv > 0.5 && gate < 0.5 ? "auto" : "none"
+        );
+        // Scaled ONLY while it is actually leaving. At rest the bar must carry
+        // no transform, or it becomes the containing block for the fixed
+        // search panel that lives inside it. (measureBar strips the transform
+        // before reading the width, so the docked logo stays sized to the bar.)
+        setStyle(
+          barEl,
+          "transform",
+          gate > 0.001 ? `scale(${(1 - 0.3 * gate).toFixed(4)})` : ""
+        );
       }
 
       if (y >= H) {
-        // Released — the sticky track lets go, normal flow from here. Land
-        // every driven value on its resting state (deduped: written once).
+        // Intro done — titles have landed. Choose now rests pinned while the
+        // rest of the page reveals up over it. Land every driven value on its
+        // resting state (deduped: written once).
         sp = 1; // stay consistent if the user scrolls back into the intro
         setStyle(el, "opacity", "");
         setStyle(el, "pointerEvents", "");
@@ -349,13 +435,13 @@ export default function Home() {
         const arrive = 1 - Math.pow(1 - sp, 2);
         const base = 0.3 + 0.7 * arrive;
         setStyle(titles, "transform", `scale(${base.toFixed(4)})`);
-        // Stay hidden while still deep in the zoom; fade in as one block once
-        // the stack is around 55% of its final size so it never reads as a
-        // tiny speck.
+        // Fade in as one block early in the flight (once the stack is ~44% of
+        // its final size) so the ALL / TALENT / MODELS / CREATIVES column shows
+        // sooner, while still deep enough that it never reads as a tiny speck.
         setStyle(
           titles,
           "opacity",
-          Math.min(1, Math.max(0, (arrive - 0.4) / 0.45)).toFixed(3)
+          Math.min(1, Math.max(0, (arrive - 0.2) / 0.45)).toFixed(3)
         );
         // Fast rows start much deeper and cover more distance on the same
         // curve — visibly smaller than the rest for the whole flight, growing
@@ -386,8 +472,13 @@ export default function Home() {
       if (barEl) {
         barEl.removeEventListener("pointermove", markActive);
         barEl.removeEventListener("pointerdown", markActive);
+        barEl.style.transform = "";
       }
-      if (dockTitle) dockTitle.style.transform = "";
+      if (barRO) barRO.disconnect();
+      if (dockTitle) {
+        dockTitle.style.transform = "";
+        dockTitle.style.fontStyle = "";
+      }
       el.style.willChange = "";
       cancelAnimationFrame(raf);
     };
@@ -406,43 +497,50 @@ export default function Home() {
         <Hero2 />
       </div>
 
-      {/* CANDOR logo overlay: big & centered, then shrinks and rises into the header. */}
+      {/* CANDOR logo overlay: the animated wordmark (® loops out and back),
+          big & centered, then shrinks and rises into the header. */}
       <div className="mix-blend-exclusion text-white fixed inset-0 z-30 pointer-events-none flex justify-center items-start">
         <div
           ref={logoRef}
           style={{ transformOrigin: "top center", willChange: "transform" }}
         >
-          <BlackLogo />
+          <LogoAnimation className="w-[260px] md:w-[420px] lg:w-[560px]" />
         </div>
       </div>
 
-      {/* Intro track: Choose rides position:sticky at the viewport top for
-          100vh of scroll (matches H in the effect). The browser pins it
-          natively — no per-frame transform, so it can't drift or jitter —
-          then it releases into normal flow at the end of the track. The
-          spacer must be real content (not padding): sticky elements can only
-          travel within the containing block's content box. */}
+      {/* Intro + pinned reveal: Choose rides position:sticky at the viewport
+          top and then STAYS pinned — it never scrolls away. Everything after it
+          (Look, Body, …) lives in the SAME containing block with a higher paint
+          order and an opaque background, so it scrolls UP from the bottom and
+          reveals over the still-pinned Choose. The browser pins Choose natively
+          (no per-frame transform), so it can't drift or jitter. */}
       <div className="relative z-10">
         {/* Starts hidden so it can't flash before the intro effect's first
             frame; the effect (or its reduced-motion branch) takes over. */}
         <div ref={contentRef} className="sticky top-0" style={{ opacity: 0 }}>
           <Choose />
         </div>
-        {/* 100vh of intro travel + 50vh of hold after the titles land, so the
-            section doesn't start scrolling away the moment it arrives. */}
+        {/* 100vh of intro travel + 50vh hold after the titles land, before the
+            next section begins sliding up over Choose. Transparent (no
+            background) so the fixed hero shows through while the titles land.
+            Real content, not padding: a sticky element can only travel within
+            its containing block's content box. */}
         <div className="h-[150vh]" aria-hidden="true" />
+
+        {/* The rest of the page. Higher z-index + opaque background, so from
+            ~150vh it scrolls UP over the pinned Choose instead of pushing it
+            away. data-snap-container marks its children as SectionSnap targets. */}
+        <div className="relative z-10 bg-white" data-snap-container>
+          <Look />
+          <Body />
+          <Showcase2 />
+          <SphereFooter />
+        </div>
       </div>
 
-      {/* Rest of the page scrolls in normally right after the release point. */}
-      <div className="relative z-10 bg-white">
-        <Look />
-        <Body />
-
-        <News />
-
-        <Showcase2 />
-        <Footer />
-      </div>
+      {/* Observer-driven section snapping (post-intro only). */}
+      {/* Temporarily disabled — smooth snap scroll commented out for now. */}
+      {/* <SectionSnap /> */}
     </section>
   );
 }

@@ -7,6 +7,8 @@ import { useState } from "react";
 import Header from "../../components/header";
 import HeaderTest from "../../components/headerTest";
 import ModelList from "../../components/ModelList";
+import ModelRail from "../../components/ModelRail";
+import LogoAnimation from "../../components/LogoAnimation";
 
 import { SearchProvider } from "../../components/SearchContext";
 
@@ -35,16 +37,56 @@ export default function Models() {
     <SearchProvider>
       <div className="bg-white min-h-screen w-full">
         <Header />
-        <main className="w-full px-3 md:px-5">
-          <section className="pt-6 lg:pt-12">
-            <div className="flex justify-between items-center pb-6 gap-2 md:gap-5  flex-row">
+        <main className="w-full px-3 md:px-5 lg:flex lg:items-start lg:gap-5">
+          {/* Left rail: 25% of the screen on desktop — the hovered model's
+              name / height / shoe and four polaroids. Sticky so it stays put
+              while the grid scrolls. */}
+          <aside
+            data-slot="models-rail"
+            // mt-5 matches the filter column's pt-5 so both columns start on
+            // the same line. Without it the rail's only top inset came from
+            // `sticky top-5`, which needs slack in the container to apply —
+            // so filtering down to a short grid (main exactly the rail's own
+            // height) left it with none and the rail jumped up 20px.
+            className="hidden lg:block lg:w-[25%] lg:shrink-0 lg:sticky lg:top-5 lg:mt-5 lg:h-[calc(100vh-2.5rem)] lg:pr-5 lg:border-r lg:border-black/10"
+          >
+            {/* CANDOR wordmark, top-left of the screen. Absolute so it
+                doesn't push the rail's polaroids off centre. (The hovered
+                model's name takes the bottom of the rail.) */}
+            <Link
+              href="/"
+              aria-label="CANDOR home"
+              className="absolute left-0 top-0 z-10 block text-black"
+            >
+              <LogoAnimation animate={false} className="w-[130px]" />
+            </Link>
+
+            <ModelRail />
+          </aside>
+
+          <div className="min-w-0 flex-1">
+          {/* Filters pin to the top of the viewport; the grid scrolls up behind
+              them (opaque background + z-index so nothing shows through). */}
+          <section className="sticky top-0 z-20 bg-white pt-5">
+            <div className="relative flex justify-between items-start pb-5 gap-2 md:gap-5  flex-row">
+              {/* page title, dead centre between the two filter stacks */}
+              <h1
+                className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 text-[52px] font-medium text-black"
+                // inline: globals.css styles h1 un-layered (display face,
+                // line-height 1), which beats Tailwind's utilities. leading-none
+                // makes the line box hug the glyphs, so the cap sits on the
+                // same top edge as the filter labels either side.
+                style={{ fontFamily: "var(--font-sub)", lineHeight: 1 }}
+              >
+                Models
+              </h1>
               <div className="flex  text-xl flex-col md:gap-1 lg:gap-1 items-start">
                 <button
                   onClick={() => setSelectedGender("female")}
                   className="self-start flex flex-row-reverse gap-1 items-center cursor-pointer"
                 >
                   <h4
-                    className={` text-sm transition-colors ${
+                    className={` text-[13px] transition-colors ${
                       selectedGender === "female"
                         ? "bg-[#00749E] text-white px-1"
                         : "text-black"
@@ -59,7 +101,7 @@ export default function Models() {
                   className="self-start flex flex-row-reverse gap-1 items-center cursor-pointer"
                 >
                   <h4
-                    className={` text-sm transition-colors ${
+                    className={` text-[13px] transition-colors ${
                       selectedGender === "male"
                         ? "bg-[#00749E] text-white px-1"
                         : "text-black"
@@ -74,7 +116,7 @@ export default function Models() {
                   className="self-start flex flex-row-reverse gap-1 items-center cursor-pointer"
                 >
                   <h4
-                    className={` text-sm transition-colors ${
+                    className={` text-[13px] transition-colors ${
                       selectedGender === "all"
                         ? "bg-[#00749E] text-white px-1"
                         : "text-black"
@@ -86,15 +128,13 @@ export default function Models() {
                 </button>
               </div>
 
-              <h1 className="text-center text-black text-5xl md:text-7xl">models</h1>
-
               <div className="flex text-xl flex-col items-end md:gap-1 lg:gap-1">
                 <button
                   onClick={() => setSelectedBoard("mainboard")}
                   className="self-end flex flex-row-reverse gap-1 items-center cursor-pointer"
                 >
                   <h4
-                    className={` text-sm transition-colors ${
+                    className={` text-[13px] transition-colors ${
                       selectedBoard === "mainboard"
                         ? "bg-[#00749E] text-white px-1"
                         : "text-black"
@@ -109,7 +149,7 @@ export default function Models() {
                   className="self-end flex flex-row-reverse gap-1 items-center cursor-pointer"
                 >
                   <h4
-                    className={` text-sm transition-colors ${
+                    className={` text-[13px] transition-colors ${
                       selectedBoard === "newfaces"
                         ? "bg-[#00749E] text-white px-1"
                         : "text-black"
@@ -124,7 +164,7 @@ export default function Models() {
                   className="self-end flex flex-row-reverse gap-1 items-center cursor-pointer"
                 >
                   <h4
-                    className={` text-sm transition-colors ${
+                    className={` text-[13px] transition-colors ${
                       selectedBoard === "all"
                         ? "bg-[#00749E] text-white px-1"
                         : "text-black"
@@ -137,8 +177,10 @@ export default function Models() {
               </div>
             </div>
           </section>
+
+          <ModelList gender={selectedGender} className="lg:px-0" />
+          </div>
         </main>
-        <ModelList />
       </div>
     </SearchProvider>
   );
