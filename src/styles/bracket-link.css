@@ -1,0 +1,68 @@
+/* The bracket button as a LINK — see components/BracketLink.jsx.
+ *
+ * Same shape and same mechanics as the model page's board tabs
+ * (styles/tab-link.css): idle the pair sits together ahead of the word,
+ * [ ] Model Portfolio, and opening it pushes the closing bracket out to the
+ * right while the label slides back between them, [ Model Portfolio ].
+ *
+ * The one difference is the trigger — the tab opens when it is SELECTED, this
+ * opens on HOVER — and the timing, which is borrowed from the footer's arrow
+ * reveal (300ms ease-out, components/ChromeLink.jsx) so the two hover states
+ * on the page feel like the same gesture.
+ *
+ * :focus-visible is bound alongside :hover so the control still opens for a
+ * keyboard, which a hover-only rule would leave shut.
+ */
+
+.bracket-link {
+  position: relative;
+  display: inline-block;
+  width: fit-content;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.bracket-link__sizer {
+  visibility: hidden;
+}
+
+.bracket-link__live {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+}
+
+.bracket-link__well {
+  display: inline-grid;
+  grid-template-columns: 0fr;
+  /* Constant in both states: the hairline that makes the idle pair read as
+     "[ ]" rather than "[]", and the breathing room inside the open pair. */
+  padding-inline: 0.15em;
+  transition: grid-template-columns 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.bracket-link__label {
+  min-width: 0;
+  white-space: nowrap;
+  /* Parks the word just past the closing bracket while the track is closed. */
+  transform: translateX(0.8em);
+  transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.bracket-link:hover .bracket-link__well,
+.bracket-link:focus-visible .bracket-link__well {
+  grid-template-columns: 1fr;
+}
+
+.bracket-link:hover .bracket-link__label,
+.bracket-link:focus-visible .bracket-link__label {
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bracket-link__well,
+  .bracket-link__label {
+    transition: none;
+  }
+}

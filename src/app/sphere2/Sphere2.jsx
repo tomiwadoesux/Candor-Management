@@ -114,6 +114,25 @@ const config = {
   idleWander: true,
 };
 
+// Standalone /sphere2 is a hollow shell: the near face of the globe is
+// cleared away and you look through it at the inside of the far wall. The
+// rim still carries the ring, so the sphere keeps its shape — cards just
+// dissolve as they turn towards you and come back as they carry on round.
+//
+// With the front gone the far wall stops being background and becomes the
+// thing being looked at, so the depth cues that were pushing it into the page
+// white are eased right off: less haze, less fade, less shrink than the
+// solid globe wants. The footer keeps the solid version (see `embedded`).
+const hollowConfig = {
+  ...config,
+  frontCut: 1,
+  frontCutStart: 0.58,
+  frontCutEnd: 0.9,
+  fogDepth: 2.1,
+  depthFadeBack: 0.85,
+  depthScaleBack: 0.55,
+};
+
 // ---------------------------------------------------------------------------
 // Page chrome: the wordmark, the menu and the two text blocks that frame the
 // sphere. Page padding matches the rest of the site (px-3 md:px-5, 20px top
@@ -340,7 +359,7 @@ export default function Sphere2({ embedded = false }) {
       <CreativeSphere
         items={items}
         title=""
-        config={config}
+        config={embedded ? config : hollowConfig}
         openSlots={heroBoard}
         apiRef={sphere}
         onOpenChange={(open, next, openItem) => {

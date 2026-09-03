@@ -1,9 +1,9 @@
 /* Fullscreen film player — /video.
  *
  * One project fills the screen. The chrome is a single hairline row of labels
- * along the bottom, with the playback line running the full width of the
- * screen beneath them. No panel, no bar, no scrim: everything sits straight on
- * the frame.
+ * along the bottom, the credits toggle alone in the top right, and the
+ * playback line running the full width of the screen beneath all of it. No
+ * panel, no bar, no scrim: everything sits straight on the frame.
  *
  * ── The blend ────────────────────────────────────────────────────────────────
  * The chrome never picks a colour. It is painted white and composited with
@@ -17,15 +17,18 @@
  * overlay: the credits panel has to stay unblended to be readable.
  *
  * ── The grid ─────────────────────────────────────────────────────────────────
- * The row is three equal columns with a tick closing the last one, so the
- * name, the house and the transport fall on even thirds and the tick shuts the
- * measure. Every one of them hangs off its own column line behind a 4px
- * square, and all of them are bottom-aligned — the name is set in the display
- * face at nearly three times the label size and still sits on their baseline.
+ * The row is two equal columns with a tick closing the last one, so the name
+ * and the house fall on even halves and the tick shuts the measure. Both hang
+ * off their own column line behind a 4px square, and both are bottom-aligned —
+ * the name is set in the display face at nearly three times the label size and
+ * still sits on their baseline. There is no transport cell: the frame is the
+ * play/pause target.
  *
  * The playback line is not one of those columns. It is bottom-anchored across
  * the whole screen, edge to edge and under every label — a rule the page sits
- * on rather than a control in the row.
+ * on rather than a control in the row. It is the one thing that ignores the
+ * page margin, and it does that by pulling itself back out of the chrome's
+ * padding by exactly that margin on three sides.
  */
 
 .film {
@@ -75,7 +78,9 @@
   inset: 0;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  /* The toggle rides the top edge, the row the bottom, and the frame is what
+     sits between them. */
+  justify-content: space-between;
   padding: var(--pad);
   /* The overlay is a full-screen sheet so the row can hang off the bottom edge;
      only the controls themselves take clicks, so the stage underneath stays one
@@ -102,8 +107,31 @@
   background: linear-gradient(to top, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0));
 }
 
-/* Holds the row and the panel that opens above it, so the panel can be placed
-   off the row's own height instead of a guessed offset. */
+/* The same pull away from mid grey the row gets, at the other edge and much
+   shallower — there is one word up there, not a whole measure. */
+.film__chrome::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 7rem;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0));
+}
+
+/* Holds the toggle and the panel that drops from it, so the panel can hang off
+   the toggle's own height instead of a guessed offset. */
+.film__head {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Holds the row, and is what the line measures its escape from the page margin
+   against. */
 .film__foot {
   position: relative;
   z-index: 2;
@@ -111,7 +139,7 @@
 
 .film-bar {
   display: grid;
-  grid-template-columns: repeat(3, 1fr) auto;
+  grid-template-columns: repeat(2, 1fr) auto;
   /* end, not start: the row sits on the bottom edge, so the title grows up
      out of the same line the single-line labels sit on. */
   align-items: end;
@@ -224,6 +252,61 @@ a.film-cell:focus-visible .film-cell__label {
   margin-bottom: -0.08em;
 }
 
+/* ── Credits toggle ────────────────────────────────────────────────────────── */
+
+/* The row carries the blend for its own cells; this one is on its own up here,
+   so it has to invert against the frame itself. */
+.film-cell--credits {
+  align-items: center;
+  gap: 0.6rem;
+  color: #fff;
+  mix-blend-mode: difference;
+  pointer-events: auto;
+}
+
+/* Brackets set in the label's own face and weight, with a marker-sized slot
+   between them. Fixed width: the square arriving must not widen the box or the
+   word beside it would shift every time the panel opens. */
+.film-box {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.28em;
+  transition: transform 260ms var(--ease);
+}
+
+.film-box::before {
+  content: "[";
+}
+
+.film-box::after {
+  content: "]";
+}
+
+.film-box__mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 4px;
+  height: 4px;
+  opacity: 0;
+  transform: scale(0.4);
+  transition: opacity 200ms var(--ease), transform 260ms var(--ease);
+}
+
+.film-box[data-open="true"] .film-box__mark {
+  opacity: 1;
+  transform: none;
+}
+
+/* The toggle's hover is the mirror of the row's: the word steps toward the box
+   instead of away from a marker, and the box is what swells. */
+.film-cell--credits:hover .film-box,
+.film-cell--credits:focus-visible .film-box {
+  transform: scale(1.15);
+}
+
 /* ── Playback line ─────────────────────────────────────────────────────────── */
 
 /* Sits on the bottom edge of the screen rather than in the row: absolute
@@ -233,9 +316,13 @@ a.film-cell:focus-visible .film-cell__label {
    z-index so a click near the bottom edge always finds the track. */
 .film-scrub {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  /* Absolute children are placed against the chrome's *padding* box, so left: 0
+     would stop the line on the page margin. Negating the padding on all three
+     sides is what carries it out to the real edges of the screen and seats it
+     flush on the bottom one. */
+  left: calc(var(--pad) * -1);
+  right: calc(var(--pad) * -1);
+  bottom: calc(var(--pad) * -1);
   z-index: 3;
   height: 3px;
   border: 0;
@@ -273,13 +360,15 @@ a.film-cell:focus-visible .film-cell__label {
 
 /* ── Credits ───────────────────────────────────────────────────────────────── */
 
-/* No label on the frame opens this any more — C does, Esc closes it, and the
-   panel lists the keys itself. It opens upward off the page margin the row
-   starts on: bottom: 100% clears whatever height the row happens to be. */
+/* Opened by the toggle above it or by C, closed by either or Esc, and it lists
+   the rest of the keys itself. It drops from the toggle rather than rising off
+   the row: top: 100% clears whatever height that line happens to be, and the
+   right edge is shared with the word, so the panel and its control hang off the
+   same margin. */
 .film-credits {
   position: absolute;
-  bottom: calc(100% + 0.9rem);
-  left: 0;
+  top: calc(100% + 0.9rem);
+  right: 0;
   width: min(22rem, 66vw);
   padding: 0.9rem 1.1rem 1rem;
   background: rgba(4, 4, 4, 0.88);
@@ -288,7 +377,7 @@ a.film-cell:focus-visible .film-cell__label {
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #fff;
   opacity: 0;
-  transform: translateY(6px);
+  transform: translateY(-6px);
   visibility: hidden;
   pointer-events: none;
   transition: opacity 260ms var(--ease), transform 260ms var(--ease),

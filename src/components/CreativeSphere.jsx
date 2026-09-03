@@ -53,6 +53,15 @@ const DEFAULTS = {
   // depth cue: back-hemisphere cards shrink and fade
   depthScaleBack: 0.5,
   depthFadeBack: 0.55,
+  // hollow shell: the near face of the globe is cleared away so you see
+  // straight through to the far wall. A card fades out as it turns towards
+  // the camera — gone by the time it is dead front — and the rim is left
+  // alone, so the sphere still reads as a sphere from its edges inward.
+  // frontCutStart/frontCutEnd are `depth` (0 back .. 1 front): the fade runs
+  // between them. 0 = off (the whole globe draws).
+  frontCut: 0,
+  frontCutStart: 0.62,
+  frontCutEnd: 0.88,
   // haze: cards behind the sphere's centre plane blend towards the page
   // colour with distance (renderer fog — no extra draw cost). fogDepth is how
   // far past the centre, in radii, a card is fully the page colour; 0 = off.
@@ -417,7 +426,14 @@ export default function CreativeSphere({
       const hits = raycaster.intersectObjects(meshes, false);
       for (const h of hits) {
         const c = cards[meshes.indexOf(h.object)];
-        if (c && c.loaded) return c;
+        if (!c || !c.loaded) continue;
+        // A cleared-away front card is still in the scene and still the
+        // nearest thing under the pointer. Let the ray pass through anything
+        // that isn't really on screen so the far wall — the part you can
+        // actually see — is what takes the click. The twin's mesh paints
+        // nothing by design, so it is exempt.
+        if (c !== twinCard && c.material.opacity < 0.06) continue;
+        return c;
       }
       return null;
     };
@@ -1232,7 +1248,21 @@ export default function CreativeSphere({
         const ds =
           lerp(cfg.depthScaleBack, 1, depth) *
           (1 + cfg.lensBoost * lensT + cfg.cursorBoost * c.cursorT);
-        const dOpacity = lerp(cfg.depthFadeBack, 1, depth);
+        let dOpacity = lerp(cfg.depthFadeBack, 1, depth);
+        // Clear the near face: a card dissolves as it swings towards the
+        // camera so the inside of the shell is what you actually look at.
+        // The cut is on `depth` alone, not on screen position, so the rim —
+        // where cards are edge-on at depth ~0.5 — keeps its ring intact and
+        // the near cards simply melt away as they rotate through it.
+        if (cfg.frontCut > 0) {
+          const t = smoothstep(
+            clamp01(
+              (depth - cfg.frontCutStart) /
+                Math.max(1e-4, cfg.frontCutEnd - cfg.frontCutStart)
+            )
+          );
+          dOpacity *= 1 - cfg.frontCut * t;
+        }
 
         const sphereSx = c.baseScale.x * introS * ds;
         const sphereSy = c.baseScale.y * introS * ds;

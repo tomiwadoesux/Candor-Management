@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import Image from "next/image";
 
 const TITLE = "SELENA FORREST";
-const PROJECT = "Bottega Veneta IL MIO";
+const PROJECT = "MODEL PORTFOLIO";
 // Connector words are lowercase; only the credited names keep their capitals.
 const CREDITS =
   "photographed by Drew Vickers || hair by Shiori Takahashi || makeup by Laura Dominique";

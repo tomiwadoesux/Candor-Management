@@ -2,7 +2,7 @@ import News from "./News";
 
 export default function Body() {
   return (
-    <section className="pt-14 md:pt-28">
+    <section className="pt-6 md:pt-10">
       {/* Sticky wrapper: the browser pins the heading beside CANDOR natively
           while this section fills the viewport, then releases it at the
           section's end. Because the vertical pin is native (no per-frame
@@ -18,7 +18,7 @@ export default function Body() {
           also lets the board below run full-bleed. */}
       <div
         data-dock-sticky
-        className="motion-safe:sticky flex items-start justify-center px-4 pb-6 pointer-events-none mix-blend-exclusion text-white md:px-10"
+        className="motion-safe:sticky flex items-start justify-center px-4 pb-3 pointer-events-none mix-blend-exclusion text-white md:px-10"
         style={{ top: 0 }}
       >
         {/* The mix-blend lives on this (non-transformed) wrapper, NOT on the h1:
@@ -29,19 +29,19 @@ export default function Body() {
             CANDOR uses, so "models" stays visible on any background. */}
         <h1
           data-dock-title
-          className="text-center font-normal lowercase tracking-[0.03em] text-white text-6xl md:text-8xl lg:text-9xl whitespace-nowrap select-none"
+          className="text-center font-normal uppercase tracking-[0.03em] text-white text-6xl md:text-8xl lg:text-9xl whitespace-nowrap select-none"
           style={{
             willChange: "transform",
             transformOrigin: "top center",
             fontFamily: "'Gwyner Condensed', Bitter, serif",
           }}
         >
-          models
+          MODELS
         </h1>
       </div>
 
-      {/* The models section carries the campaigns board: the pinned "models"
-          heading docks beside CANDOR and the campaign work runs under it. */}
+      {/* The models section carries the board: the pinned "MODELS" heading
+          docks beside CANDOR and the work runs under it. */}
       <News />
     </section>
   );

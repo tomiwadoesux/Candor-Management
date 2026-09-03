@@ -2,45 +2,27 @@ import React, { useState, useRef, useEffect } from "react";
 import { gsap } from "gsap";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import BlackLogo from "./black-logo";
+import { films } from "../../data/films";
 
 const Showcase2 = () => {
-  const videos = [
-    {
-      id: 1,
-      title: "Veuve Clicquot x\nJacquemus\nJonas Lindstroem\nCommercials",
-      url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-    },
-    {
-      id: 2,
-      title: "Dior Sauvage\nJean-Baptiste\nMondino\nCommercials",
-      url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-    },
-    {
-      id: 3,
-      title: "Miss Dior\nManu Cossu\nCommercials",
-      url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-    },
-    {
-      id: 4,
-      title: "Eau Pure\nManu Cossu\nCommercials",
-      url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-    },
-    {
-      id: 5,
-      title: "Conquest of\nSpace\nArnaud Bresson\nCommercials",
-      url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
-    },
-    // {
-    //   id: 6,
-    //   title: "FTT Live\nOnly at\nRoland Garros\nCommercials",
-    //   url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-    // },
-    // {
-    //   id: 7,
-    //   title: "From Sunset to\nSunrise\nManu Cossu\nCommercials",
-    //   url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-    // },
-  ];
+  // The showreel plays the agency's own projects. It reads them from
+  // data/films.js — the one place the reel actually lives, and what /video
+  // already plays — so the landing page and the film page can never disagree
+  // about a client, a director or a cut. The invented luxury-house titles this
+  // list used to carry pointed at Google's gtv-videos-bucket samples, which
+  // now return 403: the section was playing nothing at all.
+  //
+  // The title block keeps its four-line shape — client / collaborator /
+  // director / disciplines — built from the record rather than hand-written.
+  // `poster` gives each cut a real board frame to hold before it decodes.
+  const videos = films.map((film, i) => ({
+    id: i + 1,
+    title: [film.client, film.collaborator, film.director, film.disciplines]
+      .filter(Boolean)
+      .join("\n"),
+    url: film.src,
+    poster: film.poster,
+  }));
 
   const [hoveredVideo, setHoveredVideo] = useState(null);
   const [mainVideo, setMainVideo] = useState(() => {
@@ -173,6 +155,7 @@ const Showcase2 = () => {
                   ref={mainRef}
                   className="w-full h-full object-cover"
                   src={mainVideo.url}
+                  poster={mainVideo.poster}
                   muted
                   loop
                   playsInline
@@ -209,6 +192,7 @@ const Showcase2 = () => {
                 ref={previewRef}
                 className="w-full h-full object-cover rounded"
                 src={hoveredVideo.url}
+                poster={hoveredVideo.poster}
                 muted
                 loop
                 playsInline

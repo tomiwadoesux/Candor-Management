@@ -1,13 +1,55 @@
 "use client";
 
-import Link from "next/link";
+import Image from "next/image";
+import BracketLink from "./BracketLink";
 import { initialCaps } from "./FitText";
 
-// The model behind the campaign currently on the board. Placeholder until the
-// campaigns data lands — one entry here feeds every width.
+// The two board frames. Real board images rather than a flat fill: the section
+// is a comp card, so the pictures ARE the content — the grey blocks that used
+// to sit here read as an unloaded page. Portrait sources, cropped to the 4:5
+// frame the boards are set in.
+const BOARDS = [
+  { src: "/images/img20.jpeg", alt: "OWOLABI MOSIMABALE — board" },
+  { src: "/images/img33.jpeg", alt: "OWOLABI MOSIMABALE — board" },
+];
+
+// One board: the picture fills the frame and the arrow that was already here
+// sits over it. The frame keeps its dark fill underneath, so the layout is
+// correct for the moment before the image decodes — the same way the Look
+// panels hold their tint. `sizes` matches how wide a board actually gets:
+// a third of the viewport once the caption takes its column, half below that.
+function Board({ image, className = "", children }) {
+  return (
+    <div className={`relative flex aspect-4/5 overflow-hidden bg-black/40 ${className}`}>
+      <Image
+        src={image.src}
+        alt={image.alt}
+        fill
+        sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+        quality={85}
+        className="object-cover"
+      />
+      {/* The controls have to outrank the fill, or the picture buries them. */}
+      <div className="relative z-10 flex w-full">{children}</div>
+    </div>
+  );
+}
+
+// The model on the board. Placeholder until the board data lands — one entry
+// here feeds every width.
 const NAME = ["OWOLABI", "MOSIMABALE"];
-const COPY =
-  "Amet minim mollit non deserunt ullamco est sit aliqua dolor do hdfjuh iudwygyer iyutvd uyvtwd fi uyv udguvef uyvutsv fdyuevfyefvy, consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua enim ad minim veniam.";
+
+// No bio under the name: this is a comp card, so the only facts are the
+// measurements. Metric only (the records carry "175 cm / 5'9\"" — the
+// imperial half is dropped the same way the model page's `metric()` drops it),
+// which is what keeps the block to the two lines it is allowed.
+const MEASUREMENTS = [
+  ["Height", "175 cm"],
+  ["Chest", "81 cm"],
+  ["Waist", "58 cm"],
+  ["Hips", "86 cm"],
+  ["Shoe", "38 EU"],
+];
 
 // Name, copy and the portfolio button — the same block at every width; only
 // the display size of the name changes.
@@ -25,33 +67,41 @@ function Caption({ nameClass = "text-5xl", className = "" }) {
         ))}
       </h1>
 
-      {/* Inter, and a step down from the name's face: the copy is a caption
-          under the headline, not a second heading. */}
-      <p className="max-w-[52ch] pt-3 text-[13px] leading-[1.5] text-[#0c0c0c]/70">
-        {COPY}
+      {/* Measurements, not a bio. They run inline and wrap, so the block stays
+          within its two allowed lines at every width instead of becoming a
+          five-row table. max-w caps the measure so it can't stretch into a
+          third line on a wide third column. */}
+      <p className="max-w-[46ch] pt-3 text-[13px] leading-[1.5] text-[#0c0c0c]/70">
+        {MEASUREMENTS.map(([label, value], i) => (
+          <span key={label} className="whitespace-nowrap">
+            {i > 0 && <span className="px-2 text-[#0c0c0c]/30">/</span>}
+            <span className="uppercase tracking-wide">{label}</span> {value}
+          </span>
+        ))}
       </p>
 
-      {/* Same filled accent button as the model card on a profile — the
-          bracket pair is the site's button shape. */}
-      <Link
+      {/* The bracket pair is the site's button shape. On the model page the
+          brackets open when a tab is selected; here there is nothing to select,
+          so they open on hover — the closing bracket travelling out the way the
+          footer's arrow scales out. See components/BracketLink.jsx. */}
+      <BracketLink
         href="/models"
-        className="mt-5 w-fit cursor-pointer bg-[#00749E] px-1 py-1 text-white"
+        className="mt-5 text-xs font-bold uppercase text-[#00749E]"
       >
-        <h4 className="text-xs font-bold uppercase">[ models portfolio ]</h4>
-      </Link>
+        Model Portfolio
+      </BracketLink>
     </div>
   );
 }
 
 export default function News() {
+  // No heading of its own: the section's title is the "MODELS" wordmark that
+  // docks beside CANDOR above it, so a second heading here only repeated it and
+  // pushed the boards a screenful down. Removing it also removed the section's
+  // own top padding — that pt-14/pt-28 was stacking on top of the wrapper's in
+  // body.js, which is where the dead space under the docked line came from.
   return (
-    <section className="px-4 pt-14 md:pt-28">
-      <div className="flex justify-center pb-6">
-        <h1 className="text-center text-5xl font-normal text-black md:text-7xl lg:text-8xl">
-          campaigns
-        </h1>
-      </div>
-
+    <section className="px-4">
       {/* md and up: two boards side by side, with the caption taking the third
           column from lg. gap-4 matches the page's px-4 edge, so the gutters
           between the boards read the same as the page margin. */}
@@ -62,8 +112,8 @@ export default function News() {
           </div>
 
           <div className="flex-1">
-            <div className="flex aspect-4/5 items-center justify-end bg-black/40">
-              <button className="flex h-10 w-10 items-center justify-center bg-black transition hover:bg-gray-800">
+            <Board image={BOARDS[0]} className="items-center justify-end">
+              <button className="ml-auto flex h-10 w-10 items-center justify-center self-center bg-black transition hover:bg-gray-800">
                 <svg
                   className="h-6 w-6 text-white"
                   fill="none"
@@ -78,14 +128,14 @@ export default function News() {
                   />
                 </svg>
               </button>
-            </div>
+            </Board>
           </div>
 
           {/* The second board hangs lower than the first — the step is what
               keeps the pair from reading as one wide picture. */}
           <div className="flex-1 pt-11">
-            <div className="flex aspect-4/5 items-center justify-start bg-black/40">
-              <button className="relative -top-11 flex h-10 w-10 items-center justify-center bg-black transition hover:bg-gray-800">
+            <Board image={BOARDS[1]} className="items-center justify-start">
+              <button className="relative -top-11 flex h-10 w-10 items-center justify-center self-center bg-black transition hover:bg-gray-800">
                 <svg
                   className="h-6 w-6 text-white"
                   fill="none"
@@ -100,7 +150,7 @@ export default function News() {
                   />
                 </svg>
               </button>
-            </div>
+            </Board>
           </div>
         </div>
 
@@ -111,8 +161,8 @@ export default function News() {
 
       {/* Mobile: a single board, both arrows on it, caption underneath. */}
       <div className="pt-14 md:hidden">
-        <div className="flex aspect-4/5 items-end justify-end bg-black/40">
-          <div className="flex flex-row gap-4">
+        <Board image={BOARDS[0]} className="items-end justify-end">
+          <div className="mt-auto ml-auto flex flex-row gap-4 p-4">
             <button className="flex h-8 w-8 items-center justify-center bg-black transition hover:bg-gray-800">
               <svg
                 className="h-6 w-6 text-white"
@@ -144,7 +194,7 @@ export default function News() {
               </svg>
             </button>
           </div>
-        </div>
+        </Board>
 
         <Caption className="pt-5" nameClass="text-3xl" />
       </div>
