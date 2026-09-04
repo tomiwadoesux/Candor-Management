@@ -6,43 +6,106 @@ import Image from "next/image";
 /**
  * The player behind /video.
  *
- * One project at a time, full-bleed. Along the bottom edge: the name of the
- * person on screen set in the display face, the house they shot for beside it,
- * and the playback line running the whole width of the screen beneath both —
- * see styles/film-player.css for how any of that stays legible over both a
- * black rail and a white studio.
- *
- * There is no transport on the frame. The stage itself is the play/pause
- * target and Space does the same from the keyboard, so the only control with a
- * label is the credits toggle in the top right — a word and a box that takes
- * the mark when the panel is open.
+ * One project at a time, full-bleed, with the whole of the chrome collected
+ * into a single hairline row along the bottom edge — see
+ * styles/film-player.css for how those labels stay legible over both a black
+ * rail and a white studio.
  *
  * The stage opens on the film's poster and dissolves into the moving image the
  * first time it is played, so arriving on the page is a photograph rather than
  * a black rectangle. After that the <video> holds the stage for good.
  *
  * There is no on-screen project navigation, so ← and → step between the films
- * — the only way to reach the rest of the reel. C opens the credits, the same
- * as the toggle, and M is the sound, which has no label on the frame.
+ * — the only way to reach the rest of the reel.
+ *
+ * ── Two placements, one player ───────────────────────────────────────────────
+ * `inline` swaps the fixed full-screen stage for a 16:9 block that sits in the
+ * page flow, which is what the landing page's showreel section is. Everything
+ * else — the row, the blend, the poster dissolve, the credits panel — is the
+ * same code in both, so the two can never drift apart.
+ *
+ * The keyboard is the one thing that cannot be shared. Fullscreen, the page IS
+ * the player and it can own the window's keys; inline it is one section among
+ * several, and stealing space bar or the arrows from someone scrolling the
+ * landing page would be wrong. So the shortcuts bind to the window only when
+ * the player owns the screen.
  */
 
 const KEY_HINTS = "Space, ← →, M, C, Esc";
 
-/* The one mark in the set. It opens every label in the row on its column line
-   and it is also what drops into the credits box when the panel is open, so
-   the toggle reads in the same vocabulary as everything else on the frame. */
+/* Icons. All 10px on a common axis so a square, a triangle and a cross can
+   share the same marker slot without any of them shifting the label. */
 const Square = () => (
   <svg width="4" height="4" viewBox="0 0 4 4" aria-hidden="true">
     <rect width="4" height="4" fill="currentColor" />
   </svg>
 );
 
-export default function FilmPlayer({ films }) {
+const PlayIcon = () => (
+  <svg width="8" height="9" viewBox="0 0 8 9" aria-hidden="true">
+    <path d="M0 0 L8 4.5 L0 9 Z" fill="currentColor" />
+  </svg>
+);
+
+const PauseIcon = () => (
+  <svg width="8" height="9" viewBox="0 0 8 9" aria-hidden="true">
+    <rect width="2.5" height="9" fill="currentColor" />
+    <rect x="5.5" width="2.5" height="9" fill="currentColor" />
+  </svg>
+);
+
+const SoundIcon = ({ muted }) => (
+  <svg width="11" height="9" viewBox="0 0 11 9" aria-hidden="true">
+    <path d="M0 3 H2 L5 0.5 V8.5 L2 6 H0 Z" fill="currentColor" />
+    {muted ? (
+      <path
+        d="M7 3 L10 6 M10 3 L7 6"
+        stroke="currentColor"
+        strokeWidth="1"
+        fill="none"
+      />
+    ) : (
+      <path
+        d="M7 2.6 A3.2 3.2 0 0 1 7 6.4"
+        stroke="currentColor"
+        strokeWidth="1"
+        fill="none"
+      />
+    )}
+  </svg>
+);
+
+const CloseIcon = () => (
+  <svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true">
+    <path
+      d="M0 0 L8 8 M8 0 L0 8"
+      stroke="currentColor"
+      strokeWidth="1"
+      fill="none"
+    />
+  </svg>
+);
+
+/* Inline, this takes Close's slot: the same 10px axis, opening right. */
+const NextIcon = () => (
+  <svg width="9" height="8" viewBox="0 0 9 8" aria-hidden="true">
+    <path
+      d="M0 4 H7.5 M4.5 1 L7.5 4 L4.5 7"
+      stroke="currentColor"
+      strokeWidth="1"
+      fill="none"
+    />
+  </svg>
+);
+
+export default function FilmPlayer({ films, exitHref = "/", inline = false }) {
   const videoRef = useRef(null);
   const trackRef = useRef(null);
 
   const [filmIndex, setFilmIndex] = useState(0);
-  // No switch on the frame any more — M is what turns the sound off and on.
+  const [playing, setPlaying] = useState(false);
+  // Opens with sound on, so the label reads "Mute" — the word on a control is
+  // always what pressing it will do, never what the state currently is.
   const [muted, setMuted] = useState(false);
   // Whether the film has ever shown a frame of its own. Until it has, the
   // stage holds the poster and the <video> stays hidden underneath — see the
@@ -107,19 +170,14 @@ export default function FilmPlayer({ films }) {
   }, [muted]);
 
   useEffect(() => {
+    // Inline, the player is a section on someone else's page — it does not get
+    // to answer for the space bar or the arrow keys.
+    if (inline) return;
+
     const onKey = (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
-      // The scrubber owns the arrow keys while it has focus, for fine seeking.
-      // Only those two, though: it now runs the full width of the screen and
-      // takes focus on any click near the bottom edge, and swallowing the rest
-      // would leave M — the only sound control on the page — dead until
-      // something else was clicked.
-      if (
-        e.target?.getAttribute?.("role") === "slider" &&
-        (e.key === "ArrowLeft" || e.key === "ArrowRight")
-      ) {
-        return;
-      }
+      // The scrubber owns its own arrows (fine seeking); let it have them.
+      if (e.target?.getAttribute?.("role") === "slider") return;
 
       switch (e.key) {
         case " ":
@@ -152,17 +210,18 @@ export default function FilmPlayer({ films }) {
 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [togglePlay, goToFilm]);
+  }, [togglePlay, goToFilm, inline]);
 
   const percent = Math.round(progress * 100);
 
   return (
-    <div className="film">
-      {/* The stage is the play/pause target — the reason the chrome overlay
+    <div className="film" data-inline={inline || undefined}>
+      {/* The stage is one big play/pause target — the reason the chrome overlay
           above it is pointer-events: none apart from the controls themselves.
-          Deliberately a div and not a button: Space is the keyboard binding for
-          the same action and the frame is not a tab stop, so the row stays two
-          stops deep — the credits toggle and the scrubber. */}
+          Deliberately a div and not a button: it is a shortcut for the Play
+          control in the row, which is the one that carries the label, the tab
+          stop and the keyboard binding. Two tab stops for one action would only
+          make the row harder to get through. */}
       <div className="film__stage" onClick={togglePlay}>
         {/* No poster attribute: the opening frame is the <Image> layered over
             this one, so the film can dissolve into the still instead of the
@@ -174,7 +233,12 @@ export default function FilmPlayer({ films }) {
           src={film.src}
           playsInline
           preload="metadata"
-          onPlay={() => setStarted(true)}
+          onPlay={() => {
+            setPlaying(true);
+            setStarted(true);
+          }}
+          onPause={() => setPlaying(false)}
+          onEnded={() => setPlaying(false)}
           onTimeUpdate={(e) => {
             const { currentTime, duration } = e.currentTarget;
             if (duration) setProgress(currentTime / duration);
@@ -185,7 +249,7 @@ export default function FilmPlayer({ films }) {
           className="film__media"
           style={{ opacity: started ? 0 : 1 }}
           src={film.poster}
-          alt={`${film.model} for ${film.client}`}
+          alt={`${film.client} ✕ ${film.collaborator}`}
           fill
           sizes="100vw"
           priority
@@ -193,26 +257,118 @@ export default function FilmPlayer({ films }) {
       </div>
 
       <div className="film__chrome">
-        {/* The top band. The only labelled control on the frame lives here,
-            pushed to the right margin, with the panel hanging off it. */}
-        <div className="film__head">
-          <button
-            type="button"
-            className="film-cell film-cell--credits"
-            aria-expanded={creditsOpen}
-            aria-controls="film-credits"
-            onClick={() => setCreditsOpen((c) => !c)}
-          >
-            <span className="film-cell__label">Credits</span>
-            {/* A box the size of the marker slot, drawn in brackets and empty
-                until the panel opens, when the same 4px square every label
-                hangs off drops into it. */}
-            <span className="film-box" data-open={creditsOpen} aria-hidden="true">
-              <span className="film-box__mark">
+        <div className="film__foot">
+          <header className="film-bar">
+            <div className="film-cell film-cell--title">
+              <span className="film-cell__mark">
                 <Square />
               </span>
+              <div>
+                <h1 className="film-title">
+                  {film.client}
+                  <span className="film-title__x">✕</span>
+                  {film.collaborator}
+                </h1>
+                <p className="film-meta">Director: {film.director}</p>
+                <p className="film-meta">{film.disciplines}</p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="film-cell"
+              onClick={() => setCreditsOpen((c) => !c)}
+              aria-expanded={creditsOpen}
+              aria-controls="film-credits"
+            >
+              <span className="film-cell__mark">
+                <Square />
+              </span>
+              <span className="film-cell__label">Credits</span>
+            </button>
+
+            <div className="film-cell film-cell--scrub">
+              <div
+                ref={trackRef}
+                className="film-scrub"
+                role="slider"
+                tabIndex={0}
+                aria-label="Seek"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={percent}
+                aria-valuetext={`${percent}%`}
+                onPointerDown={(e) => {
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                  seekTo(e.clientX);
+                }}
+                onPointerMove={(e) => {
+                  if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+                    seekTo(e.clientX);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "ArrowLeft") nudge(-5);
+                  else if (e.key === "ArrowRight") nudge(5);
+                  else return;
+                  e.preventDefault();
+                }}
+              >
+                <span
+                  className="film-scrub__fill"
+                  style={{ "--progress": progress }}
+                />
+              </div>
+            </div>
+
+            <button type="button" className="film-cell" onClick={togglePlay}>
+              <span className="film-cell__mark">
+                {playing ? <PauseIcon /> : <PlayIcon />}
+              </span>
+              <span className="film-cell__label">
+                {playing ? "Pause" : "Play"}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              className="film-cell"
+              onClick={() => setMuted((m) => !m)}
+            >
+              <span className="film-cell__mark">
+                <SoundIcon muted={muted} />
+              </span>
+              <span className="film-cell__label">
+                {muted ? "Unmute" : "Mute"}
+              </span>
+            </button>
+
+            {/* Nothing to close out of when the player is a section — inline
+                the last cell is the reel's own step to the next film. */}
+            {inline ? (
+              <button
+                type="button"
+                className="film-cell"
+                onClick={() => goToFilm(1)}
+              >
+                <span className="film-cell__mark">
+                  <NextIcon />
+                </span>
+                <span className="film-cell__label">Next</span>
+              </button>
+            ) : (
+              <a className="film-cell" href={exitHref}>
+                <span className="film-cell__mark">
+                  <CloseIcon />
+                </span>
+                <span className="film-cell__label">Close</span>
+              </a>
+            )}
+
+            <span className="film-cell__mark film-tick--end" aria-hidden="true">
+              <Square />
             </span>
-          </button>
+          </header>
 
           <aside
             id="film-credits"
@@ -231,68 +387,6 @@ export default function FilmPlayer({ films }) {
               <span>{KEY_HINTS}</span>
             </div>
           </aside>
-        </div>
-
-        <div className="film__foot">
-          <header className="film-bar">
-            {/* The one line in the display face, and the only thing on the
-                frame that is a name rather than a label. */}
-            <div className="film-cell film-cell--title">
-              <span className="film-cell__mark">
-                <Square />
-              </span>
-              <h1 className="film-title">{film.model}</h1>
-            </div>
-
-            <div className="film-cell">
-              <span className="film-cell__mark">
-                <Square />
-              </span>
-              <span className="film-cell__label">{film.client}</span>
-            </div>
-
-            <span className="film-cell__mark film-tick--end" aria-hidden="true">
-              <Square />
-            </span>
-          </header>
-        </div>
-
-        {/* Not a cell in the row: the line runs the full width of the screen
-            along the very bottom edge, under everything else. It is positioned
-            against the chrome's padding box rather than laid out inside it,
-            and pulled back out of that padding by the same amount on three
-            sides — which is what lets it reach the actual edges of the screen
-            rather than stopping on the page margin the labels honour. */}
-        <div
-          ref={trackRef}
-          className="film-scrub"
-          role="slider"
-          tabIndex={0}
-          aria-label="Seek"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={percent}
-          aria-valuetext={`${percent}%`}
-          onPointerDown={(e) => {
-            e.currentTarget.setPointerCapture(e.pointerId);
-            seekTo(e.clientX);
-          }}
-          onPointerMove={(e) => {
-            if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-              seekTo(e.clientX);
-            }
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "ArrowLeft") nudge(-5);
-            else if (e.key === "ArrowRight") nudge(5);
-            else return;
-            e.preventDefault();
-          }}
-        >
-          <span
-            className="film-scrub__fill"
-            style={{ "--progress": progress }}
-          />
         </div>
       </div>
     </div>

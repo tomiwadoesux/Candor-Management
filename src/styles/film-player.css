@@ -1,9 +1,8 @@
 /* Fullscreen film player — /video.
  *
- * One project fills the screen. The chrome is a single hairline row of labels
- * along the bottom, the credits toggle alone in the top right, and the
- * playback line running the full width of the screen beneath all of it. No
- * panel, no bar, no scrim: everything sits straight on the frame.
+ * One project fills the screen and the whole of the chrome is a single
+ * hairline row along the bottom. No panel, no bar, no scrim: the title, the
+ * scrubber and the transport sit straight on the frame.
  *
  * ── The blend ────────────────────────────────────────────────────────────────
  * The chrome never picks a colour. It is painted white and composited with
@@ -17,23 +16,20 @@
  * overlay: the credits panel has to stay unblended to be readable.
  *
  * ── The grid ─────────────────────────────────────────────────────────────────
- * The row is two equal columns with a tick closing the last one, so the name
- * and the house fall on even halves and the tick shuts the measure. Both hang
- * off their own column line behind a 4px square, and both are bottom-aligned —
- * the name is set in the display face at nearly three times the label size and
- * still sits on their baseline. There is no transport cell: the frame is the
- * play/pause target.
- *
- * The playback line is not one of those columns. It is bottom-anchored across
- * the whole screen, edge to edge and under every label — a rule the page sits
- * on rather than a control in the row. It is the one thing that ignores the
- * page margin, and it does that by pulling itself back out of the chrome's
- * padding by exactly that margin on three sides.
+ * The row is six equal columns with a tick closing the last one, and every
+ * label hangs off its own column line behind a 4px square. Everything is
+ * bottom-aligned, so the title stacks upward off the same line the labels
+ * sit on.
  */
 
 .film {
   --pad: 1.25rem;
   --tick: 4px;
+  /* The scrubber is the one cell that is drawn rather than written, so it gets
+     a right gutter to keep it from running into the Play column. A percentage
+     of its own grid area, so the track keeps the same proportion of a column
+     at every width instead of eating the narrow ones. */
+  --scrub-inset: 25%;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 
   position: fixed;
@@ -78,14 +74,11 @@
   inset: 0;
   display: flex;
   flex-direction: column;
-  /* The toggle rides the top edge, the row the bottom, and the frame is what
-     sits between them. */
-  justify-content: space-between;
+  justify-content: flex-end;
   padding: var(--pad);
   /* The overlay is a full-screen sheet so the row can hang off the bottom edge;
      only the controls themselves take clicks, so the stage underneath stays one
-     big play/pause target. The padding is the page margin the row honours and
-     the playback line deliberately does not. */
+     big play/pause target. */
   pointer-events: none;
 }
 
@@ -107,39 +100,18 @@
   background: linear-gradient(to top, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0));
 }
 
-/* The same pull away from mid grey the row gets, at the other edge and much
-   shallower — there is one word up there, not a whole measure. */
-.film__chrome::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 7rem;
-  z-index: 1;
-  pointer-events: none;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0));
-}
-
-/* Holds the toggle and the panel that drops from it, so the panel can hang off
-   the toggle's own height instead of a guessed offset. */
-.film__head {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  justify-content: flex-end;
-}
-
-/* Holds the row, and is what the line measures its escape from the page margin
-   against. */
+/* Holds the row and the panel that opens above it, so the panel can be placed
+   off the row's own height instead of a guessed offset. --col lives here
+   because its 100% has to resolve against the content box the grid uses. */
 .film__foot {
+  --col: calc((100% - var(--tick)) / 6);
   position: relative;
   z-index: 2;
 }
 
 .film-bar {
   display: grid;
-  grid-template-columns: repeat(2, 1fr) auto;
+  grid-template-columns: repeat(6, 1fr) auto;
   /* end, not start: the row sits on the bottom edge, so the title grows up
      out of the same line the single-line labels sit on. */
   align-items: end;
@@ -166,9 +138,11 @@
   text-decoration: none;
 }
 
-/* Buttons and links take clicks; the title is an inert container. */
+/* Buttons and links take clicks; the title and the scrubber's own cell are
+   inert containers. */
 button.film-cell,
-a.film-cell {
+a.film-cell,
+.film-cell--scrub {
   pointer-events: auto;
 }
 
@@ -189,9 +163,6 @@ a.film-cell {
   height: 10px;
   /* Centres the 10px slot on the 1.35 line box beside it. */
   margin-bottom: 0.22em;
-  /* em-based, so beside the name it rides the display face's line box instead
-     of the label's. */
-  font-size: 0.6875rem;
   transform-origin: left center;
   transition: transform 260ms var(--ease);
 }
@@ -217,129 +188,66 @@ a.film-cell:focus-visible .film-cell__label {
 }
 
 /* currentColor, so the ring inverts with the label it belongs to. */
-.film-cell:focus-visible {
+.film-cell:focus-visible,
+.film-scrub:focus-visible {
   outline: 1px solid currentColor;
   outline-offset: 5px;
 }
 
-/* The line is the full width of the screen, so a ring around it would trace
-   the whole bottom edge. It shows focus by standing up to its hover height
-   instead — see the rule above, which :focus-visible shares. */
-.film-scrub:focus-visible {
-  outline: none;
-}
-
-/* A long name can outrun a third of the screen, so it keeps a gutter and wraps
-   rather than closing on the next marker. Nothing else in the row can push its
-   neighbours either — the cells all carry min-width: 0. */
+/* A long pairing ("Adéọlá Studio ✕ Fall / Winter 26") is wider than a column,
+   so the title keeps a gutter and wraps rather than closing on the next
+   marker. Nothing else in the row can push its neighbours either — the cells
+   all carry min-width: 0. */
 .film-cell--title {
-  padding-right: 1.5rem;
+  padding-right: 1.25rem;
 }
 
-/* The display face, and the only thing on the frame set in it: everything else
-   is an 11px sans label, so the serif is what separates the person from the
-   apparatus around them. Left in the case the roster stores it in — a name in
-   caps would read as another label. */
 .film-title {
   margin: 0;
-  font-family: var(--font-h1);
-  font-size: 1.75rem;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 700;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
+/* The cross between the two names is the one character that is not bold, so
+   the pairing reads as a collaboration rather than one long title. */
+.film-title__x {
+  display: inline-block;
+  margin: 0 0.35em;
   font-weight: 400;
-  line-height: 1.1;
-  letter-spacing: 0.005em;
-  /* Pulls the serif's baseline onto the line the 11px labels sit on: the
-     display face carries far more descender room than they do. */
-  margin-bottom: -0.08em;
 }
 
-/* ── Credits toggle ────────────────────────────────────────────────────────── */
-
-/* The row carries the blend for its own cells; this one is on its own up here,
-   so it has to invert against the frame itself. */
-.film-cell--credits {
-  align-items: center;
-  gap: 0.6rem;
-  color: #fff;
-  mix-blend-mode: difference;
-  pointer-events: auto;
+.film-meta {
+  margin: 0;
+  font-weight: 700;
+  line-height: 1.35;
 }
 
-/* Brackets set in the label's own face and weight, with a marker-sized slot
-   between them. Fixed width: the square arriving must not widen the box or the
-   word beside it would shift every time the panel opens. */
-.film-box {
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.28em;
-  transition: transform 260ms var(--ease);
+/* Scrubber — the track's left edge is its own column marker, so this cell has
+   no square. */
+.film-cell--scrub {
+  padding-right: var(--scrub-inset);
+  /* Drops the 3px track onto the same centre line as the labels beside it. */
+  padding-bottom: 0.54em;
 }
 
-.film-box::before {
-  content: "[";
-}
-
-.film-box::after {
-  content: "]";
-}
-
-.film-box__mark {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 4px;
-  height: 4px;
-  opacity: 0;
-  transform: scale(0.4);
-  transition: opacity 200ms var(--ease), transform 260ms var(--ease);
-}
-
-.film-box[data-open="true"] .film-box__mark {
-  opacity: 1;
-  transform: none;
-}
-
-/* The toggle's hover is the mirror of the row's: the word steps toward the box
-   instead of away from a marker, and the box is what swells. */
-.film-cell--credits:hover .film-box,
-.film-cell--credits:focus-visible .film-box {
-  transform: scale(1.15);
-}
-
-/* ── Playback line ─────────────────────────────────────────────────────────── */
-
-/* Sits on the bottom edge of the screen rather than in the row: absolute
-   against the chrome's padding box, so the page margin the labels honour does
-   not apply and the rule reaches both edges. Blended on its own account, since
-   it is no longer inside the row that carries the blend, and above the row's
-   z-index so a click near the bottom edge always finds the track. */
 .film-scrub {
-  position: absolute;
-  /* Absolute children are placed against the chrome's *padding* box, so left: 0
-     would stop the line on the page margin. Negating the padding on all three
-     sides is what carries it out to the real edges of the screen and seats it
-     flush on the bottom one. */
-  left: calc(var(--pad) * -1);
-  right: calc(var(--pad) * -1);
-  bottom: calc(var(--pad) * -1);
-  z-index: 3;
+  position: relative;
+  width: 100%;
   height: 3px;
   border: 0;
   padding: 0;
   background: rgba(255, 255, 255, 0.32);
-  color: #fff;
-  mix-blend-mode: difference;
   cursor: pointer;
-  pointer-events: auto;
-  /* Bottom-anchored, so the hover growth opens upward off the screen edge on
-     its own — no margin correction to keep it seated. */
-  transition: height 200ms var(--ease);
+  transition: height 200ms var(--ease), margin-bottom 200ms var(--ease);
 }
 
 .film-scrub:hover,
 .film-scrub:focus-visible {
-  height: 6px;
+  height: 5px;
+  margin-bottom: -1px;
 }
 
 .film-scrub__fill {
@@ -360,15 +268,12 @@ a.film-cell:focus-visible .film-cell__label {
 
 /* ── Credits ───────────────────────────────────────────────────────────────── */
 
-/* Opened by the toggle above it or by C, closed by either or Esc, and it lists
-   the rest of the keys itself. It drops from the toggle rather than rising off
-   the row: top: 100% clears whatever height that line happens to be, and the
-   right edge is shared with the word, so the panel and its control hang off the
-   same margin. */
+/* Opens upward out of its own label: bottom: 100% clears whatever height the
+   row happens to be, and --col puts the left edge on the Credits marker. */
 .film-credits {
   position: absolute;
-  top: calc(100% + 0.9rem);
-  right: 0;
+  bottom: calc(100% + 0.9rem);
+  left: var(--col);
   width: min(22rem, 66vw);
   padding: 0.9rem 1.1rem 1rem;
   background: rgba(4, 4, 4, 0.88);
@@ -377,7 +282,7 @@ a.film-cell:focus-visible .film-cell__label {
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #fff;
   opacity: 0;
-  transform: translateY(-6px);
+  transform: translateY(6px);
   visibility: hidden;
   pointer-events: none;
   transition: opacity 260ms var(--ease), transform 260ms var(--ease),
@@ -412,10 +317,9 @@ a.film-cell:focus-visible .film-cell__label {
 
 /* ── Narrow screens ────────────────────────────────────────────────────────── */
 
-/* Three columns stop being readable long before the media does. Below this the
-   name takes a line of its own and the labels become one flexible row — same
-   markers, same order, no new vocabulary. The line is untouched: it is on the
-   screen's bottom edge at every width. */
+/* Six columns stop being readable long before the media does. Below this the
+   title takes a line of its own and the transport becomes one flexible row —
+   same markers, same order, no new vocabulary. */
 @media (max-width: 1024px) {
   .film-bar {
     display: flex;
@@ -439,13 +343,23 @@ a.film-cell:focus-visible .film-cell__label {
   }
 
   .film-cell--title .film-cell__mark {
-    margin-top: 0.34em;
+    margin-top: 0.22em;
+  }
+
+  .film-cell--scrub {
+    flex: 1 1 6rem;
+    min-width: 4rem;
+    padding-right: 0;
+    padding-bottom: 0;
   }
 
   .film-tick--end {
     display: none;
   }
 
+  .film-credits {
+    left: 0;
+  }
 }
 
 @media (max-width: 640px) {
@@ -453,26 +367,28 @@ a.film-cell:focus-visible .film-cell__label {
     --pad: 0.875rem;
   }
 
-  .film-title {
-    font-size: 1.375rem;
-  }
-
-  /* Two bands: the title on its own line, then the labels spread across the
-     one under it. */
+  /* Three bands instead of one line: the title, the scrubber full width under
+     it, then the three labels spread across the bottom. Squeezing the track in
+     beside them would leave it too short to aim at. */
   .film-bar {
     justify-content: space-between;
     gap: 0.9rem 0.75rem;
   }
 
-  /* Generic first: the override below has the same specificity, so it only
-     wins by coming after it. */
+  /* Generic first: the two overrides below have the same specificity, so they
+     only win by coming after it. */
   .film-cell {
-    order: 2;
+    order: 3;
     gap: 0.55rem;
   }
 
   .film-cell--title {
     order: 1;
+  }
+
+  .film-cell--scrub {
+    order: 2;
+    flex: 1 0 100%;
   }
 }
 
@@ -485,4 +401,52 @@ a.film-cell:focus-visible .film-cell__label {
   .film-credits {
     transition-duration: 1ms;
   }
+}
+
+/* ── Inline placement ──────────────────────────────────────────────────────── */
+
+/* The landing page's showreel is this same player, un-fixed: a 16:9 block in
+   the flow of the page instead of the whole screen. Everything below only
+   undoes the assumptions that came with owning the viewport — the row, the
+   blend, the poster dissolve and the credits panel are untouched, which is the
+   point of doing it this way rather than forking the component.
+   Still isolated and still painting its own black, so difference blending has
+   the backdrop it needs and composites against the film rather than against
+   the white page behind it. */
+.film[data-inline] {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  /* Matches the section it replaces: square on a phone, 16:9 from md up. */
+  aspect-ratio: 1 / 1;
+}
+
+@media (min-width: 768px) {
+  .film[data-inline] {
+    aspect-ratio: 16 / 9;
+  }
+}
+
+/* Fullscreen the stage is the page and a click anywhere on it is play/pause.
+   Inline it is a block someone is scrolling past, so the cursor stops
+   advertising a control the whole section is. */
+.film[data-inline] .film__stage {
+  cursor: default;
+}
+
+/* cover, not contain: at 16:9 in a 16:9 box there are no rails to speak of,
+   and a letterboxed cut inside an already-letterboxed section reads as a
+   mistake. The blend still has the footage itself to work against. */
+.film[data-inline] .film__media {
+  object-fit: cover;
+}
+
+/* The panel opens upward out of the row. Fullscreen there is a whole screen
+   above it; inline there is only the section, so a tall credits list would
+   escape the top of the block and sit over the page above it. Cap it to the
+   room there is and let it scroll. */
+.film[data-inline] .film-credits {
+  max-height: 14rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }

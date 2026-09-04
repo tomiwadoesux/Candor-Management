@@ -9,5 +9,5 @@ export const metadata = {
 };
 
 export default function VideoPage() {
-  return <FilmPlayer films={films} />;
+  return <FilmPlayer films={films} exitHref="/" />;
 }

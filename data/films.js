@@ -8,11 +8,6 @@
 // play, so `poster` wants to be a frame from the film itself once there is
 // real footage to pull one from.
 //
-// The name the player sets along the bottom is not written here. Each entry
-// carries a `modelId` and the roster in data/models.js is the one place the
-// person's name actually lives, so a rename on the board reaches the reel on
-// its own and the two files can never disagree.
-//
 // PLACEHOLDER MEDIA. `src` points at MDN's open sample clips so the transport
 // has something real to scrub while the actual cuts are still in post. Drop
 // the finished files into public/video/ and swap the strings; nothing else has
@@ -21,14 +16,11 @@
 //
 // Not the gtv-videos-bucket URLs that Showcase.js and Showcase2.js still point
 // at — Google started returning 403 for that bucket, so those are dead.
-import { models } from "./models";
-
 const SAMPLE = "https://mdn.github.io/shared-assets/videos";
 
-const reel = [
+export const films = [
   {
     id: "maison-ori-nkem",
-    modelId: "1",
     client: "Maison Orí",
     collaborator: "Nkem",
     director: "Marguerite Oduya",
@@ -48,7 +40,6 @@ const reel = [
   },
   {
     id: "adeola-studio-fw26",
-    modelId: "6",
     client: "Adéọlá Studio",
     collaborator: "Fall / Winter 26",
     director: "Tobi Ajayi",
@@ -67,7 +58,6 @@ const reel = [
   },
   {
     id: "atelier-lagos-nocturne",
-    modelId: "9",
     client: "Atelier Lagos",
     collaborator: "Nocturne",
     director: "Ines Ferreira",
@@ -86,7 +76,6 @@ const reel = [
   },
   {
     id: "casa-verano-resort",
-    modelId: "11",
     client: "Casa Verano",
     collaborator: "Resort",
     director: "Kelechi Nwosu",
@@ -104,9 +93,3 @@ const reel = [
     ],
   },
 ];
-
-export const films = reel.map((film) => ({
-  ...film,
-  // The one line set in the display face along the bottom of the frame.
-  model: models.find((m) => m.id === film.modelId)?.name ?? "",
-}));

@@ -7,7 +7,12 @@ import Hero2 from "../components/Hero2";
 import LogoAnimation from "../components/LogoAnimation";
 import Loader from "../components/loader.jsx";
 import Body from "../components/body";
-import Showcase2 from "../components/Showcase2";
+// The showreel is the /video player, placed inline — same component, same
+// data/films.js, so the section and the film page can never drift apart.
+// Showcase2 is still on disk if this needs to go back.
+import FilmPlayer from "../components/FilmPlayer";
+import { films } from "../../data/films";
+import "../styles/film-player.css";
 import Choose from "../components/Choose";
 import Look from "@/components/Look";
 import SectionSnap from "../components/SectionSnap";
@@ -533,7 +538,11 @@ export default function Home() {
         <div className="relative z-10 bg-white" data-snap-container>
           <Look />
           <Body />
-          <Showcase2 />
+          <section className="pt-14 md:pt-28 lg:pt-20">
+            <div className="px-4">
+              <FilmPlayer films={films} inline />
+            </div>
+          </section>
           <SphereFooter />
         </div>
       </div>
