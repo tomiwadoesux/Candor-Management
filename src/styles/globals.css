@@ -105,6 +105,13 @@ b {
 }
 
 /*
+ * Superseded by <ContrastText> (components/ContrastText.jsx), which picks a
+ * real black or white per letter from the image behind it. Prefer that: this
+ * blend inverts the backdrop rather than choosing against it, so it returns
+ * mid-grey over a mid-grey and an off-hue over a saturated colour — the cases
+ * it exists to solve. Currently unused; kept only so any stray markup that
+ * still carries the class keeps its old behaviour.
+ *
  * Use this on a top-level text overlay only. A blend mode can only read the
  * backdrop in its current stacking context; applying it to every text node
  * breaks components that deliberately control their own black/white state.
@@ -215,4 +222,89 @@ b {
   .animate-download-arrow {
     animation: none;
   }
+}
+
+/* --- Hero card shimmer ---
+   A card in the hero field is a placeholder until its photograph decodes. It
+   shows a neutral base with a highlight sweeping across it, so the box reads
+   as "loading" rather than as a finished block of flat colour. The sweep runs
+   on the ::after layer (not the card itself) so it can't disturb the magnet /
+   separation transform the rAF loop writes to card.style.transform.
+   `.is-loaded` stops it — set once the image is in. */
+.hero-card-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* ASH, not white. The card sits on the site's own near-white background, so
+     a white sweep would be invisible — the highlight has to be DARKER than the
+     card to read at all. Kept low-alpha so it stays a soft grey shimmer rather
+     than a hard grey bar moving across the page. */
+  /* A soft ash band with a narrow bright core, on a faint base tint so the
+     empty card reads as a considered placeholder rather than blank page. The
+     sweep is wide and low-contrast — a sheen passing over the frame, not a
+     grey bar sliding across it. */
+  background:
+    linear-gradient(
+      105deg,
+      transparent 8%,
+      rgba(116, 116, 124, 0.05) 34%,
+      rgba(116, 116, 124, 0.13) 47%,
+      rgba(130, 130, 138, 0.17) 51%,
+      rgba(116, 116, 124, 0.13) 55%,
+      rgba(116, 116, 124, 0.05) 68%,
+      transparent 92%
+    ),
+    linear-gradient(rgba(140, 140, 148, 0.05), rgba(140, 140, 148, 0.05));
+  background-size:
+    260% 100%,
+    100% 100%;
+  background-repeat: no-repeat;
+  /* Eased, not linear: the sheen accelerates through the middle of the card
+     and slows at the edges, which reads far more like light than a constant
+     slide. The pause between passes keeps it calm. */
+  animation: hero-card-shimmer 2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+/* Fades the sweep out rather than cutting it, so a card that loads mid-sweep
+   doesn't snap. The layer is removed from the box once the fade completes. */
+.hero-card-shimmer.is-loaded::after {
+  animation: none;
+  opacity: 0;
+  transition: opacity 260ms ease;
+}
+
+@keyframes hero-card-shimmer {
+  /* Only the sweep layer moves; the base tint (second position) is static. */
+  0% {
+    background-position:
+      165% 0,
+      0 0;
+  }
+  /* Holds briefly off-frame so passes read as separate, not a loop. */
+  70%,
+  100% {
+    background-position:
+      -75% 0,
+      0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-card-shimmer::after {
+    animation: none;
+  }
+}
+
+/* Standalone, the sphere canvas takes touch-action: none so a drag anywhere on
+   it turns the globe. As a section of a scrolling page that would trap a touch
+   scroll with no way back up, so vertical panning is handed back to the page
+   and the drag keeps the axis it actually spins on. The renderer writes that
+   value inline, so this has to outrank it.
+
+   Lives here rather than in an inline <style> inside the component: that tag
+   was a target for DOM-rewriting browser extensions (a dark-mode one adds a
+   class to it), which produced a React hydration mismatch on every load. */
+[data-sphere-footer] canvas {
+  touch-action: pan-y !important;
 }

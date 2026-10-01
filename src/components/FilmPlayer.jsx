@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { models } from "../../data/models";
 
 /**
  * The player behind /video.
@@ -98,7 +99,12 @@ const NextIcon = () => (
   </svg>
 );
 
-export default function FilmPlayer({ films, exitHref = "/", inline = false }) {
+export default function FilmPlayer({
+  films,
+  exitHref = "/",
+  inline = false,
+  panel = false,
+}) {
   const videoRef = useRef(null);
   const trackRef = useRef(null);
 
@@ -214,7 +220,7 @@ export default function FilmPlayer({ films, exitHref = "/", inline = false }) {
 
   const percent = Math.round(progress * 100);
 
-  return (
+  const stage = (
     <div className="film" data-inline={inline || undefined}>
       {/* The stage is one big play/pause target — the reason the chrome overlay
           above it is pointer-events: none apart from the controls themselves.
@@ -389,6 +395,64 @@ export default function FilmPlayer({ films, exitHref = "/", inline = false }) {
           </aside>
         </div>
       </div>
+    </div>
+  );
+
+  if (!panel) return stage;
+
+  /* ── The reel's own left-hand plate ────────────────────────────────────────
+     The bottom row inside the player stays exactly as it is — it belongs to
+     the film and travels with it to /video. This plate is the section's, and
+     it says the things a page needs and a player does not: where you are in
+     the reel, what the reel is for, and the spec of the cut on screen. */
+  const index = String(filmIndex + 1).padStart(2, "0");
+  // The lead of the cut. The plate is a model card, so it is the model who is
+  // named and measured here — the film's own credits (director, photography,
+  // the rest of the cast) stay behind the Credits button in the player's row.
+  const lead = models.find((m) => m.id === film.model);
+
+  return (
+    <div className="reel">
+      <aside className="reel__plate">
+        <p className="reel__index">
+          {index} / {film.client}
+        </p>
+
+        {/* The title and its subline are one block, so the spare height of the
+            column opens above the pair rather than between them. Keyed on the
+            film so the type re-runs its entrance on every step through the
+            reel, rather than swapping silently under the eye. */}
+        <div className="reel__lede" key={film.id}>
+          <h2 className="reel__title">{lead?.stageName ?? film.client}</h2>
+
+          <p className="reel__sub">{film.disciplines}.</p>
+        </div>
+
+        {/* The same four figures, in the same order, that ModelProfile uses —
+            a model reads the same on the showreel as on their own page. */}
+        {lead && (
+          <dl className="reel__spec">
+            <div className="reel__spec-row">
+              <dt>Height</dt>
+              <dd>{lead.height}</dd>
+            </div>
+            <div className="reel__spec-row">
+              <dt>Bust</dt>
+              <dd>{lead.chest}</dd>
+            </div>
+            <div className="reel__spec-row">
+              <dt>Waist</dt>
+              <dd>{lead.waist}</dd>
+            </div>
+            <div className="reel__spec-row">
+              <dt>Hips</dt>
+              <dd>{lead.hips}</dd>
+            </div>
+          </dl>
+        )}
+      </aside>
+
+      <div className="reel__stage">{stage}</div>
     </div>
   );
 }

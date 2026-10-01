@@ -450,3 +450,204 @@ a.film-cell:focus-visible .film-cell__label {
   overflow-y: auto;
   overscroll-behavior: contain;
 }
+
+/* ── The reel: plate + stage ────────────────────────────────────────────────── */
+
+/* The landing page's showreel is the inline player with a plate bolted to its
+   left. The division of labour is the point: the bottom row inside the player
+   is the film's chrome and travels with it to /video untouched, while the
+   plate is the *section's* — the index, the pairing set large, and the spec of
+   the cut currently on screen. Nothing moved out of the card; this is added
+   beside it.
+
+   Two columns, edge to edge, no gap and no radius: the plate's right edge is
+   the stage's left edge, so the black reads as one block that happens to be
+   film on one side and type on the other. */
+.reel {
+  display: grid;
+  grid-template-columns: minmax(0, 22rem) minmax(0, 1fr);
+  background: #000;
+  color: #fff;
+  font-family: var(--font-body);
+}
+
+@media (min-width: 1280px) {
+  .reel {
+    grid-template-columns: minmax(0, 26rem) minmax(0, 1fr);
+  }
+}
+
+/* The plate matches whatever height the 16:9 stage resolves to, and its
+   contents are pushed apart: index at the top, title in the middle, spec on
+   the floor — the same bottom line the player's own row sits on. */
+/* At this height a plain space-between would strand the title alone in the middle of
+   a tall column with a void above and below it. Instead the index holds the
+   top and everything else is pushed to the floor, so the lede and the spec
+   sit together on the same baseline the player's own row runs along — the
+   type is weighted to the bottom of the block rather than floating in it. */
+.reel__plate {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  padding: 1.75rem 1.75rem 2rem;
+  min-width: 0;
+}
+
+/* The one elastic gap in the column: it absorbs all the plate's spare height,
+   which leaves the index at the top and pushes the lede and the spec down to
+   the floor together. */
+.reel__lede {
+  margin-top: auto;
+  min-width: 0;
+}
+
+/* The mono-spec texture. There is no mono face in the stack, so it is built
+   the way the rest of the site builds small type — Inter, bold, uppercase —
+   with tracking wide enough that it reads as a technical label rather than a
+   short sentence. */
+.reel__index,
+.reel__spec {
+  margin: 0;
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.reel__index {
+  opacity: 0.55;
+}
+
+/* The one large thing on the page's black. Fluid rather than stepped, because
+   the column it sits in is itself fluid between the two breakpoints above —
+   a fixed size would either overflow at the bottom or leave the plate empty at
+   the top. Each name takes its own line. */
+.reel__title {
+  margin: 0;
+  font-family: inherit;
+  font-size: clamp(2.5rem, 3.9vw, 4.5rem);
+  font-weight: 500;
+  line-height: 0.94;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.reel__sub {
+  margin: 0.9rem 0 0;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  opacity: 0.62;
+}
+
+/* The spec block sits on a hairline, which is the plate's only rule — it lines
+   the block up with the player's row across the seam. */
+.reel__spec {
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.reel__spec-row {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.reel__spec-row + .reel__spec-row {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.reel__spec dt,
+.reel__spec dd {
+  margin: 0;
+}
+
+.reel__spec dt {
+  opacity: 0.45;
+}
+
+/* Height is the section's own, not the film's. Letting the stage set it at
+   16:9 made the block short and wide — the plate's type ended up crowded into
+   whatever the film's proportions happened to leave. So the reel takes 97vh
+   and both columns stretch to it: the plate gets real room to breathe, and the
+   stage fills the rest with object-fit: cover doing the cropping. That is why
+   the inline player's aspect-ratio is released just below. */
+.reel {
+  align-items: stretch;
+  height: 97vh;
+  /* A floor for short windows (a laptop in landscape, a phone rotated), where
+     97vh alone would not leave the plate enough for the title and the spec. */
+  min-height: 34rem;
+}
+
+.reel__stage {
+  min-width: 0;
+  display: flex;
+}
+
+.reel__stage .film[data-inline] {
+  aspect-ratio: auto;
+  height: 100%;
+}
+
+/* The title re-runs this on every step through the reel — it is keyed on the
+   film — so stepping to the next project is a cut in the type as well as in
+   the footage. */
+@keyframes reel-rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.6em);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.reel__title,
+.reel__sub {
+  animation: reel-rise 620ms var(--ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+/* The subline follows the name in, a beat behind it. */
+.reel__sub {
+  animation-delay: 90ms;
+}
+
+/* Below the two-column threshold the plate stacks over the stage and its
+   height stops being the stage's, so the space-between has nothing to push
+   against — it becomes a normal run of type instead. */
+@media (max-width: 900px) {
+  .reel {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+    min-height: 0;
+  }
+
+  /* Stacked, the stage is back to being a block of its own with nothing beside
+     it to match, so it takes its proportions back. */
+  .reel__stage .film[data-inline] {
+    aspect-ratio: 1 / 1;
+    height: auto;
+  }
+
+  .reel__plate {
+    gap: 1.5rem;
+    padding: 1.5rem 1.25rem 1.75rem;
+  }
+
+  .reel__title {
+    font-size: clamp(2rem, 9vw, 3rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reel__title,
+  .reel__sub {
+    animation-duration: 1ms;
+    animation-delay: 0s;
+  }
+}

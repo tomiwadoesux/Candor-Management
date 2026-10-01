@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import dynamic from "next/dynamic";
 
 import { models } from "../../../data/models";
+import { agency, joinMailto, contactMailto } from "../../../data/agency";
 import ChromeLink from "@/components/ChromeLink";
 import CreativeSphere from "@/components/CreativeSphere";
 import LogoAnimation from "@/components/LogoAnimation";
@@ -16,20 +17,20 @@ const InNav = dynamic(() => import("@/components/InNav"), { ssr: false });
 // wordmark channel in the middle stays empty. Hero2 repeats this every
 // 2000px; here it's also repeated vertically every 1500px (the board height)
 // so the pattern carries on past every edge of the screen.
+// Kept in step with Hero2's layoutDataDesktop — same nine cards, expressed as
+// offsets from the screen centre (subtract 2000 from a hero x, 750 from its y).
+// The two fields are meant to read as one pattern, so a card removed from the
+// hero has to go from here too or the footer looks denser than the hero.
 const HERO_PATTERN = [
-  { dx: -710, dy: -520, w: 320, h: 460 },
-  { dx: -340, dy: -530, w: 340, h: 250 },
+  { dx: -720, dy: -520, w: 310, h: 440 },
+  { dx: -350, dy: -440, w: 350, h: 240 },
   { dx: -710, dy: -10, w: 350, h: 260 },
-  { dx: -300, dy: 130, w: 300, h: 400 },
-  { dx: -710, dy: 300, w: 360, h: 240 },
-  { dx: -1960, dy: -510, w: 380, h: 260 },
-  { dx: -1530, dy: -570, w: 300, h: 440 },
+  { dx: -620, dy: 320, w: 300, h: 400 },
+  { dx: -1620, dy: -560, w: 360, h: 420 },
+  { dx: -1930, dy: -410, w: 220, h: 220 },
   { dx: -1650, dy: -70, w: 370, h: 270 },
-  { dx: -1940, dy: 250, w: 320, h: 420 },
-  { dx: -1560, dy: 260, w: 360, h: 250 },
-  { dx: -1170, dy: -530, w: 340, h: 480 },
-  { dx: -1150, dy: 10, w: 400, h: 280 },
-  { dx: -1170, dy: 350, w: 360, h: 240 },
+  { dx: -1970, dy: 270, w: 280, h: 230 },
+  { dx: -1570, dy: 300, w: 290, h: 400 },
 ];
 const PERIOD_X = 2000;
 const PERIOD_Y = 1500;
@@ -64,7 +65,8 @@ const heroBoard = ({ W, H }) => {
 // Every look is credited to somebody on the roster. There is no real link in
 // the data yet, so the looks are dealt round-robin over it — swap this one
 // line for the real relation once the works carry their own credit.
-const items = Array.from({ length: 53 }, (_, i) => ({
+// Exported for app/hero3's dome, which shows the same 53 looks from inside.
+export const items = Array.from({ length: 53 }, (_, i) => ({
   src: `/thumbs/sphere/${i + 1}.jpg`,
   label: `Look ${String(i + 1).padStart(2, "0")}`,
   meta: "CANDOR",
@@ -205,13 +207,13 @@ function PageChrome({ hidden, embedded }) {
         <div className="flex flex-col items-end text-[14px] leading-[1.45]">
           <span className={TOPIC}>MODELS &amp; TALENT</span>
           <div className="mt-3 flex flex-col items-end">
-            <ChromeLink href="mailto:join@candormanagement.com">
-              join@candormanagement.com
+            <ChromeLink href={joinMailto}>{agency.join.email}</ChromeLink>
+            <ChromeLink href={agency.join.phoneHref}>
+              {agency.join.phone}
             </ChromeLink>
-            <ChromeLink href="tel:+448127518055">+44 812 751 8055</ChromeLink>
             <Rule />
-            <ChromeLink>Become a Talent</ChromeLink>
-            <ChromeLink>Submit Polaroids</ChromeLink>
+            <ChromeLink href="/get-scouted">Become a Talent</ChromeLink>
+            <ChromeLink href="/get-scouted">Submit Polaroids</ChromeLink>
             <Rule />
             <ChromeLink>Model Policy</ChromeLink>
           </div>
@@ -231,11 +233,11 @@ function PageChrome({ hidden, embedded }) {
             <ChromeLink left>Linkedin</ChromeLink>
             <ChromeLink left>Youtube</ChromeLink>
             <Rule />
-            <ChromeLink left href="mailto:contact@candormanagement.com">
-              contact@candormanagement.com
+            <ChromeLink left href={contactMailto}>
+              {agency.contact.email}
             </ChromeLink>
-            <ChromeLink left href="tel:+2348177518066">
-              +234 817 751 8066
+            <ChromeLink left href={agency.contact.phoneHref}>
+              {agency.contact.phone}
             </ChromeLink>
             <Rule />
             <ChromeLink left>privacy policy</ChromeLink>
@@ -349,17 +351,39 @@ function WorkDetails({ item }) {
   );
 }
 
-export default function Sphere2({ embedded = false }) {
+// `chrome` is separate from `embedded` on purpose. `embedded` picks which
+// globe you get (solid for the landing page's footer, hollow standalone);
+// `chrome` says whether this component brings its own furniture — the
+// wordmark, the INFO and MODELS & TALENT columns, the copyright, the talent
+// index and the work details. A page that already lays out its own chrome
+// (app/hero3) passes chrome={false} and keeps its own. Defaults to true, so
+// the landing page and /sphere2 are unaffected.
+//
+// `configOverride` merges over whichever config `embedded` selected, so a page
+// can retune the globe — radius, fog, drag speed — without a new component.
+// `apiRef` is optional and shared, not exclusive: the sphere's own controls
+// (the talent index) use it too, so a caller that passes one gets the same
+// object rather than displacing anything. Handy for chrome that has to read
+// the live scene — app/hero3's minimap reads the heading off it each frame.
+export default function Sphere2({
+  embedded = false,
+  chrome = true,
+  configOverride,
+  apiRef,
+}) {
   const [stage, setStage] = useState(null);
   const [item, setItem] = useState(null);
-  const sphere = useRef(null);
+  const ownRef = useRef(null);
+  const sphere = apiRef ?? ownRef;
+
+  const base = embedded ? config : hollowConfig;
 
   return (
     <div className="relative h-full w-full">
       <CreativeSphere
         items={items}
         title=""
-        config={embedded ? config : hollowConfig}
+        config={configOverride ? { ...base, ...configOverride } : base}
         openSlots={heroBoard}
         apiRef={sphere}
         onOpenChange={(open, next, openItem) => {
@@ -370,23 +394,27 @@ export default function Sphere2({ embedded = false }) {
       {/* The board deliberately reuses Hero2's central wordmark channel. When
           it is opened without a selected look, restore the same mark there so
           the negative space reads as a purposeful part of the shared layout. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 z-[15] flex items-center justify-center text-black transition-opacity duration-500"
-        style={{ opacity: stage === "board" ? 1 : 0 }}
-      >
-        <LogoAnimation
-          animate={false}
-          tight
-          className="w-[260px] md:w-[420px] lg:w-[560px]"
-        />
-      </div>
-      <PageChrome hidden={!!stage} embedded={embedded} />
-      <TalentIndex
-        show={stage === "focus"}
-        onPick={(m) => sphere.current?.show(FIRST_LOOK.get(m.id) ?? 0)}
-      />
-      <WorkDetails item={stage === "focus" ? item : null} />
+      {chrome && (
+        <>
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 z-[15] flex items-center justify-center text-black transition-opacity duration-500"
+            style={{ opacity: stage === "board" ? 1 : 0 }}
+          >
+            <LogoAnimation
+              animate={false}
+              tight
+              className="w-[260px] md:w-[420px] lg:w-[560px]"
+            />
+          </div>
+          <PageChrome hidden={!!stage} embedded={embedded} />
+          <TalentIndex
+            show={stage === "focus"}
+            onPick={(m) => sphere.current?.show(FIRST_LOOK.get(m.id) ?? 0)}
+          />
+          <WorkDetails item={stage === "focus" ? item : null} />
+        </>
+      )}
     </div>
   );
 }

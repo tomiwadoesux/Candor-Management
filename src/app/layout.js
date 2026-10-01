@@ -3,7 +3,9 @@ import "../styles/globals.css";
 import { HoveredModelProvider } from "../components/HoveredModelContext";
 import ModelImageCursor from "../components/ModelImageCursor";
 import SmoothScroll from "../components/SmoothScroll";
-import TransitionProvider from "@/providers/TransitionProvider";
+// Leave the tab and come back and the page resolves rather than just being
+// there. Mounted at the root so it covers every route, not only home.
+import ReturnReveal from "../components/ReturnReveal";
 
 export const metadata = {
   title: "Create Next App",
@@ -15,12 +17,11 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className="antialiased">
         <SmoothScroll />
-        <TransitionProvider>
-          <HoveredModelProvider>
-            {children}
-            <ModelImageCursor />
-          </HoveredModelProvider>
-        </TransitionProvider>
+        <ReturnReveal />
+        <HoveredModelProvider>
+          {children}
+          <ModelImageCursor />
+        </HoveredModelProvider>
       </body>
     </html>
   );

@@ -66,3 +66,29 @@
     transition: none;
   }
 }
+
+/* --- Card variant ---
+   Same control, but opened by hovering the CARD it sits in rather than the
+   control itself. Used for the "[ MODELS PORTFOLIO ]" cue in the corner of the
+   board cards on the homepage: the whole card is already the link, so the cue
+   must not be an anchor of its own (nested anchors are invalid and swallow the
+   click) — it is a plain span that reacts to .group:hover.
+
+   The bracket__* mechanics are reused verbatim so the two read as one control;
+   only the trigger differs. */
+.bracket-cue {
+  position: relative;
+  display: inline-block;
+  width: fit-content;
+  white-space: nowrap;
+}
+
+.group:hover .bracket-cue .bracket-link__well,
+.group:focus-visible .bracket-cue .bracket-link__well {
+  grid-template-columns: 1fr;
+}
+
+.group:hover .bracket-cue .bracket-link__label,
+.group:focus-visible .bracket-cue .bracket-link__label {
+  transform: none;
+}

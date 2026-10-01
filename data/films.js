@@ -21,6 +21,9 @@ const SAMPLE = "https://mdn.github.io/shared-assets/videos";
 export const films = [
   {
     id: "maison-ori-nkem",
+    // The lead of this cut, by id in data/models.js — the showreel plate
+    // reads its name and measurements from there rather than restating them.
+    model: "1",
     client: "Maison Orí",
     collaborator: "Nkem",
     director: "Marguerite Oduya",
@@ -28,7 +31,7 @@ export const films = [
     disciplines: "Video, Stills",
     year: "2026",
     src: `${SAMPLE}/flower.mp4`,
-    poster: "/images/img7.jpeg",
+    poster: "/photos/img7.jpeg",
     credits: [
       { role: "Direction", name: "Marguerite Oduya" },
       { role: "Photography", name: "Estévez & Belloso" },
@@ -40,13 +43,16 @@ export const films = [
   },
   {
     id: "adeola-studio-fw26",
+    // The lead of this cut, by id in data/models.js — the showreel plate
+    // reads its name and measurements from there rather than restating them.
+    model: "4",
     client: "Adéọlá Studio",
     collaborator: "Fall / Winter 26",
     director: "Tobi Ajayi",
     disciplines: "Video, Runway",
     year: "2026",
     src: `${SAMPLE}/tears-of-steel-battle-clip-medium.mp4`,
-    poster: "/images/img14.jpeg",
+    poster: "/photos/img14.jpeg",
     credits: [
       { role: "Direction", name: "Tobi Ajayi" },
       { role: "Photography", name: "Ines Ferreira" },
@@ -58,13 +64,16 @@ export const films = [
   },
   {
     id: "atelier-lagos-nocturne",
+    // The lead of this cut, by id in data/models.js — the showreel plate
+    // reads its name and measurements from there rather than restating them.
+    model: "9",
     client: "Atelier Lagos",
     collaborator: "Nocturne",
     director: "Ines Ferreira",
     disciplines: "Video, Campaign",
     year: "2025",
     src: `${SAMPLE}/sintel-short.mp4`,
-    poster: "/images/img22.jpeg",
+    poster: "/photos/img22.jpeg",
     credits: [
       { role: "Direction", name: "Ines Ferreira" },
       { role: "Photography", name: "Marguerite Oduya" },
@@ -76,13 +85,16 @@ export const films = [
   },
   {
     id: "casa-verano-resort",
+    // The lead of this cut, by id in data/models.js — the showreel plate
+    // reads its name and measurements from there rather than restating them.
+    model: "11",
     client: "Casa Verano",
     collaborator: "Resort",
     director: "Kelechi Nwosu",
     disciplines: "Video, Stills",
     year: "2025",
     src: `${SAMPLE}/friday.mp4`,
-    poster: "/images/img30.jpeg",
+    poster: "/photos/img30.jpeg",
     credits: [
       { role: "Direction", name: "Kelechi Nwosu" },
       { role: "Photography", name: "Tobi Ajayi" },

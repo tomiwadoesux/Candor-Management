@@ -1,14 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
-import { models } from "../../../data/models";
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Header from "../../components/header";
 import HeaderTest from "../../components/headerTest";
 import ModelList from "../../components/ModelList";
 import ModelRail from "../../components/ModelRail";
-import LogoAnimation from "../../components/LogoAnimation";
 
 import { SearchProvider } from "../../components/SearchContext";
 
@@ -21,17 +19,35 @@ const imgAkarIconsArrowUp41 =
 const imgEllipse23 =
   "http://localhost:3845/assets/0e670450cf1b40a867576040cc1482d1f77e4b18.svg";
 
-export default function Models() {
-  const [selectedGender, setSelectedGender] = useState("all");
-  const [selectedBoard, setSelectedBoard] = useState("all");
+// useSearchParams needs a Suspense boundary to prerender, so the page proper
+// is one component down.
+export default function ModelsPage() {
+  return (
+    <Suspense>
+      <Models />
+    </Suspense>
+  );
+}
+
+function Models() {
+  // The nav deep-links into this page (/models?board=newfaces, ?gender=female
+  // — see components/InNav.js NAV_GROUPS), so the filters open on whatever the
+  // link asked for. After that they're ordinary state: clicking a filter does
+  // not rewrite the URL, it just filters.
+  const params = useSearchParams();
+  const [selectedGender, setSelectedGender] = useState(
+    () => params.get("gender") ?? "all"
+  );
+  const [selectedBoard, setSelectedBoard] = useState(
+    () => params.get("board") ?? "all"
+  );
   const [hoveredModel, setHoveredModel] = useState(null);
   const [hoveredIndex, setHoveredIndex] = useState(null);
 
-  // Filter models based on selected gender
-  const filteredModels =
-    selectedGender === "all"
-      ? models
-      : models.filter((model) => model.gender === selectedGender);
+  // Both filters are applied inside ModelList (it owns the roster and now also
+  // the division split), so the page only holds the selection. It used to
+  // compute a filteredModels list here that nothing rendered, while the board
+  // buttons highlighted without filtering anything at all.
 
   return (
     <SearchProvider>
@@ -50,24 +66,13 @@ export default function Models() {
             // height) left it with none and the rail jumped up 20px.
             className="hidden lg:block lg:w-[25%] lg:shrink-0 lg:sticky lg:top-5 lg:mt-5 lg:h-[calc(100vh-2.5rem)] lg:pr-5 lg:border-r lg:border-black/10"
           >
-            {/* CANDOR wordmark, top-left of the screen. Absolute so it
-                doesn't push the rail's polaroids off centre. (The hovered
-                model's name takes the bottom of the rail.) */}
-            <Link
-              href="/"
-              aria-label="CANDOR home"
-              className="absolute left-0 top-0 z-10 block text-black"
-            >
-              <LogoAnimation animate={false} className="w-[130px]" />
-            </Link>
-
             <ModelRail />
           </aside>
 
           <div className="min-w-0 flex-1">
           {/* Filters pin to the top of the viewport; the grid scrolls up behind
               them (opaque background + z-index so nothing shows through). */}
-          <section className="sticky top-0 z-20 bg-white pt-5">
+          <section data-slot="models-filters" className="sticky top-0 z-20 bg-white pt-5">
             <div className="relative flex justify-between items-start pb-5 gap-2 md:gap-5  flex-row">
               {/* page title, dead centre between the two filter stacks */}
               <h1
@@ -178,7 +183,12 @@ export default function Models() {
             </div>
           </section>
 
-          <ModelList gender={selectedGender} className="lg:px-0" />
+          <ModelList
+            gender={selectedGender}
+            board={selectedBoard}
+            division="models"
+            className="lg:px-0"
+          />
           </div>
         </main>
       </div>

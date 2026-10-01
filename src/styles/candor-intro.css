@@ -1,0 +1,538 @@
+/* The /hero3 intro, driven by CSS.
+ *
+ * The sequence — sentence types in, the rest fades, the six fly together into
+ * CANDOR, the name holds and blurs away, the block leaves, the page's
+ * furniture arrives — runs entirely off animations with staggered delays.
+ * JavaScript flips one
+ * attribute to start it and supplies the two things CSS cannot know: each
+ * character's typing delay (already through the write's easing curve, which
+ * may be piecewise where calc() has no conditional) and the six letters'
+ * flight vectors. Everything else is here.
+ *
+ * Why it is worth doing this way: the JS version re-rendered ~97 spans on
+ * every phase change and ran a requestAnimationFrame loop for three seconds
+ * to blink six letters. Animations run on the compositor, survive a busy main
+ * thread, and cost nothing per frame in script.
+ *
+ * Custom properties each element expects:
+ *   --t            this character's typing delay, as a time (e.g. "73.20ms"),
+ *                  already through the write's easing curve
+ */
+
+/* The floating wordmark host, on the landing page: a fixed overlay mounted
+   outside the intro so the sections scrolling up cannot clip or cover it.
+   It needs the timing variables — the entry animation reads --at-furniture
+   and --logo-in-ms — but NOT .candor-intro's own `position: absolute; inset:
+   0`, which would stretch it over the page. Hence a second selector on the
+   variable block rather than reusing the class. */
+.candor-intro,
+.candor-intro-logo-host {
+  /* One place to retune the whole sequence. The cumulative marks below are
+     spelled out rather than calc()'d from each other so the timeline is
+     readable at a glance. */
+  /* The write is deliberately QUICK — the line snaps on rather than being
+     typed out at reading pace. Reading time comes from --hold-ms afterwards,
+     not from the write itself: watching a cursor crawl across a sentence you
+     have already finished reading is slower than simply being handed it.
+     The cumulative marks below are absolute values, not derived, so changing
+     this without shifting every one of them would start the sentence draining
+     while it was still being written. */
+  /* NOT what drives the stagger any more — TYPE_MS in CandorLine.jsx is, and
+     the two must be kept in step. This is retained so the timeline below can
+     still be read in one place. */
+  --type-ms: 1700ms;
+  --type-fade-ms: 180ms;
+  /* This is where the sentence is actually READ. The write is one continuous
+     sweep, so the line is whole at 1880ms and then simply stands there — the
+     hold is not a decorative beat, it is the reading time. With --lead-ms
+     after it, the complete sentence is on screen and still for 1000ms before
+     it drains. */
+  --hold-ms: 580ms;
+  --lead-ms: 420ms;
+  --fade-ms: 320ms;
+  --tail-ms: 220ms;
+  --fly-ms: 780ms;
+  /* No settle any more. It used to hold a beat between the blur finishing
+     and the block leaving; now the exit begins the moment the last of the
+     name has gone, so the two read as one movement. */
+  --settle-ms: 0ms;
+  /* How long CANDOR stands assembled before it blurs away. This is the whole
+     point of the flight: the six travel a long way and cost most of a second
+     doing it, and if the blur began the moment they landed the name would
+     never actually be legible — it would read as letters passing through a
+     shape rather than forming one. 350ms is enough to register the word —
+     it has been assembling in front of you for the whole flight, so this is
+     a beat to confirm it, not the first time you are seeing it. */
+  --name-hold-ms: 350ms;
+
+  /* The fall is no longer set here. Each letter drops on its own schedule
+     with its own spin and drift, all of it drawn per letter in
+     CandorLine.jsx (FALL_STAGGER_MS, FALL_MIN_MS / FALL_MAX_MS, SPIN_*,
+     DRIFT_MAX_VW) and handed down as --fall-delay, --fall-dur, --spin and
+     --drift. A single duration or tilt here could not vary between them,
+     which is the whole point of the effect. */
+  /* Kept because the chrome's fade still borrows it for a duration. */
+  --exit-ms: 420ms;
+  --logo-in-ms: 320ms;
+
+  /* Cumulative start times. */
+  /* The sentence is whole at 1880ms and --hold-ms is the stretch it simply
+     stands there being read, before anything starts taking it apart. */
+  --at-fade: 2880ms; /* + hold + lead */
+  --at-fly: 3000ms; /* + fade + tail */
+  /* The name is fully assembled at 3780ms (at-fly + fly-ms) and stands there
+     until this mark — that gap is --name-hold-ms, and it is the only stretch
+     of the intro where CANDOR is still and readable. Then it falls.
+     There is no separate blur step any more: the word used to dissolve in
+     place and the block slid up afterwards, which meant the name was already
+     invisible by the time anything moved. Now it leaves fully formed. */
+  --at-exit: 4130ms; /* + fly + name-hold */
+  /* The wordmark and the corner chrome come up 140ms INTO the fall, while the
+     name is still on screen and visibly on its way down. The handover is the
+     point: the word drops out of frame and the page's own furniture rises
+     behind it in the same moment, rather than one finishing and the other
+     then starting. */
+  --at-furniture: 4270ms;
+  /* The cards come up with the furniture, as the name falls past them. The
+     placeholders are already breathing at the centre of the page before the
+     word has left the frame, so the page fills as it empties and there is
+     never a blank moment between the two. */
+  --at-cards: 4270ms;
+  /* Quicker than it was (520ms): the cards now arrive while the name is still
+     dissolving, so they need to be present by the time it has gone rather
+     than still fading up after it. */
+  --card-in-ms: 380ms;
+  /* How far above dead centre the card block settles. Negative is up.
+     Zero: the pair is centred on the screen. It used to sit -4vh high, which
+     with the label hanging below each card pushed the whole group visibly
+     above the middle of the page. The variable is kept rather than removed
+     because the cards-in keyframe and both the done / reduced-motion states
+     all resolve their transform through it. */
+  --card-lift: 0vh;
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  /* Gravity, exactly: this bezier IS y = t². Constant acceleration, in one
+     continuous curve, so there are no interior keyframes to kink at. */
+  --ease-gravity: cubic-bezier(0.333, 0, 0.667, 0.333);
+  /* The tilt. Gentler than gravity at the start — a letter has to overbalance
+     before it turns — then it runs away with the fall. */
+  --ease-overbalance: cubic-bezier(0.38, 0.03, 0.72, 0.45);
+}
+
+/* The positioning, on the intro alone — the logo host above shares the
+   variables but is fixed to the viewport and must not be stretched.
+   Absolute and inset-0 because the block inside takes h-full, which resolves
+   against this element, and the chrome is positioned absolutely against it.
+   As a plain static div with auto height the block would collapse and the
+   sentence would stop being vertically centred. */
+.candor-intro {
+  position: absolute;
+  inset: 0;
+}
+
+/* ---------- the sentence ---------- */
+
+/* Every character starts invisible and is brought in by the typing sweep.
+   Held at 0 until the run starts so nothing flashes before the font lands. */
+.candor-char {
+  opacity: 0;
+}
+
+/* Typing: each character fades in on a delay proportional to its position
+   along the write. DOM order is reading order, so a wrapped paragraph fills
+   left to right and line by line without anyone working out where the breaks
+   fell.
+
+   --t is that character's delay, arriving from the component as a FINISHED
+   TIME VALUE ("73.20ms") rather than as a 0..1 position to be multiplied
+   here. That is deliberate and worth leaving alone: a custom property CSS has
+   not been told the type of is substituted as raw text, so the earlier
+   calc(var(--t) * var(--type-ms)) was multiplying a string by a time, which
+   is invalid and silently collapsed the whole delay to 0 — every character
+   appeared at once, with nothing in the console to say why.
+
+   The curve baked into --t is whatever EASE is set to in CandorLine.jsx.
+   The per-character fade keeps its own ease-out regardless: that is the
+   individual letter arriving, a separate thing from the curve the line is
+   written on. */
+[data-mode="play"] .candor-char {
+  animation: candor-type var(--type-fade-ms) var(--ease-out) forwards;
+  animation-delay: var(--t);
+}
+
+@keyframes candor-type {
+  to {
+    opacity: 1;
+  }
+}
+
+/* The non-picks leave once the sentence has been read. A short stagger across
+   the line, so it drains rather than switching off.
+
+   The stagger is scaled DOWN hard (0.12) because --t is the typing delay and
+   that curve is heavily eased: late characters carry a much larger --t than
+   early ones, so at a higher factor the tail of the sentence was still
+   draining ~440ms after its head. Combined with the flight starting later
+   still, that left the six picks sitting alone in an otherwise empty
+   paragraph — visibly stranded, on their own wrapped line. Keeping the whole
+   drain inside ~130ms means the line empties as one gesture and the picks are
+   moving almost immediately after. */
+[data-mode="play"] .candor-char:not(.candor-pick) {
+  animation:
+    candor-type var(--type-fade-ms) var(--ease-out) forwards,
+    candor-drop var(--fade-ms) var(--ease-out) forwards;
+  animation-delay: var(--t), calc(var(--at-fade) + var(--t) * 0.12);
+}
+
+@keyframes candor-drop {
+  to {
+    opacity: 0;
+  }
+}
+
+/* ---------- the six ---------- */
+
+/* A pick carries three animations: it arrives with the typing sweep, it flies
+   into its slot in the name, and it falls out of frame. They are listed
+   together because a shorthand re-declaration would drop the earlier ones. */
+.candor-pick {
+  display: inline-block;
+  position: relative;
+  z-index: 10;
+  /* Promoted to its own compositor layer up front, so the fall does not have
+     to do it on its first frame.
+     It is a will-change hint again, but a HONEST one: it names only the
+     properties that actually animate. The version this replaced said
+     `transform, filter, opacity`, and the filter was left over from a blur
+     that no longer exists — so the browser was reserving compositing for a
+     property nothing animates. A translateZ(0) cannot be used instead here,
+     because candor-fly animates `transform` and would overwrite it, losing
+     the promotion at exactly the moment it is needed. */
+  will-change: transform, translate, rotate;
+}
+
+/* The six are written on with everything else — they are part of the
+   sentence, not something added to it, so they type in on the same sweep at
+   the same delay as their neighbours. They were briefly held back to appear
+   later, which left six gaps in the line ("..to build _ ge_eration"); the
+   sentence has to read whole while it is being drawn.
+
+   What makes CANDOR absent early is not the letters being hidden but the
+   letters being SCATTERED: they sit in reading order as a, n, o, c, d, r,
+   which is not the name. The word does not exist until the flight puts it
+   together. */
+/* The flight. --dx/--dy are measured in JS from the glyphs' real positions:
+   no CSS expression can know where the "c" of "culture" sits, or where its
+   slot in CANDOR is.
+
+   Ends on opacity 1, not just the transform: it is what retires the flicker.
+   The flicker is infinite, so something has to take opacity off it — this
+   animation is later in the list and runs `forwards`, so once it finishes its
+   filled value wins and the letter is solid from the moment it lands. The
+   name therefore stands still and legible rather than strobing. */
+@keyframes candor-fly {
+  to {
+    opacity: 1;
+    transform: translate3d(var(--dx), var(--dy), 0);
+  }
+}
+
+/* ---------- the letters fall ---------- */
+
+/* The six do not leave as a word. Each one lets go on its own, a few tens of
+   milliseconds apart, and falls at its own speed with its own spin.
+
+   This is per LETTER, not per block, which is the opposite of how this
+   started: a block fall could tip the whole word but could never give one
+   letter a different weight from its neighbour. The cost of moving it down
+   here is that every keyframe must carry --dx/--dy, the flight offset that
+   put the letter in the name — this animation owns `transform` while it runs,
+   and a frame that omitted those would snap the letter back to where it sat
+   in the sentence before dropping it from there.
+
+   The vertical positions are sampled from y = t², so the letter accelerates
+   the way a dropped thing does rather than the way a timing function does.
+   That is also why the animation is `linear`: the physics is in the frames,
+   and a curve on top of them would bend it back out.
+
+   Rotation is NOT sampled on the same curve. A letter has to overbalance
+   before it turns, so the spin lags the drop early (t^1.7) and then runs away
+   with it — by the halfway point the letter is a third of the way down but
+   has only turned a fifth of its total. Drift is near-linear: sideways
+   momentum has nothing accelerating it. */
+[data-mode="play"] .candor-pick {
+  animation:
+    candor-type var(--type-fade-ms) var(--ease-out) forwards,
+    candor-fly var(--fly-ms) var(--ease-out) forwards,
+    candor-drop-away var(--fall-dur) var(--ease-gravity) forwards,
+    candor-spin-away var(--fall-dur) var(--ease-overbalance) forwards;
+  animation-delay:
+    var(--t), var(--at-fly), calc(var(--at-exit) + var(--fall-delay)),
+    calc(var(--at-exit) + var(--fall-delay));
+}
+
+/* TWO animations, not one, and each is a straight from/to.
+ *
+ * This used to be a single animation sampling y = t² at 0/20/40/60/80/100%
+ * with a `linear` timing function. That was the stutter: linear applies
+ * BETWEEN EACH PAIR of keyframes, so the curve became five straight segments
+ * and velocity jumped discontinuously at every one — tripling at the 20%
+ * mark, then again at 40, 60 and 80. The letters visibly hesitated and
+ * lurched. It was never dropped frames; the motion genuinely had kinks in it.
+ *
+ * So the sampling is gone. cubic-bezier(0.333, 0, 0.667, 0.333) IS y = t²,
+ * exactly — not an approximation, the algebra works out — so gravity is now
+ * one continuous curve between two keyframes with nothing in between to kink.
+ *
+ * Drop and spin are separate animations because they need different curves
+ * and one animation can only carry one timing function. Splitting them is
+ * what lets the rotation lag the fall — a letter has to overbalance before it
+ * turns — without reintroducing sampled keyframes to fake it.
+ *
+ * Both compose --dx/--dy, the flight offset that put the letter in the name:
+ * each animation owns `transform` while it runs, so a frame omitting them
+ * would snap the letter back to its place in the sentence. The drop carries
+ * the translate and the spin carries the rotate, and the browser composes the
+ * two transforms in list order. */
+@keyframes candor-drop-away {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: var(--drift) 115vh;
+  }
+}
+
+@keyframes candor-spin-away {
+  from {
+    rotate: 0deg;
+  }
+  to {
+    rotate: var(--spin);
+  }
+}
+
+/* ---------- the page's furniture arrives ---------- */
+
+.candor-logo,
+.candor-chrome {
+  opacity: 0;
+}
+
+/* The wordmark scales in as it appears — a small settle, so it reads as
+   taking over from the departing name rather than simply switching on. It now
+   starts while that name is still visibly blurring away above it, which is
+   what makes the handover read as one movement. */
+[data-mode="play"] .candor-logo {
+  animation: candor-logo-in var(--logo-in-ms) var(--ease-out)
+    var(--at-furniture) forwards;
+}
+
+@keyframes candor-logo-in {
+  from {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* The corners arrive WITH the mark rather than a beat behind it. The 220ms
+   lag they used to carry was there when the furniture came up after an empty
+   frame and the stagger gave that arrival some shape; now everything lands
+   together as the name dissolves, and holding the corners back just makes
+   them look late. */
+[data-mode="play"] .candor-chrome {
+  animation: candor-type var(--exit-ms) ease-out var(--at-furniture) forwards;
+}
+
+/* ---------- the cards ---------- */
+
+/* Two placeholders at the centre of the page, arriving while the name is
+   still dissolving above them — not after it has gone. They rise a little as
+   they fade in, so they read as settling into place rather than switching on.
+
+   They are a SIBLING of .candor-block, not a child, which is what lets this
+   overlap work at all: the exit translates the block -80vh, and anything
+   inside it would be carried up too. */
+.candor-cards {
+  opacity: 0;
+}
+
+[data-mode="play"] .candor-cards {
+  animation: candor-cards-in var(--card-in-ms) var(--ease-out) var(--at-cards)
+    forwards;
+}
+
+/* The lift lives in the keyframe's END state, not in a class on the element:
+   this animation runs `forwards`, so its filled `to` value owns the transform
+   once it has finished and any translate utility on the same element would be
+   wiped the moment the cards landed.
+   --card-lift is how far above dead centre the block settles. */
+@keyframes candor-cards-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, calc(var(--card-lift) + 18px), 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, var(--card-lift), 0);
+  }
+}
+
+/* The loading state, and deliberately NOT the sweeping sheen the hero cards
+   use (.hero-card-shimmer in globals.css). Two different loading treatments
+   on one site should not be the same gesture at different speeds: that one is
+   a diagonal highlight travelling across the frame, so this one is a slow
+   vertical breathe — the whole surface lifting and settling in tone. It reads
+   as something waiting rather than something being scanned.
+
+   The second card is offset half a cycle, so the pair pulses out of step and
+   the centre of the page never goes uniformly flat. */
+.candor-card {
+  position: relative;
+  overflow: hidden;
+  background-color: #ededed;
+  animation: candor-card-breathe 2.6s ease-in-out infinite;
+}
+
+/* Half a cycle, so the pair pulses out of step and the centre never goes
+   uniformly flat.
+   `> :nth-child(2)`, with no element name: the wrapper is an <a>, and the
+   `> div` this used to say never matched it — so both cards breathed in sync
+   and the offset did nothing at all. */
+.candor-cards > :nth-child(2) .candor-card {
+  animation-delay: -1.3s;
+}
+
+@keyframes candor-card-breathe {
+  0%,
+  100% {
+    background-color: #ededed;
+  }
+  50% {
+    background-color: #e0e0e2;
+  }
+}
+
+/* ---------- the repeat visit ---------- */
+
+/* The state the intro LEAVES BEHIND, painted outright.
+ *
+ * This has to light things up rather than merely switch animations off: the
+ * base rules park the cards, the wordmark and the corner chrome at opacity 0
+ * and rely on their animations to bring them in, so a `done` visit with no
+ * animations and no overrides would render a blank white page.
+ *
+ * The sentence is the one thing that does NOT come back — it has been read
+ * once in this tab, and the page should open on what the intro ends at: the
+ * wordmark, the cards, the chrome, and no name in the middle of the screen.
+ * (The paragraph is also hidden from the component side, via `visibility`.)
+ * That is also why the six need no `done` rule of their own: the block that
+ * holds them is display:none, so neither the assembled name nor the blurred
+ * state it ends on is ever on screen.
+ */
+[data-mode="done"] .candor-block {
+  display: none;
+}
+
+[data-mode="done"] .candor-logo,
+[data-mode="done"] .candor-chrome {
+  opacity: 1;
+}
+
+[data-mode="done"] .candor-cards {
+  opacity: 1;
+  transform: translate3d(0, var(--card-lift), 0);
+}
+
+/* The placeholders still breathe — that is a loading state, not part of the
+   intro, and it should behave the same however the page was arrived at. */
+
+/* ---------- the photograph arriving ---------- */
+
+/* The picture fades in over the breathing grey rather than replacing it, so
+   the card forms in place. Until it has decoded there is nothing to see and
+   the grey underneath is the whole card. */
+.candor-card-img {
+  opacity: 0;
+  transition: opacity 700ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.candor-card-img[data-loaded="1"] {
+  opacity: 1;
+}
+
+/* Once the photograph is in, the breathe has nothing left to say — a card
+   that pulses under a finished image reads as a fault rather than as loading.
+   :has() lets the parent stop on the child's state, no JavaScript involved. */
+.candor-card:has(.candor-card-img[data-loaded="1"]) {
+  animation: none;
+  background-color: #ededed;
+}
+
+/* ---------- the overlay ---------- */
+
+/* Sits between the photograph and the label. Two gradients in one element:
+   the flat rgba pair is an even tint across the whole frame, and the radial
+   is the darker ground the white word needs at the centre.
+
+   It fades in WITH the photograph rather than being there from the start —
+   keyed off the same [data-loaded] attribute, so while the card is still the
+   breathing grey placeholder there is nothing over it to darken. Tinting an
+   empty grey box would just make it look dirty. */
+.candor-card-overlay {
+  opacity: 0;
+  transition: opacity 700ms cubic-bezier(0.22, 1, 0.36, 1);
+  background:
+    radial-gradient(
+      ellipse 72% 30% at 50% 50%,
+      rgba(0, 0, 0, 0.4),
+      rgba(0, 0, 0, 0.14) 58%,
+      transparent 80%
+    ),
+    linear-gradient(rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.18));
+}
+
+.candor-card:has(.candor-card-img[data-loaded="1"]) .candor-card-overlay {
+  opacity: 1;
+}
+
+/* ---------- reduced motion ---------- */
+
+/* Nothing types, nothing flickers, nothing flies, nothing leaves: the
+   sentence and the furniture are simply present. Every animation is dropped
+   rather than shortened, so no element is left mid-flight. */
+@media (prefers-reduced-motion: reduce) {
+  [data-mode="play"] .candor-char,
+  [data-mode="play"] .candor-pick,
+  [data-mode="play"] .candor-block,
+  [data-mode="play"] .candor-logo,
+  [data-mode="play"] .candor-chrome {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    /* The picks animate filter now, so it has to be cleared alongside
+       transform — otherwise a letter could be left sitting blurred. */
+    filter: none;
+  }
+
+  /* The cards keep their lift. `transform: none` here would drop them back to
+     dead centre, so a reduced-motion visitor would see the block sitting in a
+     different place from everyone else — a different layout, not just less
+     motion, which is not what the setting asks for. */
+  [data-mode="play"] .candor-cards {
+    animation: none;
+    opacity: 1;
+    transform: translate3d(0, var(--card-lift), 0);
+  }
+
+  /* The breathe stops too — a placeholder that pulses is exactly the kind of
+     idle motion this setting is asking to be rid of. */
+  .candor-card {
+    animation: none;
+  }
+}

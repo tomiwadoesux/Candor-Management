@@ -1,4 +1,20 @@
 // data/models.js
+//
+// One roster, three divisions. `division` is the field the boards filter on —
+// "models" | "talents" | "creatives" — matching the three headings the nav
+// already names (components/header.js, components/InNav.js NAV_GROUPS).
+//
+// It exists because `talent` can't do that job: it's a freeform job title, so
+// "Creative", "Photographer" and "Fashion Designer" are three strings for what
+// the nav calls one division. `talent` stays as the line printed on a tile;
+// `division` is what decides which board a person appears on.
+//
+// PLACEHOLDER RECORDS. Everyone carrying `placeholder: true` is invented — the
+// signed roster is 16 models plus one talent (id 2) and three creatives (3-5),
+// which left /talents with a single face. The seeds fill both boards out to
+// something that reads as a board. They use real photographs from the image
+// pool but the people are fictional: grep `placeholder` to find and replace
+// every one of them.
 export const models = [
   {
     id: "1",
@@ -32,6 +48,7 @@ export const models = [
     ],
     alt: "A Candor Model",
     talent: "Model",
+    division: "models",
   },
   {
     id: "2",
@@ -65,6 +82,7 @@ export const models = [
     ],
     alt: "A Candor Model",
     talent: "Talent",
+    division: "talents",
     based: "Lagos, Nigeria",
     focus: "Actor · Dancer",
     since: "2019",
@@ -101,6 +119,7 @@ export const models = [
     ],
     alt: "A Candor Model",
     talent: "Creative",
+    division: "creatives",
     based: "Lagos, Nigeria",
     focus: "Creative Direction",
     since: "2018",
@@ -137,6 +156,7 @@ export const models = [
     ],
     alt: "A Candor Model",
     talent: "Photographer",
+    division: "creatives",
     based: "Manchester, UK",
     focus: "Editorial & Campaign",
     since: "2017",
@@ -173,6 +193,7 @@ export const models = [
     ],
     alt: "A Candor Model",
     talent: "Fashion Designer",
+    division: "creatives",
     based: "Lagos, Nigeria",
     focus: "Womenswear · Couture",
     since: "2020",
@@ -209,6 +230,7 @@ export const models = [
     ],
     alt: "A Candor Model",
     talent: "Model",
+    division: "models",
   },
   {
     id: "7",
@@ -242,6 +264,7 @@ export const models = [
     ],
     alt: "A Candor Model",
     talent: "Model",
+    division: "models",
   },
   {
     id: "8",
@@ -275,6 +298,7 @@ export const models = [
     ],
     alt: "A Candor Model",
     talent: "Model",
+    division: "models",
   },
   {
     id: "9",
@@ -308,6 +332,7 @@ export const models = [
     ],
     alt: "A Candor Model",
     talent: "Model",
+    division: "models",
   },
   {
     id: "10",
@@ -341,6 +366,7 @@ export const models = [
     ],
     alt: "A Candor Model",
     talent: "Model",
+    division: "models",
   },
   {
     id: "11",
@@ -374,6 +400,7 @@ export const models = [
     ],
     alt: "A Candor Model",
     talent: "Model",
+    division: "models",
   },
   {
     id: "12",
@@ -407,6 +434,7 @@ export const models = [
     ],
     alt: "A Candor Model",
     talent: "Model",
+    division: "models",
   },
   {
     id: "13",
@@ -440,6 +468,7 @@ export const models = [
     ],
     alt: "A Candor Model",
     talent: "Model",
+    division: "models",
   },
   {
     id: "14",
@@ -473,6 +502,7 @@ export const models = [
     ],
     alt: "A Candor Model",
     talent: "Model",
+    division: "models",
   },
   {
     id: "15",
@@ -506,6 +536,7 @@ export const models = [
     ],
     alt: "A Candor Model",
     talent: "Model",
+    division: "models",
   },
   {
     id: "16",
@@ -539,6 +570,7 @@ export const models = [
     ],
     alt: "A Candor Model",
     talent: "Model",
+    division: "models",
   },
   {
     id: "17",
@@ -572,6 +604,7 @@ export const models = [
     ],
     alt: "A Candor Model",
     talent: "Model",
+    division: "models",
   },
   {
     id: "18",
@@ -605,6 +638,7 @@ export const models = [
     ],
     alt: "A Candor Model",
     talent: "Model",
+    division: "models",
   },
   {
     id: "19",
@@ -638,6 +672,7 @@ export const models = [
     ],
     alt: "A Candor Model",
     talent: "Model",
+    division: "models",
   },
   {
     id: "20",
@@ -671,5 +706,159 @@ export const models = [
     ],
     alt: "A Candor Model",
     talent: "Model",
+    division: "models",
+  },
+
+  // ---------------------------------------------------------------------
+  // PLACEHOLDER ROSTER — fictional people, real photographs.
+  //
+  // Seeded so /talents and /creatives render as boards rather than as one or
+  // two stranded faces. Each fills a discipline the nav already lists
+  // (header.js:88-91 Actor / Dancer / Make Up Artist / Hair Stylist, and
+  // :99-102 Fashion Stylist / Artist / Photographer / Creative Director).
+  //
+  // Non-models carry `based` / `focus` / `since` instead of measurements —
+  // that's the split Sphere2's WorkDetails and the talents rail branch on.
+  // Measurements are omitted deliberately: a stylist has no comp card.
+  // ---------------------------------------------------------------------
+  {
+    id: "21",
+    placeholder: true,
+    name: "Ifeoma Balogun",
+    stageName: "Ife",
+    gender: "female",
+    age: 27,
+    nationality: "NIGERIAN",
+    board: "MAIN BOARD",
+    bio: "Ifeoma trained in stage before moving to screen, and carries that discipline into commercial work — a performer who can hold a long take and take direction in one pass.",
+    coverImage: "/images/img32.jpeg",
+    face: "/images/img32.jpeg",
+    images: ["/images/img32.jpeg", "/images/img33.jpeg"],
+    polaroids: [
+      "/images/img32.jpeg",
+      "/images/img33.jpeg",
+      "/images/img34.jpeg",
+      "/images/img35.jpeg",
+      "/images/img31.jpeg",
+      "/images/img30.jpeg",
+    ],
+    alt: "A Candor Talent",
+    talent: "Actor",
+    division: "talents",
+    based: "Lagos, Nigeria",
+    focus: "Screen · Commercial",
+    since: "2021",
+  },
+  {
+    id: "22",
+    placeholder: true,
+    name: "Chidera Eze",
+    stageName: "Dera",
+    gender: "female",
+    age: 24,
+    nationality: "NIGERIAN",
+    board: "MAIN BOARD",
+    bio: "Chidera choreographs as often as she performs, and moves between editorial motion work and live stage without changing register.",
+    coverImage: "/images/img29.jpeg",
+    face: "/images/img29.jpeg",
+    images: ["/images/img29.jpeg", "/images/img28.jpeg"],
+    polaroids: [
+      "/images/img29.jpeg",
+      "/images/img28.jpeg",
+      "/images/img27.jpeg",
+      "/images/img26.jpeg",
+      "/images/img24.jpeg",
+      "/images/img23.jpeg",
+    ],
+    alt: "A Candor Talent",
+    talent: "Dancer",
+    division: "talents",
+    based: "Lagos, Nigeria",
+    focus: "Contemporary · Afrobeats",
+    since: "2020",
+  },
+  {
+    id: "23",
+    placeholder: true,
+    name: "Amara Okonkwo",
+    stageName: "Amara",
+    gender: "female",
+    age: 31,
+    nationality: "NIGERIAN",
+    board: "MAIN BOARD",
+    bio: "Amara works across beauty and editorial, and is known on set for skin that reads true under every light — a clean, unfussy hand that photographs the way it looks in the room.",
+    coverImage: "/images/img18.jpeg",
+    face: "/images/img18.jpeg",
+    images: ["/images/img18.jpeg", "/images/img17.jpeg"],
+    polaroids: [
+      "/images/img18.jpeg",
+      "/images/img17.jpeg",
+      "/images/img16.jpeg",
+      "/images/img22.jpeg",
+      "/images/img21.jpeg",
+      "/images/img12.jpeg",
+    ],
+    alt: "A Candor Talent",
+    talent: "Make Up Artist",
+    division: "talents",
+    based: "Lagos, Nigeria",
+    focus: "Beauty · Editorial",
+    since: "2016",
+  },
+  {
+    id: "24",
+    placeholder: true,
+    name: "Ngozi Achebe",
+    stageName: "Ngozi",
+    gender: "female",
+    age: 29,
+    nationality: "NIGERIAN",
+    board: "MAIN BOARD",
+    bio: "Ngozi styles for campaign and editorial, building looks out of archive and local ateliers rather than the season's press rail.",
+    coverImage: "/images/img6.jpeg",
+    face: "/images/img6.jpeg",
+    images: ["/images/img6.jpeg", "/images/img5.jpeg"],
+    polaroids: [
+      "/images/img6.jpeg",
+      "/images/img5.jpeg",
+      "/images/img4.jpeg",
+      "/images/img11.jpeg",
+      "/images/img30.jpeg",
+      "/images/img34.jpeg",
+    ],
+    alt: "A Candor Creative",
+    talent: "Fashion Stylist",
+    division: "creatives",
+    based: "Lagos, Nigeria",
+    focus: "Campaign · Editorial",
+    since: "2019",
+  },
+  {
+    id: "25",
+    placeholder: true,
+    name: "Emeka Obi",
+    stageName: "Emeka",
+    gender: "male",
+    age: 34,
+    nationality: "NIGERIAN",
+    board: "MAIN BOARD",
+    bio: "Emeka paints and sets, and is booked as much for art direction on a build as for the work that ends up on the wall behind it.",
+    coverImage: "/images/img23.jpeg",
+    face: "/images/img23.jpeg",
+    images: ["/images/img23.jpeg", "/images/img22.jpeg"],
+    polaroids: [
+      "/images/img23.jpeg",
+      "/images/img22.jpeg",
+      "/images/img21.jpeg",
+      "/images/img35.jpeg",
+      "/images/img12.jpeg",
+      "/images/img16.jpeg",
+    ],
+    alt: "A Candor Creative",
+    talent: "Artist",
+    division: "creatives",
+    based: "Lagos, Nigeria",
+    focus: "Set · Art Direction",
+    since: "2015",
   },
 ];

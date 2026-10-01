@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import Image from "next/image";
+import ContrastText from "@/components/ContrastText";
 
 const TITLE = "SELENA FORREST";
 const PROJECT = "MODEL PORTFOLIO";
@@ -12,9 +13,11 @@ const CREDITS =
 // The look itself: a two-frame diptych, one image per panel of the split. The
 // panels keep their red/black fills underneath, so the section reads correctly
 // for the moment before the frames decode.
+// Served from /photos (the model photography) rather than /images, which now
+// holds the public-domain painted portraits — see public/images/CREDITS.md.
 const FRAMES = [
-  { src: "/images/img7.jpeg", tint: "bg-red-500" },
-  { src: "/images/img14.jpeg", tint: "bg-black" },
+  { src: "/photos/img7.jpeg", tint: "bg-red-500" },
+  { src: "/photos/img14.jpeg", tint: "bg-black" },
 ];
 
 // The credits block is sticky, so it descends through the section as it scrolls
@@ -36,6 +39,20 @@ const FADE_RUNWAY = 160; // px of pinned travel left when the fade begins
 
 export default function Look() {
   const rootRef = useRef(null);
+
+  // One ref per panel of the diptych, so the credits can tell which photograph
+  // each of their letters is actually sitting on. The title crosses the seam,
+  // and the two frames are nothing alike — a pale drawing against a near-black
+  // painting — so a single colour for the line cannot serve both halves.
+  //
+  // Held in a single ref rather than an array of useRef(): an array literal is
+  // a new array every render, which makes `sources` new too and re-runs the
+  // sampler's effect on every paint.
+  const panelRefs = useRef(FRAMES.map(() => ({ current: null })));
+  const sources = useMemo(
+    () => FRAMES.map((f, i) => ({ src: f.src, ref: panelRefs.current[i] })),
+    [],
+  );
 
   useEffect(() => {
     const root = rootRef.current;
@@ -180,9 +197,10 @@ export default function Look() {
   return (
     <section className="h-screen" data-look ref={rootRef}>
       <div className="relative h-full flex flex-col md:flex-row min-h-0">
-        {FRAMES.map((frame) => (
+        {FRAMES.map((frame, i) => (
           <div
             key={frame.src}
+            ref={panelRefs.current[i]}
             className={`${frame.tint} relative w-full h-full overflow-hidden`}
           >
             <Image
@@ -221,7 +239,7 @@ export default function Look() {
             the left one. */}
         <div
           data-look-textwrap
-          className="absolute inset-0 z-10 pointer-events-none mix-blend-exclusion text-white p-4 md:p-10 flex items-start justify-center"
+          className="absolute inset-0 z-10 pointer-events-none p-4 md:p-10 flex items-start justify-center"
         >
           <div
             data-look-text
@@ -230,22 +248,30 @@ export default function Look() {
             {/* w-fit group + w-0/min-w-full siblings: only the title sets the
                 group's width, so the rule always matches the name exactly. */}
             <div className="flex w-fit flex-col items-center gap-1.5 md:gap-2">
-              <h1
+              <ContrastText
+                as="h1"
+                sources={sources}
                 data-look-line
                 className="uppercase text-2xl md:text-3xl tracking-wide whitespace-nowrap"
               >
                 {TITLE}
-              </h1>
-              <h4 className="w-0 min-w-full uppercase text-xs tracking-[0.08em] md:text-sm">
+              </ContrastText>
+              <ContrastText
+                as="h4"
+                sources={sources}
+                className="w-0 min-w-full uppercase text-xs tracking-[0.08em] md:text-sm"
+              >
                 {PROJECT}
-              </h4>
+              </ContrastText>
             </div>
-            <p
+            <ContrastText
+              as="p"
+              sources={sources}
               data-look-line
               className="whitespace-nowrap text-xs leading-[1.45] md:text-sm"
             >
               {CREDITS}
-            </p>
+            </ContrastText>
           </div>
         </div>
       </div>

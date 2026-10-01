@@ -1,0 +1,79 @@
+/*
+ * THE RETURN REVEAL — the timing.
+ *
+ * Two layers on one element, deliberately out of step:
+ *
+ *   the SHEET   opacity on the element's own background. Leads. Gone first.
+ *   the BLUR    backdrop-filter on what shows through. Trails. Clears after.
+ *
+ * The whole effect is the gap between them. For a stretch in the middle the
+ * sheet is already transparent while the page underneath is still resolving,
+ * so the page appears to come into focus rather than to fade in. Collapse the
+ * gap and it degrades into an ordinary crossfade.
+ *
+ * The blur therefore runs longer AND starts later. Either alone is not
+ * enough: a longer blur that starts at the same moment still does most of its
+ * work behind the sheet, where none of it can be seen.
+ */
+
+.return-reveal {
+  /* --rr-sheet-*: the background lifting off. Short, and first.
+     260ms is under the sheet feeling like a "loading" screen, over it
+     feeling like a flicker. */
+  --rr-sheet-ms: 260ms;
+  --rr-sheet-delay: 0ms;
+
+  /* --rr-blur-*: the softness resolving. Long, and second.
+     The 120ms delay is what puts the blur behind the sheet. It is less than
+     --rr-sheet-ms on purpose, so the blur is already moving as the sheet
+     finishes and there is no dead beat between the two.
+     760 + 120 = 880ms total; the unmount timeout in ReturnReveal.jsx sits
+     past that at 1250ms. If these change, that changes. */
+  --rr-blur-ms: 760ms;
+  --rr-blur-delay: 120ms;
+
+  /* How soft the page starts. 8px reads as "not yet settled". Past ~14px it
+     stops looking like focus and starts looking like frosted glass. */
+  --rr-blur-px: 8px;
+
+  position: fixed;
+  inset: 0;
+  z-index: 60; /* above Header's menu overlay at z-50, the topmost thing. */
+  pointer-events: none; /* never eats a click, even mid-animation. */
+
+  /* The site's own background, not #fff. On a #fafafa page a pure white
+     sheet is a visible flash of a DIFFERENT colour rather than the page
+     holding still. */
+  background-color: var(--background, #fafafa);
+
+  will-change: opacity, backdrop-filter;
+
+  transition:
+    opacity var(--rr-sheet-ms) cubic-bezier(0.33, 1, 0.68, 1) var(--rr-sheet-delay),
+    backdrop-filter var(--rr-blur-ms) cubic-bezier(0.22, 1, 0.36, 1) var(--rr-blur-delay),
+    -webkit-backdrop-filter var(--rr-blur-ms) cubic-bezier(0.22, 1, 0.36, 1) var(--rr-blur-delay);
+}
+
+/* The first painted frame: sheet fully opaque, page fully soft. */
+.return-reveal[data-phase="cover"] {
+  opacity: 1;
+  backdrop-filter: blur(var(--rr-blur-px));
+  -webkit-backdrop-filter: blur(var(--rr-blur-px));
+}
+
+/* Both layers released on the same commit; the delays in the transition,
+   not two separate triggers, are what stagger them. */
+.return-reveal[data-phase="clear"] {
+  opacity: 0;
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+}
+
+/* A reveal is decoration: the page is identical with and without it. For
+   anyone who has asked not to be moved, there is nothing to degrade to —
+   it simply does not run. */
+@media (prefers-reduced-motion: reduce) {
+  .return-reveal {
+    display: none;
+  }
+}

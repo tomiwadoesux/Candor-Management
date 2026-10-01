@@ -15,18 +15,43 @@ import WhiteLogo from "./white-logo";
 
 gsap.registerPlugin(MorphSVGPlugin);
 
+// Each group heads a division route, and each item deep-links into it. The
+// model boards filter by board; the talent and creative disciplines filter by
+// the job title a record carries (data/models.js `talent`), which is what
+// /talents and /creatives read out of the query string.
+//
+// Every one of these used to be <Link href="/">, so the whole index sent you
+// back to the home page whatever you picked.
 const NAV_GROUPS = [
   {
     title: "Models",
-    items: ["New Faces", "Development", "Established", "Mainboard"],
+    href: "/models",
+    items: [
+      { label: "New Faces", href: "/models?board=newfaces" },
+      { label: "Mainboard", href: "/models?board=mainboard" },
+      { label: "Women", href: "/models?gender=female" },
+      { label: "Men", href: "/models?gender=male" },
+    ],
   },
   {
     title: "Talents",
-    items: ["Actor", "Dancer", "Make Up Artist", "Hair Stylist"],
+    href: "/talents",
+    items: [
+      { label: "Actor", href: "/talents?focus=Actor" },
+      { label: "Dancer", href: "/talents?focus=Dancer" },
+      { label: "Make Up Artist", href: "/talents?focus=Make+Up+Artist" },
+      { label: "Hair Stylist", href: "/talents?focus=Hair+Stylist" },
+    ],
   },
   {
     title: "Creatives",
-    items: ["Fashion Stylist", "Artist", "Photographer", "Creative Director"],
+    href: "/creatives",
+    items: [
+      { label: "Fashion Stylist", href: "/creatives?focus=Fashion+Stylist" },
+      { label: "Artist", href: "/creatives?focus=Artist" },
+      { label: "Photographer", href: "/creatives?focus=Photographer" },
+      { label: "Creative Director", href: "/creatives?focus=Creative+Director" },
+    ],
   },
 ];
 
@@ -238,13 +263,15 @@ const InNav = ({ searchOpen = false }) => {
           <div className="menu-grid">
             {NAV_GROUPS.map((group) => (
               <div key={group.title} className="nav-group">
-                <h3 className="nav-group-title">{group.title}</h3>
+                <h3 className="nav-group-title">
+                  <Link href={group.href}>{group.title}</Link>
+                </h3>
                 <ul className="nav-list">
                   {group.items.map((item) => (
-                    <li key={item} className="nav-item">
-                      <Link href="/">
+                    <li key={item.label} className="nav-item">
+                      <Link href={item.href}>
                         <span className="nav-item-arrow">→</span>
-                        <span className="nav-item-label">{item}</span>
+                        <span className="nav-item-label">{item.label}</span>
                       </Link>
                     </li>
                   ))}

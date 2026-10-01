@@ -1,0 +1,282 @@
+[
+ {
+  "file": "img1.jpeg",
+  "artist": "John Singer Sargent",
+  "title": "Mrs. George Swinton (Elizabeth Ebsworth)",
+  "date": "1897",
+  "w": 850,
+  "h": 1600
+ },
+ {
+  "file": "img2.jpeg",
+  "artist": "Frederic, Lord Leighton",
+  "title": "Lachrymae",
+  "date": "1891",
+  "w": 502,
+  "h": 1600
+ },
+ {
+  "file": "img3.jpeg",
+  "artist": "Julia Margaret Cameron",
+  "title": "Julia Jackson",
+  "date": "1867",
+  "w": 1269,
+  "h": 1600
+ },
+ {
+  "file": "img4.jpeg",
+  "artist": "John Singer Sargent",
+  "title": "Mrs. Charles Gifford Dyer (Mary Anthony)",
+  "date": "1880",
+  "w": 1107,
+  "h": 1600
+ },
+ {
+  "file": "img5.jpeg",
+  "artist": "John Philip Simpson",
+  "title": "The Captive Slave (Ira Aldridge)",
+  "date": "1827",
+  "w": 1270,
+  "h": 1600
+ },
+ {
+  "file": "img6.jpeg",
+  "artist": "Amedeo Modigliani",
+  "title": "Portrait of a Woman",
+  "date": "c. 1917/19",
+  "w": 1286,
+  "h": 1600
+ },
+ {
+  "file": "img7.jpeg",
+  "artist": "Amedeo Modigliani",
+  "title": "Portrait of a Young Woman",
+  "date": "n.d.",
+  "w": 1015,
+  "h": 1600
+ },
+ {
+  "file": "img8.jpeg",
+  "artist": "Amedeo Modigliani",
+  "title": "Jacques and Berthe Lipchitz",
+  "date": "1916",
+  "w": 1067,
+  "h": 1600
+ },
+ {
+  "file": "img9.jpeg",
+  "artist": "Amedeo Modigliani",
+  "title": "Portrait of a Woman",
+  "date": "1910",
+  "w": 1073,
+  "h": 1600
+ },
+ {
+  "file": "img10.jpeg",
+  "artist": "Joseph Blackburn",
+  "title": "Abigail Chesebrough (Mrs. Alexander Grant)",
+  "date": "1754",
+  "w": 1289,
+  "h": 1600
+ },
+ {
+  "file": "img11.jpeg",
+  "artist": "Cecilia Beaux",
+  "title": "Dorothea and Francesca",
+  "date": "1898",
+  "w": 906,
+  "h": 1600
+ },
+ {
+  "file": "img12.jpeg",
+  "artist": "Jules Pascin",
+  "title": "Hermine David",
+  "date": "1907",
+  "w": 1350,
+  "h": 1600
+ },
+ {
+  "file": "img13.jpeg",
+  "artist": "Julia Margaret Cameron",
+  "title": "Anne Thackeray Ritchie",
+  "date": "May 1870",
+  "w": 1318,
+  "h": 1600
+ },
+ {
+  "file": "img14.jpeg",
+  "artist": "John Singleton Copley",
+  "title": "Mrs. Daniel Hubbard (Mary Greene)",
+  "date": "c. 1764",
+  "w": 1268,
+  "h": 1600
+ },
+ {
+  "file": "img15.jpeg",
+  "artist": "Jean Baptiste Camille Corot",
+  "title": "Interrupted Reading",
+  "date": "c. 1870",
+  "w": 1126,
+  "h": 1600
+ },
+ {
+  "file": "img16.jpeg",
+  "artist": "James McNeill Whistler",
+  "title": "Portrait of Dr. William McNeill Whistler",
+  "date": "1871\u201373",
+  "w": 1274,
+  "h": 1600
+ },
+ {
+  "file": "img17.jpeg",
+  "artist": "Rembrandt van Rijn",
+  "title": "Woman with a Pink",
+  "date": "January 29, 1880",
+  "w": 1012,
+  "h": 1600
+ },
+ {
+  "file": "img18.jpeg",
+  "artist": "Walter Shirlaw",
+  "title": "Self-Portrait",
+  "date": "1878",
+  "w": 1225,
+  "h": 1600
+ },
+ {
+  "file": "img19.jpeg",
+  "artist": "Fernand Khnopff",
+  "title": "Hortensia",
+  "date": "1884",
+  "w": 1600,
+  "h": 1289
+ },
+ {
+  "file": "img20.jpeg",
+  "artist": "Henri Regnault",
+  "title": "Salome",
+  "date": "1870",
+  "w": 1000,
+  "h": 1600
+ },
+ {
+  "file": "img21.jpeg",
+  "artist": "Jean-L\u00e9on G\u00e9r\u00f4me",
+  "title": "Bashi-Bazouk",
+  "date": "1868\u201369",
+  "w": 1305,
+  "h": 1600
+ },
+ {
+  "file": "img22.jpeg",
+  "artist": "Edgar Degas",
+  "title": "The Old Italian Woman",
+  "date": "1857",
+  "w": 1303,
+  "h": 1600
+ },
+ {
+  "file": "img23.jpeg",
+  "artist": "Henri Regnault",
+  "title": "Salome",
+  "date": "1865",
+  "w": 1600,
+  "h": 1302
+ },
+ {
+  "file": "img24.jpeg",
+  "artist": "James McNeill Whistler",
+  "title": "Arrangement in Flesh Colour and Black: Portrait of Theodore Duret",
+  "date": "1883",
+  "w": 759,
+  "h": 1600
+ },
+ {
+  "file": "img25.jpeg",
+  "artist": "Auguste Renoir",
+  "title": "Madame Georges Charpentier (Marguerite-Louise Lemonnier, 1848\u20131904) and Her Children, Georgette-Berthe (1872\u20131945) and Paul-Emile-Charles (1875\u20131895)",
+  "date": "1878",
+  "w": 1600,
+  "h": 1302
+ },
+ {
+  "file": "img26.jpeg",
+  "artist": "Gustave Courbet",
+  "title": "Jo, La Belle Irlandaise",
+  "date": "1865\u201366",
+  "w": 1600,
+  "h": 1358
+ },
+ {
+  "file": "img27.jpeg",
+  "artist": "John Singer Sargent",
+  "title": "Egyptian Woman",
+  "date": "1866",
+  "w": 1600,
+  "h": 1076
+ },
+ {
+  "file": "img28.jpeg",
+  "artist": "Edgar Degas",
+  "title": "Dancers Practicing at the Barre",
+  "date": "1877",
+  "w": 1600,
+  "h": 1479
+ },
+ {
+  "file": "img29.jpeg",
+  "artist": "Edgar Degas",
+  "title": "The Dance Class",
+  "date": "1874",
+  "w": 1484,
+  "h": 1600
+ },
+ {
+  "file": "img30.jpeg",
+  "artist": "Edgar Degas",
+  "title": "The Dancing Class",
+  "date": "ca. 1870",
+  "w": 1600,
+  "h": 1195
+ },
+ {
+  "file": "img31.jpeg",
+  "artist": "Jacometto (Jacometto Veneziano)",
+  "title": "Portrait of a Woman, Possibly a Nun of San Secondo; (verso) Scene in Grisaille",
+  "date": "ca. 1485\u201395",
+  "w": 1116,
+  "h": 1600
+ },
+ {
+  "file": "img32.jpeg",
+  "artist": "Edgar Degas",
+  "title": "James-Jacques-Joseph Tissot (1836\u20131902)",
+  "date": "ca. 1867\u201368",
+  "w": 1201,
+  "h": 1600
+ },
+ {
+  "file": "img33.jpeg",
+  "artist": "Edgar Degas",
+  "title": "The Collector of Prints",
+  "date": "1866",
+  "w": 1220,
+  "h": 1600
+ },
+ {
+  "file": "img34.jpeg",
+  "artist": "Gustave Courbet",
+  "title": "Young Ladies of the Village",
+  "date": "1851\u201352",
+  "w": 1600,
+  "h": 1195
+ },
+ {
+  "file": "img35.jpeg",
+  "artist": "Fra Filippo Lippi",
+  "title": "Portrait of a Woman with a Man at a Casement",
+  "date": "ca. 1440",
+  "w": 1060,
+  "h": 1600
+ }
+]

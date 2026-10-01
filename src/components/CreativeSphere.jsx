@@ -31,6 +31,69 @@ const OPEN_EASE = CustomEase.create("candorOpen", "M0,0 C0.32,0.72 0,1 1,1");
  * card on the board selects it, and empty space / Esc closes.
  */
 const DEFAULTS = {
+  // ---- inside the sphere ----
+  // Normally the globe is an object you look AT: the radius is clamped so the
+  // whole shell fits on screen. `inside` turns that around and puts the viewer
+  // within the shell, with the cards wrapping past every edge.
+  //
+  //   false      — off (the default everywhere else on the site)
+  //   "center"   — the eye sits at the sphere's own centre; images completely
+  //                surround you and a drag turns your view rather than the globe
+  //   "shell"    — the eye sits partway out towards the wall, so the far side
+  //                dominates and the near cards arc overhead; the sphere still
+  //                reads as a form you are inside of
+  //
+  // Three things change when it is on, all of them necessary rather than
+  // stylistic: the viewport clamp on the radius is lifted (the shell MUST be
+  // bigger than the screen or you are not inside anything), the near-face
+  // `frontCut` is ignored (it deletes precisely the cards that should be
+  // wrapping around you), and the back-hemisphere depth cues are neutralised
+  // (from inside, every card is roughly equidistant, so shrinking and fading
+  // "the back" just flattens the whole shell).
+  inside: false,
+  // px — the shell's radius when inside. Deliberately NOT clamped to the
+  // viewport; it wants to be comfortably larger than the screen.
+  insideRadius: 900,
+  // "shell" only: how far the eye sits from the centre, as a fraction of the
+  // radius. 0 is the centre, 1 is against the wall.
+  insideEyeFrac: 0.45,
+  // Vertical field of view when inside, degrees. The outside view's 45° is a
+  // telephoto lens: with the eye 0.45R off centre it takes in only the far
+  // ~17% of the shell, a cap across which the eye distance barely varies —
+  // which is a flat grid, whatever the geometry says. A wide lens is what
+  // being inside something looks like: at 90° the visible region is ~40% of
+  // the shell and near cards come out ~2.4x the far ones.
+  insideFov: 90,
+  // Draw the shell itself as a faint graticule (latitude / longitude lines)
+  // just outside the cards. If the wall is a sphere, show the sphere.
+  insideGrid: true,
+  insideGridOpacity: 0.14,
+  insideGridColor: 0x0c0c0c,
+  // Light the wall. Outside, the cards are unlit (MeshBasicMaterial) and read
+  // at full strength wherever they are, which is right for a globe you look
+  // at. Inside, that makes every card the same flat brightness and the wall
+  // reads as packed — nothing separates near from far. So inside the cards
+  // take a lit material and a point light sits at the eye: its falloff does
+  // the shading, near cards bright and the far wall dimmer, which is the
+  // tonal depth a real enclosed space has. A soft ambient keeps the far side
+  // from going black.
+  insideLight: true,
+  insideAmbient: 0.32,
+  // Point light strength as a multiple of the radius (linear falloff, so this
+  // is the brightness at exactly one radius from the light). 1 radius → ~0.55
+  // from the light plus the ambient; the near rim runs brighter, the far pole
+  // sits around 0.7 total.
+  insideLightGain: 0.55,
+  // The light sits this far above the eye, as a fraction of the radius, so the
+  // wall also grades gently top to bottom rather than only near to far.
+  insideLightUp: 0.3,
+  // How far each card lies down onto the wall. 0 = billboard (every card
+  // square to the camera, floating in front of the shell); 1 = flat against
+  // the wall, its face towards the centre. In between is a blend of the two
+  // orientations. On the wall the cards take the sphere's shape — the ones at
+  // the edge of view lean away, and the lamp shades each one by its angle —
+  // but fully flat they can read as raked clutter, so this is a dial.
+  insideConform: 0.7,
   radius: 330, // px — sphere radius on screen (clamped to the viewport)
   // px kept between the rim cards and the viewport edge when the radius is
   // clamped. The vertical inset also keeps the globe clear of the caption.
@@ -144,6 +207,39 @@ const DEFAULTS = {
   introStagger: 0.035,
 };
 
+// A unit-sphere graticule as line segments: `lat` latitude rings (the poles
+// excluded — they are points) and `lon` full great circles through the poles,
+// which is 2×lon meridians. Built once; scaled to the radius in layoutAll.
+function graticuleGeometry(lat = 11, lon = 12, seg = 96) {
+  const pts = [];
+  const TAU = Math.PI * 2;
+  for (let i = 1; i <= lat; i++) {
+    const phi = (i / (lat + 1)) * Math.PI;
+    const y = Math.cos(phi);
+    const r = Math.sin(phi);
+    for (let j = 0; j < seg; j++) {
+      const a0 = (j / seg) * TAU;
+      const a1 = ((j + 1) / seg) * TAU;
+      pts.push(r * Math.cos(a0), y, r * Math.sin(a0));
+      pts.push(r * Math.cos(a1), y, r * Math.sin(a1));
+    }
+  }
+  for (let i = 0; i < lon; i++) {
+    const t = (i / lon) * Math.PI;
+    const ct = Math.cos(t);
+    const st = Math.sin(t);
+    for (let j = 0; j < seg; j++) {
+      const a0 = (j / seg) * TAU;
+      const a1 = ((j + 1) / seg) * TAU;
+      pts.push(Math.sin(a0) * ct, Math.cos(a0), Math.sin(a0) * st);
+      pts.push(Math.sin(a1) * ct, Math.cos(a1), Math.sin(a1) * st);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
+  return g;
+}
+
 function fibonacciPoint(i, n) {
   const step = 2 / n;
   const y = i * step - 1 + step / 2;
@@ -226,7 +322,20 @@ export default function CreativeSphere({
     let H = container.clientHeight || 1;
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(45, W / H, 1, 5000);
+    // Inside the shell the nearest cards pass very close to the eye, so the
+    // near plane has to come in or they clip through it. The camera stays at
+    // z = 1000 in both modes: pxToWorld() is derived from that distance, so
+    // moving it would rescale every px-denominated size on the page. What
+    // changes instead is where the SHELL sits relative to it — see basePos.
+    // Inside: a wide lens (see insideFov), and a far plane pushed well out —
+    // the wide lens makes world units per px larger, so the far wall lands
+    // several thousand units past the camera and 5000 would clip it.
+    const camera = new THREE.PerspectiveCamera(
+      cfg.inside ? cfg.insideFov : 45,
+      W / H,
+      cfg.inside ? 0.1 : 1,
+      cfg.inside ? 40000 : 5000
+    );
     camera.position.z = 1000;
     if (cfg.fogDepth > 0) scene.fog = new THREE.Fog(cfg.fogColor, 1, 2);
 
@@ -244,6 +353,45 @@ export default function CreativeSphere({
 
     const group = new THREE.Group();
     scene.add(group);
+    // Inside the shell the group is slid down the z axis so the viewer's own
+    // position lands on the camera. Recomputed on resize, since the radius
+    // (and so the eye offset) tracks the viewport.
+    const placeGroup = () => {
+      group.position.z = cfg.inside ? camera.position.z - eyeOffset() : 0;
+    };
+
+    // The shell drawn as lines, so the wall reads as a sphere rather than as a
+    // scatter of cards in space. Lives in the group, so it turns with them;
+    // scaled to the radius in layoutAll. Sits a hair OUTSIDE the cards'
+    // radius — from inside, further away means behind them.
+    // The lights, inside only. The point light is placed and its strength set
+    // in layoutAll, since both track the radius.
+    let ambient = null;
+    let lamp = null;
+    if (cfg.inside && cfg.insideLight) {
+      ambient = new THREE.AmbientLight(0xffffff, cfg.insideAmbient);
+      // decay 1: linear falloff. The physically-correct inverse square is far
+      // too steep across a shell whose near and far walls differ ~3x in
+      // distance — it blows the rim out to get the far pole lit at all.
+      lamp = new THREE.PointLight(0xffffff, 1, 0, 1);
+      scene.add(ambient, lamp);
+    }
+
+    let grid = null;
+    if (cfg.inside && cfg.insideGrid) {
+      grid = new THREE.LineSegments(
+        graticuleGeometry(),
+        new THREE.LineBasicMaterial({
+          color: cfg.insideGridColor,
+          transparent: true,
+          opacity: cfg.insideGridOpacity,
+          // Never occlude a card, and keep the lines out of the depth buffer
+          // so the billboards in front of them composite cleanly.
+          depthWrite: false,
+        })
+      );
+      group.add(grid);
+    }
 
     // The frosted sheet sits over the canvas and the open card is mirrored
     // into a DOM <img> above it, so the sphere blurs while the card stays
@@ -285,6 +433,14 @@ export default function CreativeSphere({
     const isMobile = () => W <= 640;
     const planeSizePx = () => (isMobile() ? cfg.mobilePlaneSize : cfg.planeSize);
     const radiusPx = () => {
+      // Inside the shell the clamp is exactly the wrong instinct: fitting the
+      // sphere on screen is what keeps you outside it. Take the configured
+      // radius as given, with a floor of half the viewport diagonal so the
+      // wall can never fall inside the frame however the window is resized.
+      if (cfg.inside) {
+        const minR = Math.hypot(W, H) / 2;
+        return Math.max(minR, cfg.insideRadius);
+      }
       // keep rim cards inside the viewport, leaving room for title / caption
       const available = Math.min(
         W / 2 - cfg.radiusInsetX,
@@ -293,6 +449,20 @@ export default function CreativeSphere({
       const maxR = available - planeSizePx() / 2;
       return Math.max(80, Math.min(cfg.radius, maxR));
     };
+    // Where the eye sits along the sphere's z axis, in world units. The camera
+    // itself never moves (pxToWorld depends on its distance), so the shell is
+    // pushed towards it instead: the group is offset so that the point the
+    // viewer occupies ends up at the camera. 0 when not inside.
+    const eyeOffset = () => {
+      if (!cfg.inside) return 0;
+      const R = pxToWorld(radiusPx());
+      // "center": the eye is the sphere's centre. "shell": it sits a fraction
+      // of the way out towards the far wall, so more of the shell is in front.
+      return cfg.inside === "shell" ? R * cfg.insideEyeFrac : 0;
+    };
+    // Safe to call from here down: placeGroup() reads eyeOffset() at call
+    // time, and both it and radiusPx / pxToWorld are now defined.
+    placeGroup();
 
     // ---------- cards ----------
     const loader = new THREE.TextureLoader();
@@ -300,10 +470,20 @@ export default function CreativeSphere({
     const maxAniso = renderer.capabilities.getMaxAnisotropy();
 
     const cards = items.map((item, i) => {
-      const material = new THREE.MeshBasicMaterial({
+      // Lit inside (see insideLight), unlit everywhere else — Basic ignores
+      // the scene's lights entirely, so the outside routes are unaffected by
+      // them existing.
+      const Material =
+        cfg.inside && cfg.insideLight
+          ? THREE.MeshLambertMaterial
+          : THREE.MeshBasicMaterial;
+      const material = new Material({
         transparent: true,
         opacity: 0,
         color: 0xffffff,
+        // Double-sided so a card can never go invisible (or stop taking
+        // clicks — the raycaster honours `side`) whichever way it faces.
+        side: THREE.DoubleSide,
       });
       const mesh = new THREE.Mesh(geometry, material);
       mesh.visible = false;
@@ -353,13 +533,38 @@ export default function CreativeSphere({
     const meshes = cards.map((c) => c.mesh);
 
     const layoutCard = (c) => {
-      const s = pxToWorld(planeSizePx());
+      let s = pxToWorld(planeSizePx());
+      // pxToWorld sizes a card as though it sat at z = 0 — one camera-length
+      // away. That is true of the sphere seen from outside, whose centre is
+      // exactly there. From INSIDE, the wall you are looking at is a further
+      // radius away, so perspective shrinks every card by cameraZ/(cameraZ+R)
+      // — better than half at the radii this mode uses, which is why cards
+      // that ought to fill the view arrive looking like stamps. Scale up by
+      // the reciprocal so planeSize keeps meaning what it says on the wall in
+      // front of you.
+      if (cfg.inside) {
+        const R = pxToWorld(radiusPx());
+        const eye = eyeOffset();
+        // Distance from the eye to the far wall along the view axis.
+        const far = camera.position.z + (R - eye);
+        s *= far / camera.position.z;
+      }
       const a = c.aspect || 1;
       c.baseScale.set(a >= 1 ? s : s * a, a >= 1 ? s / a : s);
     };
     const dir = new THREE.Vector3();
     const layoutAll = () => {
       const R = pxToWorld(radiusPx());
+      if (grid) grid.scale.setScalar(R * 1.02);
+      if (lamp) {
+        // At the eye (the camera), lifted a little so the wall grades top to
+        // bottom as well as near to far. Scene space, not group space — the
+        // eye does not turn with the shell.
+        lamp.position.set(0, R * cfg.insideLightUp, camera.position.z);
+        // Linear falloff: brightness at distance d is intensity / d, so this
+        // is exactly insideLightGain at one radius out.
+        lamp.intensity = R * cfg.insideLightGain;
+      }
       if (scene.fog) {
         // starts at the centre plane so the front half (and the open-state
         // board at z = 0) stays clean; only the inside recedes into the haze
@@ -414,6 +619,15 @@ export default function CreativeSphere({
     const turnTo = new THREE.Quaternion();
     const turnAxis = new THREE.Vector3();
     const turn = { t: 1, on: false };
+    // Scratch for the inside mode's on-the-wall orientation. Built with a
+    // lookAt rather than setFromUnitVectors so every card keeps a consistent
+    // "up" — the minimal rotation leaves cards rolled arbitrarily about their
+    // own normal, which reads as a mess.
+    const ORIGIN = new THREE.Vector3();
+    const UP = new THREE.Vector3(0, 1, 0);
+    const UP_ALT = new THREE.Vector3(0, 0, 1); // for cards at the poles
+    const wallM = new THREE.Matrix4();
+    const wallQ = new THREE.Quaternion();
 
     // ---------- interaction ----------
     const raycaster = new THREE.Raycaster();
@@ -438,6 +652,10 @@ export default function CreativeSphere({
       return null;
     };
     const insideSphere = (clientX, clientY) => {
+      // From within the shell the sphere is not a disc on screen — it is
+      // everywhere. A circle test would either cover the whole viewport or,
+      // worse, cut a hole in the middle of it.
+      if (cfg.inside) return true;
       const rect = canvas.getBoundingClientRect();
       const dx = clientX - (rect.left + rect.width / 2);
       const dy = clientY - (rect.top + rect.height / 2);
@@ -742,7 +960,36 @@ export default function CreativeSphere({
       });
       openCard(c);
     };
-    if (apiRef) apiRef.current = { show: showCard };
+    // Scratch for the heading read below — allocated once, not per call.
+    const headingV = new THREE.Vector3();
+    const headingInv = new THREE.Quaternion();
+
+    if (apiRef)
+      apiRef.current = {
+        show: showCard,
+        // Where the viewer is looking, in the SPHERE's own frame — a unit
+        // vector, so a minimap can plot it against the cards' basePos
+        // directions without knowing anything about the rotation model.
+        //
+        // The group carries the rotation, so the camera's fixed -z view axis
+        // has to be pushed back through the inverse to say which part of the
+        // shell is currently in front of you.
+        heading: () => {
+          headingInv.copy(q).invert();
+          // The camera looks down -z, so the wall in front of you is the -z
+          // side of the shell — not +z, which is the pole behind your head.
+          headingV.set(0, 0, -1).applyQuaternion(headingInv);
+          return { x: headingV.x, y: headingV.y, z: headingV.z };
+        },
+        // The cards' resting directions on the shell (unit vectors, sphere
+        // frame) plus whether each one has its texture yet. Static once
+        // loaded, so a minimap can read it a single time.
+        points: () =>
+          cards.map((c) => {
+            const v = c.basePos.clone().normalize();
+            return { x: v.x, y: v.y, z: v.z, loaded: c.loaded };
+          }),
+      };
 
     // ---------- resize ----------
     const resize = () => {
@@ -751,6 +998,9 @@ export default function CreativeSphere({
       camera.aspect = W / H;
       camera.updateProjectionMatrix();
       renderer.setSize(W, H, false);
+      // Inside the shell the radius tracks the viewport diagonal, so the eye
+      // offset moves with it and the group has to be re-placed.
+      placeGroup();
       layoutAll();
       if (expandedCard) {
         if (boardOpen) computeGrid();
@@ -1222,14 +1472,36 @@ export default function CreativeSphere({
 
       for (const c of cards) {
         if (!c.loaded) continue;
-        c.mesh.quaternion.copy(invQ); // billboard
+        // Billboard: the card turns to face the camera square-on. Outside
+        // that is the whole story. Inside, it is blended towards lying flat on
+        // the wall (see insideConform) — and only while the card is on the
+        // sphere: an open or boarded card faces the camera fully, whatever the
+        // dial says.
+        c.mesh.quaternion.copy(invQ);
+        if (cfg.inside && cfg.insideConform > 0) {
+          const k = cfg.insideConform * clamp01(1 - c.expand - c.grid);
+          if (k > 0.0005) {
+            // Matrix4.lookAt(eye, target, up) points the frame's +z from
+            // target towards eye; eye at the origin and target on the shell
+            // gives +z pointing INWARD, which is the face we want turned to
+            // the room. Swap the up vector near the poles, where it would be
+            // parallel to the view direction and the frame would collapse.
+            const nearPole = Math.abs(c.basePos.y) > 0.999 * c.basePos.length();
+            wallM.lookAt(ORIGIN, c.basePos, nearPole ? UP_ALT : UP);
+            wallQ.setFromRotationMatrix(wallM);
+            c.mesh.quaternion.slerp(wallQ, k);
+          }
+        }
 
         const introS = 0.6 + 0.4 * c.intro;
 
         // --- sphere state: depth + centre lens ---
         worldPos.copy(c.basePos).applyQuaternion(q);
         const depth = clamp01((worldPos.z / R + 1) / 2); // 0 back .. 1 front
-        const front = clamp01((depth - 0.5) * 2); // front hemisphere only
+        // Front hemisphere only — from outside. From inside the wall you look
+        // at IS the back hemisphere (the camera faces -z), and gating on this
+        // would switch the pointer lens off for every card you can see.
+        const front = cfg.inside ? 1 : clamp01((depth - 0.5) * 2);
         screenV.copy(worldPos).project(camera);
         const sx = (screenV.x + 1) * 0.5 * W;
         const sy = (1 - screenV.y) * 0.5 * H;
@@ -1245,16 +1517,26 @@ export default function CreativeSphere({
           const target = smoothstep(clamp01(1 - v)) * front;
           c.cursorT += (target - c.cursorT) * cfg.cursorRise;
         }
-        const ds =
-          lerp(cfg.depthScaleBack, 1, depth) *
-          (1 + cfg.lensBoost * lensT + cfg.cursorBoost * c.cursorT);
-        let dOpacity = lerp(cfg.depthFadeBack, 1, depth);
+        // From inside, "the back of the sphere" is not a thing the viewer can
+        // see past — every card is roughly a radius away, and the perspective
+        // camera is already doing the depth work. Shrinking and fading by
+        // `depth` on top of that just flattens the wall, so both cues are held
+        // at full strength and only the lenses remain.
+        const ds = cfg.inside
+          ? 1 + cfg.lensBoost * lensT + cfg.cursorBoost * c.cursorT
+          : lerp(cfg.depthScaleBack, 1, depth) *
+            (1 + cfg.lensBoost * lensT + cfg.cursorBoost * c.cursorT);
+        let dOpacity = cfg.inside ? 1 : lerp(cfg.depthFadeBack, 1, depth);
         // Clear the near face: a card dissolves as it swings towards the
         // camera so the inside of the shell is what you actually look at.
         // The cut is on `depth` alone, not on screen position, so the rim —
         // where cards are edge-on at depth ~0.5 — keeps its ring intact and
         // the near cards simply melt away as they rotate through it.
-        if (cfg.frontCut > 0) {
+        //
+        // Skipped entirely when inside: the "near face" is the part of the
+        // wall behind your shoulder, and cutting it away removes exactly the
+        // cards that should be wrapping around you.
+        if (cfg.frontCut > 0 && !cfg.inside) {
           const t = smoothstep(
             clamp01(
               (depth - cfg.frontCutStart) /
@@ -1408,6 +1690,12 @@ export default function CreativeSphere({
       geometry.dispose();
       renderer.dispose();
       if (apiRef?.current) apiRef.current = null;
+      if (grid) {
+        group.remove(grid);
+        grid.geometry.dispose();
+        grid.material.dispose();
+      }
+      if (lamp) scene.remove(ambient, lamp);
       veilEl.remove();
       cardEl.remove();
       if (canvas.parentNode === container) container.removeChild(canvas);

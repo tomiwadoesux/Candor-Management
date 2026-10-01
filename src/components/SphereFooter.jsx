@@ -44,12 +44,8 @@ export default function SphereFooter() {
       data-sphere-footer
       className="relative h-screen w-full overflow-hidden bg-white text-black"
     >
-      {/* Standalone, the canvas takes touch-action: none so a drag anywhere on
-          it turns the globe. As a section of a scrolling page that would trap
-          a touch scroll with no way back up, so vertical panning is handed
-          back to the page and the drag keeps the axis it actually spins on.
-          The renderer writes that value inline, so this has to outrank it. */}
-      <style>{`[data-sphere-footer] canvas { touch-action: pan-y !important; }`}</style>
+      {/* The canvas touch-action rule lives in styles/globals.css — see the
+          [data-sphere-footer] canvas block there for why. */}
       {mounted && <Sphere2 embedded />}
     </section>
   );
