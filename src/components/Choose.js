@@ -11,7 +11,7 @@ import { agency, joinMailto, contactMailto } from "../../data/agency";
 // the contact details read as the same set of controls in both places. Those
 // are module-local there, so they are restated here rather than exported —
 // keeping the footer's own markup untouched.
-const TOPIC = "text-[12px] font-bold uppercase tracking-[0.02em]";
+const TOPIC = "font-display text-[11px] lowercase tracking-[0.02em]";
 
 // The gap down the middle, between the two cards.
 const GUTTER = "2rem";

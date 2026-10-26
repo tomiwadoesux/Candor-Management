@@ -73,6 +73,9 @@ export default function ContrastText({
   sources,
   measureRef,
   fallback = "#ffffff",
+  // Optional page color for letters outside every photo, e.g. /001's white
+  // gutters. Omitted callers retain their existing edge-sampling behavior.
+  outsideColor,
   className = "",
   as: Tag = "span",
   ...rest
@@ -172,7 +175,11 @@ export default function ContrastText({
       // same handful of rects for every glyph.
       const boxes = panels.map((p, i) => {
         const el = p.ref?.current || fallbackBox;
-        return { rect: el?.getBoundingClientRect(), map: map[i] };
+        return {
+          rect: el?.getBoundingClientRect(),
+          map: map[i],
+          objectPosition: p.objectPosition,
+        };
       });
 
       for (const o of offsets) {
@@ -200,6 +207,11 @@ export default function ContrastText({
             cy >= rect.top &&
             cy <= rect.bottom,
         );
+        if (!hit && outsideColor) {
+          el.style.color = outsideColor;
+          el.style.textShadow = "none";
+          continue;
+        }
         if (!hit) hit = boxes[0];
         if (!hit?.rect || !hit.rect.width || !hit.rect.height) continue;
 
@@ -213,6 +225,7 @@ export default function ContrastText({
           r.width / rect.width,
           r.height / rect.height,
           rect.width / rect.height,
+          hit.objectPosition,
         );
 
         const verdict = decide(luma);
@@ -271,7 +284,7 @@ export default function ContrastText({
       if (queued) cancelAnimationFrame(queued);
       window.removeEventListener("scroll", schedule);
     };
-  }, [map, measureRef, chars, panels]);
+  }, [map, measureRef, chars, panels, outsideColor]);
 
   return (
     <Tag ref={hostRef} className={className} style={{ color: fallback }} {...rest}>

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import MorphGallery from "./MorphGallery";
+import { LAYOUTS } from "@/lib/packRows";
 
 /**
  * /grid — Selected Work.
@@ -21,8 +22,24 @@ import MorphGallery from "./MorphGallery";
 // The data stores both systems ("175 cm / 5'9\""); show only the metric half.
 const metric = (v) => (v ? String(v).split("/")[0].trim() : "");
 
+// The two board shapes on offer, in the order the switch shows them. The
+// first is the default.
+const BOARD_OPTIONS = [
+  { key: "threes", label: "3-up" },
+  { key: "pairs", label: "2-up" },
+];
+
 export default function CaseGrid({ items }) {
   const [active, setActive] = useState(null);
+  const [board, setBoard] = useState(BOARD_OPTIONS[0].key);
+  // The board only fades in when it replaces another one, never on load.
+  const [swapped, setSwapped] = useState(false);
+
+  const chooseBoard = (key) => {
+    if (key === board) return;
+    setBoard(key);
+    setSwapped(true);
+  };
 
   // Memoised because MorphGallery re-binds its scroll listeners whenever the
   // item list identity changes — without this, opening the modal (a state
@@ -51,14 +68,44 @@ export default function CaseGrid({ items }) {
           <span className="text-sm font-semibold uppercase tracking-[0.18em]">
             Candor
           </span>
-          <nav className="flex gap-6 text-xs uppercase tracking-[0.14em] text-[#0c0c0c]/60">
-            <Link href="/models" className="hover:text-[#0c0c0c]">
-              Models
-            </Link>
-            <Link href="/" className="hover:text-[#0c0c0c]">
-              Index
-            </Link>
-          </nav>
+          <div className="flex items-center gap-5 md:gap-10">
+            <div
+              role="radiogroup"
+              aria-label="Grid layout"
+              className="flex items-center gap-2 text-xs uppercase tracking-[0.14em]"
+            >
+              {BOARD_OPTIONS.map(({ key, label }, i) => (
+                <span key={key} className="flex items-center gap-2">
+                  {i > 0 && (
+                    <span aria-hidden className="text-[#0c0c0c]/25">
+                      /
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={board === key}
+                    onClick={() => chooseBoard(key)}
+                    className={`cursor-pointer transition-colors duration-200 ${
+                      board === key
+                        ? "text-[#0c0c0c]"
+                        : "text-[#0c0c0c]/35 hover:text-[#0c0c0c]/70"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                </span>
+              ))}
+            </div>
+            <nav className="flex gap-4 text-xs uppercase tracking-[0.14em] text-[#0c0c0c]/60 md:gap-6">
+              <Link href="/models" className="hover:text-[#0c0c0c]">
+                Models
+              </Link>
+              <Link href="/" className="hover:text-[#0c0c0c]">
+                Index
+              </Link>
+            </nav>
+          </div>
         </div>
       </div>
 
@@ -75,10 +122,16 @@ export default function CaseGrid({ items }) {
         </h2>
       </header>
 
+      {/* Keyed by shape so a switch mounts a fresh board — its scroll
+          bindings and entrance state start over for the new rows. */}
       <MorphGallery
+        key={board}
         items={tiles}
+        layout={LAYOUTS[board]}
         onSelect={setActive}
-        className="px-6 pb-48 md:px-10"
+        className={`px-6 pb-48 md:px-10 ${
+          board === "pairs" ? "morph-board--pairs" : ""
+        } ${swapped ? "morph-board--swap" : ""}`}
       />
 
       <CaseModal item={active} onClose={() => setActive(null)} />

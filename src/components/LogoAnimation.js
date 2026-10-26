@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { gsap } from "gsap";
-import { MotionPathPlugin } from "gsap/MotionPathPlugin";
 
 // The CANDOR wordmark as an SVG. The ® rides out and morphs into a dot as you
 // scroll toward the pinned editorial credits — a demarcation between CANDOR and
@@ -35,9 +33,19 @@ export default function LogoAnimation({
 
     // MorphSVGPlugin touches `document` at module load, so it can't be imported
     // at the top level (it would break SSR). Load it (and ScrollTrigger) lazily,
-    // client-side only, then wire up the scrubbed timeline.
+    // client-side only, then wire up the scrubbed timeline. gsap itself comes
+    // in here too, not at the top: most pages render this with animate={false},
+    // and a static import would ship the whole library to every one of them
+    // just to draw a still wordmark.
     (async () => {
-      const [{ MorphSVGPlugin }, { ScrollTrigger }] = await Promise.all([
+      const [
+        { gsap },
+        { MotionPathPlugin },
+        { MorphSVGPlugin },
+        { ScrollTrigger },
+      ] = await Promise.all([
+        import("gsap"),
+        import("gsap/MotionPathPlugin"),
         import("gsap/MorphSVGPlugin"),
         import("gsap/ScrollTrigger"),
       ]);

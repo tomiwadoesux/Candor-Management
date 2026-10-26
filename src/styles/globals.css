@@ -3,6 +3,15 @@
 @import url("https://fonts.bunny.net/css2?family=inter:wght@300;400;500;600;700&display=swap");
 @import "tailwindcss";
 
+/* Geist Medium, from vercel/geist-font 1.4.2; license in /fonts/Geist-OFL.txt. */
+@font-face {
+  font-family: "Geist";
+  src: url("/fonts/Geist-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
 @font-face {
   font-family: "Arno Pro";
   src: url("/fonts/arnopro-regular.woff2") format("woff2");
@@ -28,13 +37,14 @@
   color-scheme: light;
   --background: #fafafa;
   --foreground: #0c0c0c;
-  /* One sans across the site: Inter. Only --font-h1 (the display face)
-     differs. Arno is a single Regular cut subset to Latin: no bold and no
-     italic, so anything under it asking for either gets the browser's
-     synthetic version. */
+  /* Inter for body and interface text; Geist for H4 headings.
+     Arno is a single Regular cut subset to Latin: no bold and no italic,
+     so anything under it asking for either gets the browser's synthetic
+     version. */
   --font-body: "Inter", Arial, sans-serif;
   --font-header: "Inter", Arial, sans-serif;
   --font-h1: "Arno Pro", "Bitter", serif;
+  --font-h4: "Geist", Arial, sans-serif;
   --font-sub: "Inter", Arial, sans-serif;
 }
 
@@ -73,6 +83,10 @@ h5 {
   font-family: var(--font-sub);
   font-weight: 500;
   margin: 0;
+}
+
+h4 {
+  font-family: var(--font-h4);
 }
 
 h6,

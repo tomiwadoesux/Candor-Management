@@ -1,0 +1,268 @@
+/* The agency pages — /about, /contact, /privacy.
+ *
+ * One dark ground for all three. They are the pages that speak for Candor
+ * itself rather than for someone on the board, and they share a voice: Arno at
+ * poster scale over near-black, Inter set small and quiet underneath, nothing
+ * between them but space and hairlines.
+ *
+ * Everything here hangs off `.agency`, so the rules cannot leak onto the light
+ * pages, and the whole palette is the six tokens below — flipping these pages
+ * to the site's light ground is a token change, not a rewrite.
+ *
+ * CASCADE: this file is deliberately unlayered, like globals.css's element
+ * rules. That is what lets `.ag-body` beat globals' `p { font-weight: 500 }`
+ * and `.ag-display` beat its `h1 { line-height: 1 }`. The cost is that a
+ * Tailwind utility (layered) can NOT override a property one of these classes
+ * sets — put a different colour or size on an `.ag-*` element inline, or with
+ * another class here, not with `text-…`.
+ */
+
+.agency {
+  --ag-ground: #0c0c0c; /* the site's own ink, used as the page */
+  --ag-ink: #f2efe9; /* warm paper white — pure white glares at this size */
+  --ag-mute: rgb(242 239 233 / 0.58); /* body copy: 5.9:1 on the ground */
+  --ag-faint: rgb(242 239 233 / 0.34); /* captions and numerals only */
+  --ag-rule: rgb(242 239 233 / 0.14);
+  --ag-accent: #00749e; /* the brand blue — as a fill; too dark for text here */
+  --ag-accent-ink: #5ab8dc; /* the same blue lifted until it reads on black */
+
+  /* The intro's --ease-out (styles/candor-intro.css): fast away, long settle.
+     Every move on these pages uses it, so they arrive the way the home page
+     does. */
+  --ag-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  background: var(--ag-ground);
+  color: var(--ag-ink);
+  min-height: 100vh;
+  /* The fixed search/menu island sits 20px off the bottom and is ~46px tall;
+     this keeps the last line of every page clear of it. */
+  padding-bottom: 104px;
+}
+
+.agency ::selection {
+  background: var(--ag-ink);
+  color: var(--ag-ground);
+}
+
+/* The island is black on a black page. A hairline puts its edge back. */
+.agency [data-bottombar] {
+  box-shadow: 0 0 0 1px rgb(242 239 233 / 0.16);
+}
+
+/* ------------------------------------------------------------------ type -- */
+
+/* Arno is a single Regular cut: size and space do the work weight would do
+   elsewhere, so the steps between these are big on purpose. */
+.ag-display {
+  font-family: var(--font-h1);
+  font-weight: 400;
+  letter-spacing: -0.018em;
+  line-height: 0.86;
+  text-wrap: balance;
+}
+
+.ag-xl {
+  font-size: clamp(64px, 15.5vw, 300px);
+}
+
+.ag-l {
+  font-size: clamp(44px, 8.4vw, 152px);
+  line-height: 0.9;
+}
+
+.ag-m {
+  font-size: clamp(30px, 4.3vw, 72px);
+  line-height: 0.96;
+  letter-spacing: -0.01em;
+}
+
+.ag-s {
+  font-size: clamp(22px, 2.2vw, 34px);
+  line-height: 1.08;
+  letter-spacing: -0.005em;
+}
+
+/* Small caps-height labels in Inter: the eyebrow above a block, the column
+   head in a table. */
+.ag-label {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ag-mute);
+}
+
+/* p is weight 500 site-wide (globals.css); running copy on a dark ground
+   reads heavy at that, so these step back to 400. */
+.ag-body {
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.62;
+  color: var(--ag-mute);
+  max-width: 62ch;
+}
+
+.ag-body strong,
+.ag-body b {
+  color: var(--ag-ink);
+  font-weight: 500;
+}
+
+.ag-body a,
+.ag-link {
+  color: var(--ag-ink);
+  text-decoration: underline;
+  text-decoration-color: rgb(242 239 233 / 0.35);
+  text-underline-offset: 0.18em;
+  text-decoration-thickness: 1px;
+  transition: text-decoration-color 200ms var(--ag-ease);
+}
+
+.ag-body a:hover,
+.ag-link:hover {
+  text-decoration-color: currentColor;
+}
+
+.ag-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.ag-rule {
+  border-top: 1px solid var(--ag-rule);
+}
+
+.agency :focus-visible {
+  outline: 1px solid var(--ag-ink);
+  outline-offset: 3px;
+}
+
+/* ---------------------------------------------------------------- motion -- */
+
+/* The headline rises into place a word at a time, each word out of its own
+   mask. Pure CSS and on first paint — there is no observer to wait for, so a
+   slow script can never leave a page's title missing.
+
+   The mask is padded below and pulled back by the same amount so descenders
+   are not clipped while the word is still climbing. */
+.ag-rise .w {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding-bottom: 0.1em;
+  margin-bottom: -0.1em;
+}
+
+.ag-rise .w > span {
+  display: inline-block;
+  animation: ag-rise 1150ms var(--ag-ease) both;
+  animation-delay: calc(var(--i, 0) * 75ms + var(--d, 0ms));
+}
+
+@keyframes ag-rise {
+  from {
+    transform: translateY(108%);
+  }
+}
+
+/* Below the fold, blocks settle in as they cross into view — tied to scroll
+   position by the browser itself rather than by a script. Where scroll-driven
+   animations are not supported the rule is simply absent and everything is
+   just there, which is the correct resting state anyway. */
+@supports (animation-timeline: view()) {
+  .ag-in {
+    animation: ag-in linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 55%;
+  }
+
+  @keyframes ag-in {
+    from {
+      opacity: 0;
+      transform: translateY(28px);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ag-rise .w > span,
+  .ag-in {
+    animation: none !important;
+  }
+}
+
+/* ------------------------------------------------------------ divisions -- */
+
+/* The board rows on /about. The label slides a step right on hover and a
+   portrait opens in the slot beside it, wiped down from the top — the reveal
+   is a clip, so the row's layout never moves. */
+.ag-div-label {
+  display: inline-block;
+  transition: transform 700ms var(--ag-ease);
+}
+
+.ag-div:hover .ag-div-label,
+.ag-div:focus-visible .ag-div-label {
+  transform: translateX(0.12em);
+}
+
+.ag-div-img {
+  clip-path: inset(0 0 100% 0);
+  transition: clip-path 700ms var(--ag-ease);
+}
+
+.ag-div:hover .ag-div-img,
+.ag-div:focus-visible .ag-div-img {
+  clip-path: inset(0 0 0 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ag-div-label,
+  .ag-div-img {
+    transition: none;
+  }
+}
+
+/* ---------------------------------------------------------- live status -- */
+
+/* The open/closed dot beside an office's clock. Open breathes, slowly — it is
+   the only thing on these pages that moves on its own, so it stays calm. */
+.ag-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ag-faint);
+  flex-shrink: 0;
+}
+
+.ag-dot[data-open="true"] {
+  background: var(--ag-accent-ink);
+  animation: ag-breathe 2.8s ease-in-out infinite;
+}
+
+@keyframes ag-breathe {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* The clock's colon ticks with the seconds. */
+.ag-colon {
+  animation: ag-tick 1s steps(1, end) infinite;
+}
+
+@keyframes ag-tick {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ag-dot[data-open="true"],
+  .ag-colon {
+    animation: none;
+  }
+}

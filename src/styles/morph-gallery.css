@@ -28,6 +28,12 @@
   gap: var(--gap);
 }
 
+/* A row whose tiles share their bottom line instead (the pairs layout puts
+   the small picture down here every other row). */
+.morph-row[data-align="end"] {
+  align-items: flex-end;
+}
+
 .morph-tile {
   width: calc(var(--share) * (100% - var(--gap) * var(--gaps)));
   flex: none;
@@ -44,11 +50,27 @@
 }
 
 /* The scaled layer sits inside the box and never affects layout, which is what
-   keeps the box measurable while the animation is mid-flight. */
+   keeps the box measurable while the animation is mid-flight. It is the
+   window: it clips, and it grows out of the corner. */
 .morph-tile__media {
   position: absolute;
   inset: 0;
+  overflow: hidden;
   transform: scale(var(--p));
+  transform-origin: var(--origin);
+  will-change: transform;
+}
+
+/* The photo undoes the window's scale, so it is always drawn at full size and
+   only uncovered — plus up to 14% extra that settles out as the window lands.
+   The max() keeps a closed tile (--p: 0) from dividing by zero. Its own layer,
+   so it rasterises at the size it is actually seen, not the window's. */
+.morph-tile__photo {
+  position: absolute;
+  inset: 0;
+  transform: scale(
+    calc((1 + 0.14 * (1 - var(--p))) / max(var(--p), 0.001))
+  );
   transform-origin: var(--origin);
   will-change: transform;
 }
@@ -78,6 +100,59 @@
   .morph-tile {
     width: auto;
     flex: 1 1 calc((100% - var(--gap)) / 2);
+  }
+}
+
+/* Pairs (LAYOUTS.pairs, area-sized): one big picture and one small, pushed
+   to opposite edges. Each tile takes its share of the row *or* the width that
+   holds the row's tallest tile to --row-h, whichever is smaller — the shares
+   and caps are in the same proportion, so both tiles in a row always take the
+   same branch. When the cap wins, the freed width becomes gutter.
+
+   Already two-up, so phones keep the big/small split rather than wrapping. */
+.morph-board--pairs {
+  --gap: clamp(1rem, 4vw, 4rem);
+  --row-h: 80vh;
+  /* More air between rows: two pictures of different sizes need the space to
+     read as two decisions rather than one crowded row. */
+  gap: clamp(3rem, 8vw, 7rem);
+}
+
+.morph-board--pairs .morph-row {
+  flex-wrap: nowrap;
+  justify-content: space-between;
+}
+
+.morph-board--pairs .morph-tile {
+  flex: none;
+  width: min(
+    calc(var(--share) * (100% - var(--gap) * var(--gaps))),
+    calc(var(--cap, 100) * var(--row-h))
+  );
+}
+
+@media (max-width: 767px) {
+  .morph-board--pairs {
+    --gap: 0.75rem;
+    gap: 2.5rem;
+  }
+}
+
+/* A board that replaces another (the layout switch on /grid) comes up rather
+   than cutting in. Opacity only — the tiles' own transforms are scroll's. */
+.morph-board--swap {
+  animation: morph-board-in 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes morph-board-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .morph-board--swap {
+    animation: none;
   }
 }
 

@@ -66,6 +66,7 @@ export default function Lightbox({ item, onClose }) {
         aria-label={shown.alt}
         tabIndex={-1}
         className="morph-modal__panel morph-modal__panel--plain"
+        data-has-description={Boolean(shown.description || shown.href)}
       >
         <button
           type="button"
@@ -86,6 +87,13 @@ export default function Lightbox({ item, onClose }) {
             className="h-full w-full object-contain"
           />
         </div>
+        {(shown.description || shown.href) && (
+          <div className="profile-project-details">
+            {shown.label && <h2>{shown.label}</h2>}
+            {shown.description && <p>{shown.description}</p>}
+            {shown.href && <a className="profile-content-link" href={shown.href} target="_blank" rel="noopener noreferrer">View project ↗</a>}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { models } from "../../data/models";
+import FilmBar from "./FilmBars";
 
 /**
  * The player behind /video.
@@ -104,6 +105,7 @@ export default function FilmPlayer({
   exitHref = "/",
   inline = false,
   panel = false,
+  bar = null,
 }) {
   const videoRef = useRef(null);
   const trackRef = useRef(null);
@@ -118,6 +120,7 @@ export default function FilmPlayer({
   // stage markup for why the opening frame is not the poster attribute.
   const [started, setStarted] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
   const [creditsOpen, setCreditsOpen] = useState(false);
 
   const film = films[filmIndex];
@@ -249,6 +252,7 @@ export default function FilmPlayer({
             const { currentTime, duration } = e.currentTarget;
             if (duration) setProgress(currentTime / duration);
           }}
+          onLoadedMetadata={(e) => setDuration(e.currentTarget.duration || 0)}
         />
 
         <Image
@@ -264,6 +268,46 @@ export default function FilmPlayer({
 
       <div className="film__chrome">
         <div className="film__foot">
+          {bar ? (
+            <FilmBar
+              film={film}
+              films={films}
+              filmIndex={filmIndex}
+              playing={playing}
+              muted={muted}
+              progress={progress}
+              duration={duration}
+              creditsOpen={creditsOpen}
+              onPlay={togglePlay}
+              onMute={() => setMuted((m) => !m)}
+              onCredits={() => setCreditsOpen((c) => !c)}
+              onJump={setFilmIndex}
+              scrubProps={{
+                ref: trackRef,
+                role: "slider",
+                tabIndex: 0,
+                "aria-label": "Seek",
+                "aria-valuemin": 0,
+                "aria-valuemax": 100,
+                "aria-valuenow": percent,
+                onPointerDown: (e) => {
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                  seekTo(e.clientX);
+                },
+                onPointerMove: (e) => {
+                  if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+                    seekTo(e.clientX);
+                  }
+                },
+                onKeyDown: (e) => {
+                  if (e.key === "ArrowLeft") nudge(-5);
+                  else if (e.key === "ArrowRight") nudge(5);
+                  else return;
+                  e.preventDefault();
+                },
+              }}
+            />
+          ) : (
           <header className="film-bar">
             <div className="film-cell film-cell--title">
               <span className="film-cell__mark">
@@ -375,6 +419,7 @@ export default function FilmPlayer({
               <Square />
             </span>
           </header>
+          )}
 
           <aside
             id="film-credits"

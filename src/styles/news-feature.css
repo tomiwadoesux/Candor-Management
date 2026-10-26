@@ -1,0 +1,243 @@
+.news-feature {
+  --news-offset: 44px;
+  --ink: #0c0c0c;
+  --mute: #6b6b6b;
+  --rule: rgba(12, 12, 12, 0.12);
+  --accent: #00749e;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --wipe: cubic-bezier(0.77, 0, 0.18, 1);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: 20px;
+  padding: 100px 44px 64px;
+  background: #fff;
+  color: var(--ink);
+  outline: none;
+}
+
+/* ── Copy column ─────────────────────────────────────────────────────────── */
+
+.news-feature__copy {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 40px;
+  padding: 0 32px 0 0;
+}
+
+.news-feature__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.news-feature__label,
+.news-feature__count,
+.news-feature__spec dt,
+.news-feature__up-next,
+.news-feature__frame figcaption {
+  font-size: 10px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+
+.news-feature__label { color: var(--mute); }
+
+.news-feature__count { display: inline-flex; gap: 6px; overflow: hidden; }
+.news-feature__count-now { display: inline-block; color: var(--ink); animation: news-count 500ms var(--ease) both; }
+.news-feature__count-of { color: #999; }
+
+@keyframes news-count { from { transform: translateY(100%); opacity: 0; } }
+
+.news-feature__copy h2 {
+  max-width: 100%;
+  font-size: clamp(34px, 3.6vw, 66px);
+  font-weight: 400;
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+/* Each word rises out of its own mask, one after the other. */
+.news-feature__word { display: block; overflow: hidden; padding-bottom: 0.06em; }
+.news-feature__word > span { display: inline-block; }
+.news-feature__lede[data-animate] .news-feature__word > span {
+  animation: news-rise 900ms var(--ease) both;
+  animation-delay: calc(120ms + var(--i) * 70ms);
+}
+
+@keyframes news-rise { from { transform: translateY(105%); } }
+
+.news-feature__copy p {
+  max-width: 34ch;
+  padding-top: 24px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--mute);
+}
+
+.news-feature__lede[data-animate] > :not(h2) {
+  animation: news-fade 700ms var(--ease) both;
+  animation-delay: 320ms;
+}
+.news-feature__lede[data-animate] > .news-feature__spec { animation-delay: 380ms; }
+.news-feature__lede[data-animate] > :last-child { animation-delay: 440ms; }
+
+@keyframes news-fade { from { opacity: 0; transform: translateY(10px); } }
+
+/* Measurements: four hairline cells, the same figures as the profile page. */
+.news-feature__spec {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  max-width: 400px;
+  margin-top: 28px;
+  border-top: 1px solid var(--rule);
+}
+.news-feature__spec > div { padding: 12px 10px 0 0; }
+.news-feature__spec > div + div { padding-left: 12px; border-left: 1px solid var(--rule); }
+.news-feature__spec dt { color: #999; }
+.news-feature__spec dd { padding-top: 6px; font-size: 15px; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+
+.news-feature__link { margin-top: 32px; color: var(--accent); font-size: 19px; }
+
+/* ── Progress strip ──────────────────────────────────────────────────────── */
+
+.news-feature__nav { display: grid; gap: 14px; }
+
+.news-feature__ticks { display: flex; align-items: center; gap: 4px; }
+.news-feature__tick {
+  position: relative;
+  flex: 0 0 10px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  transition: flex-basis 600ms var(--ease);
+}
+.news-feature__tick::before {
+  content: "";
+  position: absolute;
+  inset: 7px 0;
+  background: #d6d6d6;
+  transition: background-color 200ms;
+}
+.news-feature__tick[aria-selected="true"] { flex-basis: 44px; }
+.news-feature__tick[aria-selected="true"]::before { background: var(--ink); }
+@media (hover: hover) and (pointer: fine) {
+  .news-feature__tick:hover::before { background: #8a8a8a; }
+}
+
+.news-feature__up-next { color: #999; }
+
+/* ── Frames ──────────────────────────────────────────────────────────────── */
+
+.news-feature__frame { position: relative; margin: 0; }
+.news-feature__media { position: relative; aspect-ratio: 4 / 5; overflow: hidden; background: #eee; }
+.news-feature__layer { position: absolute; inset: 0; }
+.news-feature__layer img { object-fit: cover; object-position: center top; transition: transform 1200ms var(--ease); }
+
+@media (hover: hover) and (pointer: fine) {
+  .news-feature__frame:hover .news-feature__layer--in img { transform: scale(1.03); }
+}
+
+/* The incoming model wipes across the outgoing one from the side you moved
+   towards, its picture settling from a slight zoom as it lands. */
+.news-feature__layer--in[data-animate] {
+  animation: news-wipe 1000ms var(--wipe) both;
+  animation-delay: var(--delay);
+}
+.news-feature__layer--in[data-animate] img {
+  animation: news-settle 1400ms var(--ease) both;
+  animation-delay: var(--delay);
+}
+
+@keyframes news-wipe {
+  from {
+    clip-path: inset(0 calc(50% - var(--dir) * 50%) 0 calc(50% + var(--dir) * 50%));
+  }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes news-settle { from { transform: scale(1.14) translateX(calc(var(--dir) * 4%)); } }
+
+.news-feature__frame figcaption {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 10px;
+  color: #999;
+}
+
+.news-feature__frame--second { margin-top: var(--news-offset); }
+
+/* ── Arrows ──────────────────────────────────────────────────────────────── */
+
+.news-feature__arrow {
+  position: absolute;
+  top: calc(50% - 14px);
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 48px;
+  border: 0;
+  border-radius: 0;
+  color: white;
+  background: rgba(12, 12, 12, 0.1);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  cursor: pointer;
+  overflow: hidden;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 200ms, transform 150ms;
+}
+.news-feature__arrow svg { transition: transform 300ms var(--ease); }
+.news-feature__arrow--previous { right: 0; }
+.news-feature__arrow--next { left: 0; top: calc(50% - 14px - var(--news-offset)); }
+.news-feature__arrow--mobile-next { display: none; }
+.news-feature__arrow:focus-visible,
+.news-feature a:focus-visible,
+.news-feature__tick:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.news-feature__arrow:active { transform: scale(0.94); }
+@media (hover: hover) and (pointer: fine) {
+  .news-feature__arrow:hover { background: var(--accent); }
+  .news-feature__arrow--next:hover svg,
+  .news-feature__arrow--mobile-next:hover svg { transform: translateX(3px); }
+  .news-feature__arrow--previous:hover svg { transform: rotate(180deg) translateX(3px) !important; }
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (min-width: 1600px) { .news-feature { padding-inline: 4vw; gap: 28px; } }
+
+@media (max-width: 1023px) {
+  .news-feature { grid-template-columns: repeat(2, minmax(0, 1fr)); padding-inline: 32px; }
+  .news-feature__copy { grid-row: 2; grid-column: 1 / -1; padding: 16px 0 0; gap: 28px; }
+  .news-feature__copy h2 { font-size: 46px; }
+}
+
+@media (max-width: 767px) {
+  .news-feature { display: flex; flex-direction: column; padding: 72px 24px 40px; gap: 28px; }
+  .news-feature__frame--first { order: -1; width: 100%; }
+  .news-feature__frame--second { display: none; }
+  .news-feature__copy { width: 100%; padding: 0; gap: 24px; }
+  .news-feature__copy h2 { max-width: 14ch; font-size: clamp(38px, 10vw, 58px); }
+  .news-feature__copy p { padding-top: 16px; max-width: 40ch; }
+  .news-feature__arrow { top: auto; bottom: 32px; }
+  .news-feature__arrow--previous { right: 44px; }
+  .news-feature__arrow--mobile-next { right: 0; display: grid; }
+  .news-feature__tick { flex-basis: 8px; }
+  .news-feature__tick[aria-selected="true"] { flex-basis: 32px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .news-feature *,
+  .news-feature *::before { animation: none !important; transition: none !important; }
+}

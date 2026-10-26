@@ -5,16 +5,17 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { models } from "../../data/models";
 import { useSearchOptional } from "./SearchContext";
 import HoverText from "./HoverText";
+import SearchGlyph from "./SearchGlyph";
+import { ISLAND_EASE as EASE, ISLAND_OPEN, ISLAND_CLOSE, ISLAND_BUTTON, getSearchPanelWidth } from "../lib/islandMotion";
 
 const BAR_H = 46; // uniform search-bar height (closed === bottom row when open)
 const BOTTOM_GAP = 20; // matches the fixed bottom-5 offset
 
 // Drawer-style curve (iOS sheet): quick confident start, long gentle settle —
 // none of expo's snap, none of ease-in-out's slow wind-up.
-const EASE = [0.32, 0.72, 0, 1];
-const H_DUR = 0.55; // horizontal growth
-const V_DUR = 0.5; // vertical growth
-const V_DELAY = 0.1; // vertical starts a beat after horizontal, overlapping it
+const H_DUR = ISLAND_OPEN.horizontal;
+const V_DUR = ISLAND_OPEN.vertical;
+const V_DELAY = ISLAND_OPEN.verticalDelay;
 
 const SEARCH_WORDS = ["talent", "model", "creative"];
 const OPEN_LABEL = "name";
@@ -24,6 +25,7 @@ export default function Search() {
   const ctx = useSearchOptional();
   const [localOpen, setLocalOpen] = useState(false);
   const isOpen = ctx ? ctx.isSearchOpen : localOpen;
+  const menuLabelActive = ctx?.menuLabelActive ?? false;
 
   const [search, setSearch] = useState("");
   const [viewport, setViewport] = useState({ w: 1280, h: 800 });
@@ -62,6 +64,7 @@ export default function Search() {
   // the panel and seeds the query with the character that was typed.
   useEffect(() => {
     const onType = (e) => {
+      if (ctx?.isMenuOpen || e.defaultPrevented || e.target?.closest?.("dialog[open]")) return;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.key.length !== 1) return; // printable characters only
       const t = e.target;
@@ -82,7 +85,7 @@ export default function Search() {
     window.addEventListener("keydown", onType);
     return () => window.removeEventListener("keydown", onType);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
+  }, [isOpen, ctx?.isMenuOpen]);
 
   const filteredModels = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -101,6 +104,7 @@ export default function Search() {
   };
 
   const openSearch = () => {
+    if (ctx?.isMenuOpen) return;
     // Capture the exact rect of the closed bar so the panel morphs out of it.
     const el = closedBarRef.current;
     if (el) {
@@ -119,7 +123,7 @@ export default function Search() {
   };
 
   // Target (open) geometry — full panel, bottom aligned with the closed bar.
-  const panelW = Math.min(viewport.w * 0.94, 820);
+  const panelW = getSearchPanelWidth(viewport.w);
   const panelH = Math.min(viewport.h * 0.86, 860);
   const bottomY = viewport.h - BOTTOM_GAP;
   const target = {
@@ -151,10 +155,10 @@ export default function Search() {
   const exitTransition = prefersReduced
     ? { duration: 0 }
     : {
-        left: { duration: 0.4, ease: EASE },
-        width: { duration: 0.4, ease: EASE },
-        top: { duration: 0.38, ease: EASE, delay: 0.08 },
-        height: { duration: 0.38, ease: EASE, delay: 0.08 },
+        left: { duration: ISLAND_CLOSE.horizontal, ease: EASE },
+        width: { duration: ISLAND_CLOSE.horizontal, ease: EASE },
+        top: { duration: ISLAND_CLOSE.vertical, ease: EASE, delay: ISLAND_CLOSE.verticalDelay },
+        height: { duration: ISLAND_CLOSE.vertical, ease: EASE, delay: ISLAND_CLOSE.verticalDelay },
       };
 
   // Cards start revealing while the morph is still finishing, not after it.
@@ -164,7 +168,9 @@ export default function Search() {
   // One shared string drives both the closed bar and the open input, so the
   // text never jumps when the panel mounts/unmounts. A shared prefix (e.g.
   // "Search ") is held fixed and only the changing tail scrambles.
-  const [display, setDisplay] = useState(`Search ${SEARCH_WORDS[0]}`);
+  const [localDisplay, setLocalDisplay] = useState(`Search ${SEARCH_WORDS[0]}`);
+  const display = ctx ? ctx.searchLabel : localDisplay;
+  const setDisplay = ctx ? ctx.setSearchLabel : setLocalDisplay;
   const displayRef = useRef(`Search ${SEARCH_WORDS[0]}`);
   const scrambleTimer = useRef(null);
   const [wordIdx, setWordIdx] = useState(0);
@@ -177,10 +183,10 @@ export default function Search() {
     displayRef.current = next;
     setDisplay(next);
     if (inputRef.current) inputRef.current.placeholder = next;
-  }, []);
+  }, [setDisplay]);
 
   const scrambleTo = useCallback(
-    (to) => {
+    (to, ticks = 14) => {
       const from = displayRef.current;
       if (from === to) return;
       clearInterval(scrambleTimer.current);
@@ -193,7 +199,6 @@ export default function Search() {
       const prefix = to.slice(0, p);
       const fromTail = from.slice(p);
       const toTail = to.slice(p);
-      const ticks = 14;
       let tick = 0;
       scrambleTimer.current = setInterval(() => {
         tick += 1;
@@ -217,17 +222,25 @@ export default function Search() {
 
   // While closed, the label cycles talent → model → creative every 6s.
   useEffect(() => {
-    if (isOpen || prefersReduced) return;
+    if (isOpen || ctx?.isMenuOpen || prefersReduced) return;
     const t = setInterval(
       () => setWordIdx((i) => (i + 1) % SEARCH_WORDS.length),
       6000
     );
     return () => clearInterval(t);
-  }, [isOpen, prefersReduced]);
+  }, [isOpen, ctx?.isMenuOpen, prefersReduced]);
 
   useEffect(() => {
+    clearInterval(scrambleTimer.current);
+    if (menuLabelActive) {
+      // Let the label move into the magnifier's place, then resolve to Menu
+      // before the blue button finishes its slide and starts expanding.
+      if (prefersReduced) { applyDisplay("Menu"); return; }
+      const timer = setTimeout(() => scrambleTo("Menu", 7), ISLAND_BUTTON.enter * 350);
+      return () => clearTimeout(timer);
+    }
     scrambleTo(isOpen ? OPEN_LABEL : `Search ${SEARCH_WORDS[wordIdx]}`);
-  }, [isOpen, wordIdx, scrambleTo]);
+  }, [isOpen, wordIdx, menuLabelActive, prefersReduced, applyDisplay, scrambleTo]);
 
   useEffect(() => () => clearInterval(scrambleTimer.current), []);
 
@@ -236,19 +249,7 @@ export default function Search() {
     open: { opacity: 1, y: 0, transition: { duration: 0.35, ease: "easeOut" } },
   };
 
-  const magnifier = (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      className="h-5 w-5 shrink-0"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={2}
-    >
-      <circle cx="11" cy="11" r="7" />
-      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-    </svg>
-  );
+  const magnifier = <SearchGlyph />;
 
   return (
     <>
@@ -259,19 +260,35 @@ export default function Search() {
         ref={closedBarRef}
         onClick={openSearch}
         aria-label="Open search"
-        style={{ height: BAR_H, pointerEvents: isOpen ? "none" : "auto" }}
-        className="flex w-[210px] items-center gap-2 bg-[#141414] px-4 text-white cursor-pointer"
+        disabled={ctx?.isMenuOpen}
+        style={{ height: BAR_H, pointerEvents: isOpen ? "none" : "auto", visibility: ctx?.isMenuOpen ? "hidden" : undefined }}
+        className="flex w-[210px] items-center gap-2 overflow-hidden bg-[#141414] px-4 text-white cursor-pointer"
       >
-        {magnifier}
+        <motion.span
+          data-search-icon
+          aria-hidden="true"
+          className="flex h-5 w-5 shrink-0"
+          initial={false}
+          animate={{ x: menuLabelActive ? -40 : 0, opacity: menuLabelActive ? 0 : 1 }}
+          transition={{ duration: prefersReduced ? 0 : menuLabelActive ? ISLAND_BUTTON.enter : ISLAND_BUTTON.exit, ease: EASE }}
+        >
+          {magnifier}
+        </motion.span>
         {/* Metrics mirror the open input exactly (same leading, text starts at
             the same x) so the open/close handoff doesn't shift the label. */}
-        <span className="relative flex items-center text-sm leading-5 text-neutral-400">
+        <motion.span
+          data-search-label
+          className="relative flex shrink-0 items-center whitespace-nowrap text-sm leading-5 text-neutral-400"
+          initial={false}
+          animate={{ x: menuLabelActive ? -28 : 0 }}
+          transition={{ duration: prefersReduced ? 0 : menuLabelActive ? ISLAND_BUTTON.enter : ISLAND_BUTTON.exit, ease: EASE }}
+        >
           <span
             aria-hidden
             className="search-caret absolute left-0 top-1/2 -translate-y-1/2"
           />
           {display}
-        </span>
+        </motion.span>
       </button>
 
       <AnimatePresence>

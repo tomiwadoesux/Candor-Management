@@ -89,7 +89,7 @@ export default function ModelList({
     <section className="relative  ">
       <div
         data-slot="models-grid"
-        className={`grid grid-cols-2 pt-3 md:pt-0 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 px-3 md:px-5 ${className}`}
+        className={`grid grid-cols-2 pt-3 md:pt-0 md:grid-cols-3 gap-3 md:gap-4 px-3 md:px-5 ${className}`}
         onMouseLeave={() => {
           setHoveredIndex(null);
           setHoveredModel(null);

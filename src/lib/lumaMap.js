@@ -149,7 +149,7 @@ export function loadLumaMap(src) {
  * `panelAR` is the displayed box's aspect ratio. Returns the rect rewritten
  * into 0..1 image space.
  */
-function coverToImage(map, panelAR, x, y, w, h) {
+function coverToImage(map, panelAR, x, y, w, h, objectPosition) {
   const imgAR = map.ar;
 
   // Which axis overflows: an image wider than the box is cropped left/right,
@@ -160,10 +160,9 @@ function coverToImage(map, panelAR, x, y, w, h) {
   if (imgAR > panelAR) visW = panelAR / imgAR;
   else visH = imgAR / panelAR;
 
-  // cover centres the crop, so the visible window starts half the lost
-  // fraction in.
-  const offX = (1 - visW) / 2;
-  const offY = (1 - visH) / 2;
+  // Match CSS object-position; the existing callers use the centered default.
+  const offX = (1 - visW) * (objectPosition?.x ?? 0.5);
+  const offY = (1 - visH) * (objectPosition?.y ?? 0.5);
 
   return {
     x: offX + x * visW,
@@ -182,15 +181,19 @@ function coverToImage(map, panelAR, x, y, w, h) {
  * and the rect is corrected for `object-fit: cover` first, so the cells read
  * are the ones genuinely behind the letter. Omit it and the image is assumed
  * to fill the box exactly (object-fit: fill).
+ * `objectPosition` optionally supplies x/y fractions (0..1) for a non-centered
+ * crop; for example, center 15% is { x: 0.5, y: 0.15 }.
  *
  * Returns null when the rect falls outside the image, so a letter that has
  * scrolled off the photo keeps its last good colour rather than snapping to a
  * value sampled from the edge.
  */
-export function sampleRect(map, x, y, w, h, panelAR) {
+export function sampleRect(map, x, y, w, h, panelAR, objectPosition) {
   if (!map || !map.cells) return null;
 
-  if (panelAR) ({ x, y, w, h } = coverToImage(map, panelAR, x, y, w, h));
+  if (panelAR) {
+    ({ x, y, w, h } = coverToImage(map, panelAR, x, y, w, h, objectPosition));
+  }
 
   if (x + w < 0 || y + h < 0 || x > 1 || y > 1) return null;
 

@@ -2,6 +2,8 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import "../../styles/candor-intro.css";
+import { introMemoryAllowed, INTRO_SEEN_KEY } from "../../lib/introMemory";
+import HeatTransition from "../../components/HeatTransition";
 
 // The intro: the mission line types itself in, the rest of it drains away and
 // the six letters hiding CANDOR inside it fly out to spell the name, the name
@@ -18,9 +20,9 @@ import "../../styles/candor-intro.css";
 //   3. pre-eases the typing stagger, whose curve is piecewise where calc()
 //      has no conditional, and hands each character a finished delay
 //
-// It then flips one attribute and stands back: there are two renders in the
-// life of the page and no script runs per frame, so the animations sit on the
-// compositor and a busy main thread cannot stutter them.
+// It then flips one attribute and stands back: the intro runs on the
+// compositor. The landing page's later scroll departure is isolated in
+// HeatTransition; it does not drive or rewrite this intro timeline.
 //
 // The letters are picked by their exact position in the sentence rather than
 // by matching characters, because most of them occur many times over and only
@@ -126,20 +128,15 @@ const EASE = (t) => {
 // the stagger is computed here (see the --t comment below for why it cannot be
 // left to CSS), while every cumulative mark in the timeline is still expressed
 // against the stylesheet's copy. Change one and you must change the other.
-//
-// 1700, up from 1250. The line is ~96 characters and at the old duration the
-// sweep crossed them faster than the sentence could be taken in — it read as
-// the line being switched on in pieces rather than written. The extra 450ms
-// is spent on the sweep itself, not on the hold afterwards, so the sentence
-// is being READ while it is being drawn instead of only once it is whole.
-//
-// Every cumulative mark in candor-intro.css moves with this — they are
-// absolute times, not offsets, so they do not follow it on their own.
-const TYPE_MS = 1700;
+// The sweep matches the CSS timeline: the page appears as the name finishes
+// forming, and the boxes settle at 2130ms before the letters start falling.
+const TYPE_MS = 900;
+const LABEL_TYPE_MS = 360;
 
 // A character's delay: its position along the write, eased, scaled to the
-// write's length.
-const charDelay = (i, n) => EASE(n > 1 ? i / (n - 1) : 0) * TYPE_MS;
+// write's length. The shorter card labels use the same sweep curve.
+const charDelay = (i, n, duration = TYPE_MS) =>
+  EASE(n > 1 ? i / (n - 1) : 0) * duration;
 
 // The two boards. These are the photographs Choose used for the same pair —
 // img1 for MODELS, img24 for TALENTS — kept deliberately, so the association
@@ -160,13 +157,14 @@ const CARDS = [
 // The stagger is deliberately TIGHT. The six should read as one event coming
 // apart, not as a queue of letters taking turns, so the last to go leaves
 // within FALL_STAGGER_MS of the first.
-const FALL_STAGGER_MS = 110;
+const FALL_STAGGER_MS = 60;
 
 // Duration spread. A letter that falls slower is not lighter — it is the same
 // gravity over a longer screen, so the variation reads as depth rather than
-// as inconsistency. Kept narrow for the same reason as the stagger.
-const FALL_MIN_MS = 760;
-const FALL_MAX_MS = 980;
+// as inconsistency. The slower fall overlaps the page's reveal without
+// holding back the boxes or controls.
+const FALL_MIN_MS = 650;
+const FALL_MAX_MS = 820;
 
 // How far each letter has turned by the time it leaves frame. Signed, so some
 // letters spin clockwise and others anticlockwise — a word coming apart has
@@ -187,7 +185,7 @@ const DRIFT_MAX_VW = 4.5;
 // Exported so a page that holds something back for the length of the intro
 // can tell whether the intro is going to play at all — on a repeat visit it
 // is skipped, and waiting out its duration would be waiting for nothing.
-export const SEEN_KEY = "candor:intro-seen";
+export const SEEN_KEY = INTRO_SEEN_KEY;
 
 // `floatingLogo` tells this component NOT to render the wordmark, because the
 // page is rendering it itself as a fixed overlay outside the intro's wrapper.
@@ -231,7 +229,7 @@ export function CandorFloatingLogo({ children }) {
 
   return (
     <div
-      className="candor-intro-logo-host pointer-events-none fixed inset-x-0 top-5 z-40 flex justify-center"
+      className="candor-intro-logo-host pointer-events-none fixed left-1/2 top-5 z-40 w-max -translate-x-1/2"
       data-mode={mode ?? undefined}
     >
       <div className="candor-logo">{children}</div>
@@ -271,10 +269,14 @@ export default function CandorLine({
       setMode("done");
       return;
     }
-    try {
-      sessionStorage.setItem(SEEN_KEY, "1");
-    } catch {
-      // Not fatal — it just means the next visit plays it again.
+    // Only if the visitor hasn't objected on /privacy — see lib/introMemory.js
+    // for why that switch has to exist.
+    if (introMemoryAllowed()) {
+      try {
+        sessionStorage.setItem(SEEN_KEY, "1");
+      } catch {
+        // Not fatal — it just means the next visit plays it again.
+      }
     }
     setMode("play");
   }, []);
@@ -298,14 +300,21 @@ export default function CandorLine({
   // zero, and a letter that barely turns reads as one that failed to.
   const fall = useMemo(() => {
     const out = {};
-    const pick = (min, max) => min + Math.random() * (max - min);
-    const sign = () => (Math.random() < 0.5 ? -1 : 1);
+    // Seed by replay so SSR and hydration produce identical styles. Ambient
+    // randomness here made React discard and rebuild the intro on page load.
+    let seed = take + 1;
+    const random = () => {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      return seed / 4294967296;
+    };
+    const pick = (min, max) => min + random() * (max - min);
+    const sign = () => (random() < 0.5 ? -1 : 1);
     for (const p of ORDERED) {
       out[p.index] = {
-        delay: Math.random() * FALL_STAGGER_MS,
+        delay: random() * FALL_STAGGER_MS,
         dur: pick(FALL_MIN_MS, FALL_MAX_MS),
         spin: sign() * pick(SPIN_MIN_DEG, SPIN_MAX_DEG),
-        drift: sign() * Math.random() * DRIFT_MAX_VW,
+        drift: sign() * random() * DRIFT_MAX_VW,
       };
     }
     return out;
@@ -489,14 +498,14 @@ export default function CandorLine({
           still resolves against .candor-intro and holds its corner. */}
         {copyright}
 
-        {/* The two placeholders, centred. They begin arriving while the name is
-          still clearing the top of the frame, so the middle of the page is
-          filling as it empties rather than after. */}
+        {/* The two placeholders, centred. They arrive as CANDOR finishes
+          forming, so the page is already visible when the letters fall. */}
         {/* 2:3, the house portrait ratio — the same box the board cards and the
           rail's polaroids use, so these read as standing in for real imagery
           rather than as generic blocks. Sized by HEIGHT with the ratio doing
           the width, so the proportion holds at every viewport instead of
           drifting as two independent dimensions would. */}
+        <HeatTransition enabled={floatingLogo} targetSelector="[data-look]">
         <div className="candor-cards pointer-events-none absolute inset-0 z-0 flex items-center justify-center gap-3 md:gap-6">
           {CARDS.map(({ label, href, src }) => (
             // h-full, and not decorative: the card inside is sized at a
@@ -508,127 +517,47 @@ export default function CandorLine({
               href={href}
               className="pointer-events-auto flex h-full items-center"
             >
-              {/* The placeholder IS the frame: the photograph fades in over the
-                breathing grey once it has decoded, so the card forms in place
-                rather than being swapped for a different element.
-
-                Sized by HEIGHT, with aspect-[2/3] deriving the width, so the
-                proportion is identical at every viewport instead of drifting
-                as two independent dimensions would.
-
-                MOBILE (the unprefixed value) keeps the pair side by side, so
-                the binding constraint is WIDTH, not height: two cards plus a
-                12px gap inside ~30px of rail on each side is (100vw-72px),
-                halved, and a 2:3 card that wide is 1.5x as tall — 0.75 is
-                that half times 1.5. 30px is what the ROTATED chrome needs —
-                only as wide as 10px type is tall, plus its padding — which is
-                why the rails can be this narrow at all; set horizontally the
-                same text would want 64px a side and leave the cards unusable.
-                The 62% ceiling only binds on unusually tall narrow phones.
-
-                FROM md UP the pair sits side by side and the three terms are
-                a floor race — whichever binds first wins:
-                  76%               of the CONTAINER, not a vh of the viewport.
-                                    That distinction is what makes the space
-                                    above and below the cards identical: the
-                                    container is already inset by the page's
-                                    py-5, so a percentage of it is symmetric by
-                                    construction, whereas a vh value is
-                                    measured against a box 40px taller than
-                                    the one the cards actually sit in.
-                  700px             stops the pair becoming absurd on very
-                                    large displays
-                  (100vw-120px)*.75 narrow screens: each card can take half of
-                                    (viewport - 120px of gutter and gap), and
-                                    a 2:3 card that wide is 1.5x as tall —
-                                    0.75 is that half times 1.5 */}
+              {/* The frame keeps the portrait ratio; its caption sits below
+                  the clipped image so the whole board remains one link. */}
               <div
-                className="candor-card relative aspect-[2/3] h-[min(62%,(100vw-72px)*0.75)] md:h-[min(76%,700px,(100vw-120px)*0.75)]"
+                className="candor-card-frame relative aspect-[2/3] h-[min(62%,(100vw-72px)*0.75)] md:h-[min(76%,700px,(100vw-120px)*0.75)]"
                 style={{ containerType: "inline-size" }}
               >
-                <img
-                  src={src}
-                  alt=""
-                  loading="lazy"
-                  decoding="async"
-                  className="candor-card-img absolute inset-0 h-full w-full object-cover"
-                  onLoad={(e) => {
-                    e.currentTarget.dataset.loaded = "1";
-                  }}
-                />
-
-                {/* The overlay. Two layers doing two different jobs, in one
-                    element: a flat tint across the whole photograph so the
-                    pair reads as a set rather than as two unrelated pictures,
-                    and a radial darkening at the centre so the white label has
-                    ground to sit on.
-                    Both are needed. The flat tint alone leaves the word
-                    fighting whatever happens to be behind it — the Sargent on
-                    the left is almost entirely pale dress — and the radial
-                    alone reads as a smudge laid over an otherwise untouched
-                    image. */}
-                <div
-                  aria-hidden="true"
-                  className="candor-card-overlay absolute inset-0"
-                />
-
-                {/* The label, centred ON the card. An h1 so it picks up the
-                    display face globals.css gives headings — that rule is
-                    un-layered and beats Tailwind's utilities, which is why the
-                    size and line-height are set inline here rather than with
-                    text-[…] classes that would lose to it. Same trap as the
-                    one noted in models/page.js and talents/page.js. */}
-                <h1
-                  className="candor-card-label absolute inset-0 flex items-center justify-center text-center uppercase tracking-[0.14em] text-white"
-                  style={{
-                    // Sized against the CARD, not the viewport. 11.2cqw is
-                    // what makes the longer of the two words fill ~80% of the
-                    // frame: TALENTS is eight characters, and with the initial
-                    // at 1.34x plus 0.14em tracking it advances ~7.1x the font
-                    // size. A vw-based clamp cannot do this — the card is a
-                    // proportion of the viewport HEIGHT on desktop and of its
-                    // WIDTH on mobile, so a size that fitted one broke the
-                    // other, and TALENTS overflowed its card at every width.
-                    // clamp() still floors and caps it, so the word stays
-                    // legible on a small phone and does not become a poster on
-                    // a large display.
-                    fontSize: "clamp(16px, 11.2cqw, 62px)",
-                    lineHeight: 1,
-                    // The type is over a photograph, so it carries its own
-                    // shadow as well as the scrim: between them the word holds
-                    // whether the pixels behind it land light or dark.
-                    textShadow: "0 1px 24px rgba(0,0,0,0.55)",
-                  }}
-                >
-                  {/* The initial is set larger than the rest of the word, so
-                      MODELS and TALENTS read as display type rather than as
-                      two labels in the same size.
-                      It has to be a SPAN rather than ::first-letter: the label
-                      is uppercased in CSS, so the M and the odels arrive as
-                      one run of text and a pseudo-element could size the glyph
-                      but not carry the tighter tracking the larger size needs.
-                      Splitting it in the markup also keeps the accessible name
-                      intact — it is still one word to a screen reader. */}
-                  {/* An inner flex row so the two spans can sit on a shared
-                      BASELINE while the h1 above still centres the word in the
-                      card. Doing both on one element is not possible:
-                      items-baseline would align the letters correctly but
-                      stop centring the block vertically. */}
-                  <span
-                    aria-hidden="true"
-                    className="flex items-baseline justify-center"
-                  >
-                    <span style={{ fontSize: "1.34em", lineHeight: 1 }}>
-                      {label.charAt(0)}
-                    </span>
-                    <span>{label.slice(1)}</span>
+                <div className="candor-card-reveal h-full w-full">
+                <div className="candor-card h-full w-full">
+                    <img
+                      src={src}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      className="candor-card-img absolute inset-0 h-full w-full object-cover"
+                      onLoad={(e) => {
+                        e.currentTarget.dataset.loaded = "1";
+                      }}
+                    />
+                  </div>
+                </div>
+                <h2 className="candor-card-label">
+                  <span aria-hidden="true" className="candor-card-word">
+                    {label.split("").map((letter, i) => (
+                      <span
+                        key={i}
+                        className="candor-card-letter"
+                        style={{
+                          "--t": `${charDelay(i, label.length, LABEL_TYPE_MS).toFixed(2)}ms`,
+                        }}
+                      >
+                        {letter}
+                      </span>
+                    ))}
                   </span>
                   <span className="sr-only">{label}</span>
-                </h1>
+                </h2>
               </div>
             </a>
           ))}
         </div>
+        </HeatTransition>
 
         <div className="candor-block pointer-events-none relative z-10 flex h-full flex-col items-center justify-center">
           <p

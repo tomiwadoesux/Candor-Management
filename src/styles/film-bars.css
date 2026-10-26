@@ -1,0 +1,211 @@
+/* The inline showreel's control bar — see components/FilmBars.jsx. */
+
+.fb {
+  color: #fff;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.35;
+}
+
+.fb button {
+  pointer-events: auto;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0;
+}
+
+.fb [role="slider"] {
+  pointer-events: auto;
+  cursor: pointer;
+  touch-action: none;
+  outline: none;
+}
+
+.fb button:focus-visible,
+.fb [role="slider"]:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 4px;
+}
+
+.fb p {
+  margin: 0;
+}
+
+/* Inline the chrome's 1.25rem gutter was sized for a hairline row; a title
+   this large needs more air around it. */
+.film__chrome:has(.fb-c) {
+  padding: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .film__chrome:has(.fb-c) {
+    padding: 2rem 2.25rem 1.75rem;
+  }
+}
+
+.fb-c {
+  mix-blend-mode: difference;
+}
+
+.fb-c__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 2.5rem;
+  padding-bottom: 1.75rem;
+}
+
+.fb-c__lede {
+  min-width: 0;
+  animation: fb-c-in 700ms var(--ease) both;
+}
+
+@keyframes fb-c-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+/* Small type shares one voice: caps, open tracking, mono figures. */
+.fb-c__kicker,
+.fb-c__time,
+.fb-c__label {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.fb-c__kicker {
+  opacity: 0.65;
+  padding-bottom: 0.85rem;
+}
+
+.fb-c__title {
+  margin: 0;
+  font-size: clamp(2rem, 5.2vw, 5.25rem);
+  font-weight: 700;
+  line-height: 0.88;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
+}
+
+.fb-c__title span {
+  display: inline-block;
+  font-weight: 300;
+  font-size: 0.55em;
+  vertical-align: 0.35em;
+  opacity: 0.5;
+  padding: 0 0.3em;
+}
+
+.fb-c__dir {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  opacity: 0.7;
+  padding-top: 0.9rem;
+}
+
+.fb-c__ctrls {
+  display: grid;
+  justify-items: end;
+  gap: 0.6rem;
+  flex: none;
+  text-align: right;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.fb-c__ctrls button {
+  gap: 0.6rem;
+  opacity: 0.75;
+  transition: opacity 160ms, transform 200ms var(--ease);
+}
+
+.fb-c__ctrls button:hover {
+  opacity: 1;
+  transform: translateX(-3px);
+}
+
+.fb-c__time {
+  opacity: 0.65;
+  padding-bottom: 0.4rem;
+}
+
+.fb-c__chapters {
+  display: flex;
+  gap: 6px;
+}
+
+.fb-c__ch {
+  flex: 1;
+  min-width: 0;
+  display: grid !important;
+  gap: 0.7rem;
+  text-align: left;
+  opacity: 0.5;
+  transition: opacity 200ms, flex-grow 500ms var(--ease);
+}
+
+.fb-c__ch:hover {
+  opacity: 0.85;
+}
+
+.fb-c__ch--on {
+  flex-grow: 2.5;
+  opacity: 1;
+}
+
+.fb-c__bar {
+  display: block;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.28);
+  overflow: hidden;
+}
+
+.fb-c__bar span {
+  display: block;
+  height: 100%;
+  background: #fff;
+  transform-origin: left;
+  transform: scaleX(var(--p));
+}
+
+.fb-c__label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 767px) {
+  .fb-c__top {
+    gap: 1.25rem;
+    padding-bottom: 1.25rem;
+  }
+
+  .fb-c__kicker {
+    padding-bottom: 0.6rem;
+  }
+
+  .fb-c__ctrls {
+    font-size: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .fb-c__ctrls button[aria-controls],
+  .fb-c__dir,
+  .fb-c__ch:not(.fb-c__ch--on) .fb-c__label {
+    display: none;
+  }
+}

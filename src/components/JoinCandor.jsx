@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import BracketLink from "./BracketLink";
+import ChromeLink from "./ChromeLink";
 import { scouting } from "../../data/scouting";
 import { agency, joinMailto } from "../../data/agency";
 import { models } from "../../data/models";
@@ -138,12 +138,12 @@ export default function JoinCandor() {
               .
             </p>
 
-            <BracketLink
+            <ChromeLink
               href="/get-scouted"
-              className="mt-10 text-xs font-bold uppercase text-white"
+              className="mt-10 text-[13px] text-white"
             >
               Apply to Candor
-            </BracketLink>
+            </ChromeLink>
           </div>
 
           {/* The facts, ranged right on desktop so the block closes the

@@ -15,6 +15,9 @@
 // something that reads as a board. They use real photographs from the image
 // pool but the people are fictional: grep `placeholder` to find and replace
 // every one of them.
+// First-person bios for talent and creative profiles are editorial drafts.
+// Locations come from each record; inspirations and personal voice need the
+// talent's own review before publication. Replace with their approved copy.
 export const models = [
   {
     id: "1",
@@ -65,7 +68,7 @@ export const models = [
     eyeColor: "GREEN",
     nationality: "NIGERIAN",
     board: "MAIN BOARD",
-    bio: "John has worked with top fashion brands and specializes in runway shows. Their work spans editorial, runway and commercial campaigns, and they are equally at home on a studio set as on location, bringing a considered sense of movement and a strong, quiet presence to every booking.",
+    bio: "I'm John, an actor and dancer based in Lagos, Nigeria. I love telling a story through the way someone moves, pauses or holds a look. Music and the small moments I notice around the city often give me a starting point. Whether I'm on stage or in front of a camera, I want the performance to feel honest.",
     coverImage: "/images/img7.jpeg",
     face: "/images/img7.jpeg",
     images: [
@@ -91,6 +94,21 @@ export const models = [
     id: "3",
     name: "Chioma Nwosu",
     stageName: "Atlas",
+    portfolio: {
+      // Temporary cover studies for the preview, replaced by authored covers later.
+      covers: [13, 14, 15, 16, 17, 18].map((image, index) => ({
+        src: `/images/img${image}.jpeg`,
+        alt: `Chioma Nwosu cover study ${index + 1}`,
+        label: `Cover study ${String(index + 1).padStart(2, "0")}`,
+        meta: "Study",
+      })),
+    },
+    // Placeholder artwork until the creative supplies their own hand drawing.
+    doodle: {
+      src: "/images/doodles/world.svg",
+      alt: "Hand-drawn globe with an orbit and small stars",
+      caption: "The world is its to take",
+    },
     gender: "female",
     age: 23,
     height: "180 cm / 5'11\"",
@@ -102,7 +120,7 @@ export const models = [
     eyeColor: "BROWN",
     nationality: "NIGERIAN",
     board: "MAIN BOARD",
-    bio: "Chioma brings elegance and poise to every photoshoot with her unique look. Their work spans editorial, runway and commercial campaigns, and they are equally at home on a studio set as on location, bringing a considered sense of movement and a strong, quiet presence to every booking.",
+    bio: "I'm Chioma, a creative director based in Lagos, Nigeria. I collect little things that catch my eye: a colour combination on the street, an old photograph, the way someone puts an outfit together. Those details often become the starting point for my work. I love collaborating with people who see things differently and making images that feel personal, curious and alive.",
     coverImage: "/images/img13.jpeg",
     face: "/images/img13.jpeg",
     images: [
@@ -139,7 +157,7 @@ export const models = [
     eyeColor: "BROWN",
     nationality: "NIGERIAN",
     board: "MAIN BOARD",
-    bio: "Marcus is a versatile model experienced in commercial and high-fashion work. Their work spans editorial, runway and commercial campaigns, and they are equally at home on a studio set as on location, bringing a considered sense of movement and a strong, quiet presence to every booking.",
+    bio: "I'm Marcus, a photographer based in Manchester, UK. I work across editorial and campaigns, but my starting point is usually a person, a place or a particular kind of light. I'm inspired by cinema, street photography and the moments between poses. I like giving people room to settle into a shoot so something unexpected can happen.",
     coverImage: "/images/img19.jpeg",
     face: "/images/img19.jpeg",
     images: [
@@ -176,7 +194,7 @@ export const models = [
     eyeColor: "BROWN",
     nationality: "NIGERIAN",
     board: "RISING STARS",
-    bio: "Tunde is an emerging talent with a natural camera presence and strong physique. Their work spans editorial, runway and commercial campaigns, and they are equally at home on a studio set as on location, bringing a considered sense of movement and a strong, quiet presence to every booking.",
+    bio: "I'm Tunde, a fashion designer based in Lagos, Nigeria, working in womenswear and couture. Fabric is often where an idea begins for me: its weight, texture and the way it moves on a body. I find inspiration in sculptural shapes and the way people make clothes their own. I want the pieces I create to feel expressive and lived in.",
     coverImage: "/images/img25.jpeg",
     face: "/images/img25.jpeg",
     images: [
@@ -730,7 +748,7 @@ export const models = [
     age: 27,
     nationality: "NIGERIAN",
     board: "MAIN BOARD",
-    bio: "Ifeoma trained in stage before moving to screen, and carries that discipline into commercial work — a performer who can hold a long take and take direction in one pass.",
+    bio: "I'm Ifeoma, an actor based in Lagos, Nigeria. I started in theatre before moving into screen and commercial work. I'm drawn to characters with something going on beneath the surface, and I find inspiration in the conversations and gestures people rarely notice. I like taking time with those details until a character starts to feel like someone you might know.",
     coverImage: "/images/img32.jpeg",
     face: "/images/img32.jpeg",
     images: ["/images/img32.jpeg", "/images/img33.jpeg"],
@@ -758,7 +776,7 @@ export const models = [
     age: 24,
     nationality: "NIGERIAN",
     board: "MAIN BOARD",
-    bio: "Chidera choreographs as often as she performs, and moves between editorial motion work and live stage without changing register.",
+    bio: "I'm Chidera, a dancer and choreographer based in Lagos, Nigeria. My work moves between contemporary dance, Afrobeats, live performance and film. A rhythm, a feeling or the way someone walks can spark an idea for me. I love finding movement that tells a story without needing to explain it, especially when I can build it with other performers.",
     coverImage: "/images/img29.jpeg",
     face: "/images/img29.jpeg",
     images: ["/images/img29.jpeg", "/images/img28.jpeg"],
@@ -786,7 +804,7 @@ export const models = [
     age: 31,
     nationality: "NIGERIAN",
     board: "MAIN BOARD",
-    bio: "Amara works across beauty and editorial, and is known on set for skin that reads true under every light — a clean, unfussy hand that photographs the way it looks in the room.",
+    bio: "I'm Amara, a makeup artist based in Lagos, Nigeria, working across beauty and editorial. I'm inspired by real skin, unexpected colour combinations and the way light changes a face. I like to begin with the person in front of me and build from there. The most satisfying looks are the ones that feel considered without hiding who someone is.",
     coverImage: "/images/img18.jpeg",
     face: "/images/img18.jpeg",
     images: ["/images/img18.jpeg", "/images/img17.jpeg"],
@@ -814,7 +832,7 @@ export const models = [
     age: 29,
     nationality: "NIGERIAN",
     board: "MAIN BOARD",
-    bio: "Ngozi styles for campaign and editorial, building looks out of archive and local ateliers rather than the season's press rail.",
+    bio: "I'm Ngozi, a fashion stylist based in Lagos, Nigeria. I work on campaigns and editorials, often bringing archive pieces together with work from local ateliers. I'm inspired by the way people dress for themselves: the combinations, the little adjustments, the things they keep wearing. I love building a look that feels like it belongs to a person and a story.",
     coverImage: "/images/img6.jpeg",
     face: "/images/img6.jpeg",
     images: ["/images/img6.jpeg", "/images/img5.jpeg"],
@@ -842,7 +860,7 @@ export const models = [
     age: 34,
     nationality: "NIGERIAN",
     board: "MAIN BOARD",
-    bio: "Emeka paints and sets, and is booked as much for art direction on a build as for the work that ends up on the wall behind it.",
+    bio: "I'm Emeka, an artist based in Lagos, Nigeria, working across painting, sets and art direction. I notice surfaces, colours and objects that carry traces of how they've been used. Those everyday details often find their way into my work. I enjoy moving between a painting and a space you can step into, thinking about how each one makes you feel.",
     coverImage: "/images/img23.jpeg",
     face: "/images/img23.jpeg",
     images: ["/images/img23.jpeg", "/images/img22.jpeg"],

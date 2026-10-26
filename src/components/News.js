@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import BracketLink from "./BracketLink";
+import ChromeLink from "./ChromeLink";
 import { initialCaps } from "./FitText";
 import { models } from "../../data/models";
 
@@ -172,16 +172,13 @@ function Caption({
         ))}
       </dl>
 
-      {/* The bracket pair is the site's button shape. On the model page the
-          brackets open when a tab is selected; here there is nothing to select,
-          so they open on hover — the closing bracket travelling out the way the
-          footer's arrow scales out. See components/BracketLink.jsx. */}
-      <BracketLink
+      {/* The site's link style — see components/ChromeLink.jsx. */}
+      <ChromeLink
         href="/models"
-        className="mt-8 text-xs font-bold uppercase text-[#00749E]"
+        className="mt-8 text-[13px] text-[#00749E]"
       >
         Model Portfolio
-      </BracketLink>
+      </ChromeLink>
     </div>
   );
 }

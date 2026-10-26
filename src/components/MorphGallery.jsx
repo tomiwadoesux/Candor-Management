@@ -15,21 +15,35 @@ import { packRows, entranceOrder, originFor } from "@/lib/packRows";
  *   2. Nothing is cropped — a tile's box *is* the picture's aspect ratio
  *      (measured server-side in lib/imageSize.js). A wider box is therefore a
  *      taller one: tops stay flush to the row's line and the bottoms rag out.
- *   3. As a row crosses the bottom of the viewport its tiles scale 0 → 1 one
- *      after another, scrubbed by scroll position rather than fired once on
+ *   3. As a row crosses the bottom of the viewport its tiles open one after
+ *      another, scrubbed by scroll position rather than fired once on
  *      intersection — so scrolling back up rewinds the sequence. Each tile is
  *      half open before the next one starts, and the running order is authored
  *      per row rather than left to right: one row opens from the centre,
  *      another from the ends, another backwards.
- *   4. The scale is anchored at a top corner, not the centre — tiles lean away
- *      from the middle of their row so it opens outward. Anchoring the *top*
- *      is what holds the row's shared top line steady mid-entrance; a
- *      bottom-anchored tile grows upward and walks its top edge off the line.
+ *   4. Opening is a window growing out of a corner, not the picture itself
+ *      shrinking: the frame scales 0 → 1 while the photo inside is
+ *      counter-scaled, so it is always shown at full size and simply uncovered,
+ *      settling from a slight zoom as the frame lands. Scaling the photo itself
+ *      put a speck of a thumbnail on screen at the start of every tile.
+ *   5. The corner is a top one — tiles lean away from the middle of their row
+ *      so it opens outward, and anchoring the *top* is what holds the row's
+ *      shared top line steady mid-entrance. A row whose tiles share their
+ *      bottom line instead (the pairs layout) grows off bottom corners.
+ *   6. Scroll sets each tile's *target*; what is drawn eases towards it over a
+ *      few frames and then the loop stops. That is what keeps a notched mouse
+ *      wheel or a dragged scrollbar from stepping the tiles open in jumps.
  *
  * Props:
  *   items      — [{ id, src, alt, pxW, pxH, label?, meta? }]
  *   onSelect   — optional; when given, tiles become buttons and call it
  *   className  — spacing for the board itself (padding, row gap)
+ *   rowSizes   — tiles per row, cycled (see lib/packRows.js)
+ *   layout     — a full set of packRows options, e.g. LAYOUTS.pairs; wins
+ *                over rowSizes
+ *   reveal     — viewport (default), static preview, or after-scroll for a
+ *                profile whose first gallery row starts above the fold
+ *   parallax   — optional inner-photo drift; leaves the reveal frame intact
  */
 
 // Entrance timing. Two numbers, both in plain terms — turn these to retune.
@@ -54,24 +68,39 @@ const HANDOFF = 0.5;
 // under the cap and keep the full duration.
 const VISIBILITY_MARGIN = 0.85;
 
-// Below this width the board wraps to two-up and every tile is its own row, so
-// the sequencing has nothing to sequence.
+// SETTLE: time constant, in ms, of the ease from where a tile is drawn to where
+// scroll says it should be. Roughly a third of that gap closes per 16ms frame.
+// Much higher and the board visibly trails the page; much lower and wheel
+// notches show through again.
+const SETTLE = 90;
+
+// Below this width rows of three or more wrap to two-up and every tile is its
+// own row, so the sequencing has nothing to sequence. Rows of two still sit
+// side by side there and keep it.
 const STACK_BREAKPOINT = 768;
 
 const clamp01 = (n) => (n < 0 ? 0 : n > 1 ? 1 : n);
+
+// Decelerates into full size, so a tile lands rather than stopping dead when
+// the scroll position says it's done — and the small-window start, the least
+// interesting part, goes by quickest.
+const easeOut = (t) => 1 - (1 - t) ** 3;
 
 export default function MorphGallery({
   items,
   onSelect,
   className = "",
   rowSizes,
+  layout,
+  reveal = "viewport",
+  parallax = false,
 }) {
   const rootRef = useRef(null);
 
   // Row structure only changes when the set or the row shape does.
   const rows = useMemo(
-    () => packRows(items, rowSizes ? { rowSizes } : undefined),
-    [items, rowSizes]
+    () => packRows(items, layout ?? (rowSizes ? { rowSizes } : undefined)),
+    [items, rowSizes, layout]
   );
 
   useEffect(() => {
@@ -90,18 +119,25 @@ export default function MorphGallery({
     );
     if (!tiles.length) return;
 
-    // Reduced motion gets the finished board, no scrubbing.
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (reveal === "static") {
       tiles.forEach(({ card }) => card.style.setProperty("--p", "1"));
       return;
     }
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    // Per tile: where scroll says it should be, where it is drawn, and the
+    // last value written, so a settled tile costs no style work at all.
+    const target = new Float32Array(tiles.length);
+    const shown = new Float32Array(tiles.length);
+    const written = new Array(tiles.length).fill("");
 
     let raf = 0;
+    let last = 0;
+    let dirty = true;
 
-    const update = () => {
-      raf = 0;
+    const measure = () => {
       const vh = window.innerHeight;
-      const stacked = window.innerWidth < STACK_BREAKPOINT;
+      const narrow = window.innerWidth < STACK_BREAKPOINT;
 
       // Every rect first, then every write. Interleaving them makes each
       // setProperty invalidate style and the next getBoundingClientRect force
@@ -110,7 +146,7 @@ export default function MorphGallery({
       const rects = tiles.map(({ box }) => box.getBoundingClientRect());
 
       for (let i = 0; i < tiles.length; i++) {
-        const { card, order, rowSize } = tiles[i];
+        const { order, rowSize } = tiles[i];
         // The untransformed layout box: the scale lives on a child, so this
         // rect stays the tile's true position and size no matter where the
         // animation currently is.
@@ -118,6 +154,7 @@ export default function MorphGallery({
 
         // A stacked tile is alone on its line, so it neither waits nor has to
         // share the row's window.
+        const stacked = narrow && rowSize > 2;
         const n = stacked ? 1 : rowSize;
         const spans = 1 + (n - 1) * HANDOFF; // tile durations the row occupies
 
@@ -131,31 +168,143 @@ export default function MorphGallery({
         // sequence comes entirely from subtracting the tile's own start.
         const travelled = vh - rect.top;
         const start = stacked ? 0 : order * HANDOFF * duration;
-        const p = clamp01((travelled - start) / duration);
+        const viewportProgress = clamp01((travelled - start) / duration);
+        // A profile's first row is already above the fold. It must wait for
+        // actual page scroll rather than arriving partly open on page load.
+        const scrollProgress = reveal === "after-scroll"
+          ? clamp01((window.scrollY - start) / duration)
+          : 1;
+        target[i] = motion.matches
+          ? (reveal === "after-scroll" && window.scrollY <= 0 ? 0 : 1)
+          : Math.min(viewportProgress, scrollProgress);
+      }
+    };
 
-        card.style.setProperty("--p", p.toFixed(4));
+    const paint = (i) => {
+      const value = easeOut(shown[i]).toFixed(4);
+      if (value !== written[i]) {
+        tiles[i].card.style.setProperty("--p", value);
+        if (reveal === "after-scroll") tiles[i].card.inert = Number(value) <= 0.001;
+        written[i] = value;
+      }
+    };
+
+    const frame = (now) => {
+      raf = 0;
+      // Clamped so a frame after a stall (tab switch, long task) eases rather
+      // than jumping the whole way in one go.
+      const dt = last ? Math.min(now - last, 48) : 16;
+      last = now;
+
+      if (dirty) {
+        dirty = false;
+        measure();
+      }
+
+      const k = 1 - Math.exp(-dt / SETTLE);
+      let moving = false;
+
+      for (let i = 0; i < tiles.length; i++) {
+        const gap = target[i] - shown[i];
+        if (motion.matches || (reveal === "after-scroll" && window.scrollY <= 0) || Math.abs(gap) < 0.001) {
+          shown[i] = target[i];
+        } else {
+          shown[i] += gap * k;
+          moving = true;
+        }
+        paint(i);
+      }
+
+      if (moving || dirty) {
+        raf = requestAnimationFrame(frame);
+      } else {
+        last = 0;
       }
     };
 
     const schedule = () => {
-      if (!raf) raf = requestAnimationFrame(update);
+      dirty = true;
+      if (!raf) raf = requestAnimationFrame(frame);
     };
 
-    update();
+    // First paint lands where the page already is — nothing eases in on load
+    // or when a board is swapped in.
+    measure();
+    dirty = false;
+    for (let i = 0; i < tiles.length; i++) {
+      shown[i] = target[i];
+      paint(i);
+    }
+
     window.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("resize", schedule);
     // Fonts and images settling in can shift the board; re-measure once.
     window.addEventListener("load", schedule);
+    motion.addEventListener("change", schedule);
+    const observer = new ResizeObserver(schedule);
+    observer.observe(root);
 
     return () => {
       if (raf) cancelAnimationFrame(raf);
       window.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", schedule);
       window.removeEventListener("load", schedule);
+      motion.removeEventListener("change", schedule);
+      observer.disconnect();
     };
     // Re-bind when the rows change — the tabs on a model page swap the whole
     // board out, and the old nodes are gone by then.
-  }, [rows]);
+  }, [rows, reveal]);
+
+  useEffect(() => {
+    if (!parallax || !rootRef.current) return;
+    const root = rootRef.current;
+    const media = [...root.querySelectorAll("[data-media]")].map((box) => ({
+      box, image: box.querySelector("img"), written: "",
+    })).filter(({ image }) => image);
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const travelAmounts = [0.22, 0.25, 0.21, 0.24];
+    let raf = 0;
+
+    const update = () => {
+      raf = 0;
+      const vh = window.innerHeight;
+      const rects = media.map(({ box }) => box.getBoundingClientRect());
+      media.forEach((entry, index) => {
+        const rect = rects[index];
+        // Across the whole viewport, the photo drifts downward as its frame
+        // travels upward. A 55% overscan safely contains the 21–25% travel.
+        const progress = Math.max(-1, Math.min(1,
+          (vh - 2 * (rect.top + rect.height / 2)) / (vh + rect.height)));
+        const offset = progress * rect.height * travelAmounts[index % travelAmounts.length];
+        const transform = motion.matches ? "none"
+          : `translate3d(0, ${offset.toFixed(2)}px, 0) scale(1.55)`;
+        if (entry.written !== transform) {
+          entry.image.style.transform = transform;
+          entry.written = transform;
+        }
+      });
+    };
+    const schedule = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    const observer = new ResizeObserver(schedule);
+    media.forEach(({ box }) => observer.observe(box));
+    update();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    motion.addEventListener("change", schedule);
+    return () => {
+      cancelAnimationFrame(raf);
+      observer.disconnect();
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      motion.removeEventListener("change", schedule);
+      media.forEach(({ image }) => {
+        image.style.removeProperty("transform");
+      });
+    };
+  }, [rows, parallax]);
 
   return (
     <div ref={rootRef} className={`morph-board ${className}`}>
@@ -166,26 +315,36 @@ export default function MorphGallery({
           <div
             key={r}
             className="morph-row"
+            data-align={row.align}
             style={{ "--gaps": row.items.length - 1 }}
           >
             {row.items.map((item, i) => {
               const share = row.shares[i];
+              // Rows of two stay side by side on a phone; longer rows wrap to
+              // two-up there.
+              const phoneVw =
+                row.items.length <= 2 ? Math.round(share * 100) : 50;
 
               const media = (
                 <>
                   {/* Layout box — never transformed, so it stays measurable. */}
                   <div data-media className="morph-tile__box">
+                    {/* The window that grows out of the corner… */}
                     <div className="morph-tile__media">
-                      <Image
-                        src={item.src}
-                        alt={item.alt}
-                        fill
-                        sizes={`(max-width: 767px) 50vw, ${Math.max(
-                          Math.round(share * 92),
-                          10
-                        )}vw`}
-                        className="object-cover grayscale transition-[filter] duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:grayscale-0"
-                      />
+                      {/* …and the photo, counter-scaled to stay full size. */}
+                      <div className="morph-tile__photo">
+                        <Image
+                          src={item.src}
+                          alt={item.alt}
+                          fill
+                          draggable={parallax ? false : undefined}
+                          sizes={`(max-width: 767px) ${phoneVw}vw, ${Math.max(
+                            Math.round(share * 92),
+                            10
+                          )}vw`}
+                          className={`object-cover grayscale transition-[filter,scale] duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:grayscale-0${parallax ? "" : " group-hover:scale-[1.03]"}`}
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -210,6 +369,7 @@ export default function MorphGallery({
                 <figure
                   key={item.id}
                   data-card
+                  inert={reveal === "after-scroll" ? true : undefined}
                   data-order={order[i]}
                   data-row-size={row.items.length}
                   className="morph-tile group"
@@ -218,8 +378,11 @@ export default function MorphGallery({
                     "--share": share,
                     // The photo's true proportions — no crop, no designed ratio.
                     "--ar": `${item.pxW} / ${item.pxH}`,
-                    "--origin": originFor(i, row.items.length),
-                    "--p": "0",
+                    // Area-sized rows only: width per unit of row height, for
+                    // the CSS height limit.
+                    ...(row.caps && { "--cap": row.caps[i].toFixed(4) }),
+                    "--origin": originFor(i, row.items.length, row.align),
+                    "--p": reveal === "static" ? "1" : "0",
                   }}
                 >
                   {onSelect ? (

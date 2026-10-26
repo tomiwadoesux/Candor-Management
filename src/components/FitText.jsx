@@ -35,6 +35,8 @@ export default function FitText({
   align = "left",
   alignY = "center",
   opticalLeft = false,
+  ignoreTransform = false,
+  maxFontSize = Infinity,
 }) {
   const boxRef = useRef(null);
   const textRef = useRef(null);
@@ -45,13 +47,27 @@ export default function FitText({
     if (!box || !el) return;
     const avail = box.clientWidth;
     if (!avail) return;
+    // A docked profile can scale this span. Fit against its intrinsic size,
+    // otherwise resizing the viewport would compound that visual scale.
+    const transform = el.style.transform;
+    const transition = el.style.transition;
+    if (ignoreTransform) {
+      el.style.setProperty("transition", "none", "important");
+      el.style.setProperty("transform", "none", "important");
+    }
     const BASE = 200; // measure big so rounding barely matters
     el.style.fontSize = `${BASE}px`;
     // The span is inline-block, so its rect is the text's own (fractional)
     // width — scrollWidth rounds to whole px and would overshoot the box.
     const natural = el.getBoundingClientRect().width;
-    if (!natural) return;
-    let size = (BASE * avail) / natural;
+    if (!natural) {
+      if (ignoreTransform) {
+        el.style.transform = transform;
+        el.style.transition = transition;
+      }
+      return;
+    }
+    let size = Math.min(maxFontSize, (BASE * avail) / natural);
     // Uppercase cap height is well under 1em, so the box height is a safe
     // ceiling for the font size.
     if (capToHeight && box.clientHeight) {
@@ -64,11 +80,11 @@ export default function FitText({
     // proportional, and the single linear guess above overshoots by b. The
     // two samples we now have solve it exactly.
     const measured = el.getBoundingClientRect().width;
-    const clamped = capToHeight && box.clientHeight === size;
+    const clamped = size === maxFontSize || (capToHeight && box.clientHeight === size);
     if (!clamped && measured && Math.abs(measured - avail) > 0.25) {
       const slope = (natural - measured) / (BASE - size);
       const offset = natural - slope * BASE;
-      let exact = (avail - offset) / slope;
+      let exact = Math.min(maxFontSize, (avail - offset) / slope);
       if (capToHeight && box.clientHeight) {
         exact = Math.min(exact, box.clientHeight);
       }
@@ -109,7 +125,11 @@ export default function FitText({
         el.style.marginLeft = `${bearing}px`;
       }
     }
-  }, [capToHeight, opticalLeft]);
+    if (ignoreTransform) {
+      el.style.transform = transform;
+      el.style.transition = transition;
+    }
+  }, [capToHeight, opticalLeft, ignoreTransform, maxFontSize]);
 
   useEffect(() => {
     fit();

@@ -92,7 +92,7 @@ export default function Loading() {
           </section>
 
           <section className="relative">
-            <div className="grid grid-cols-2 gap-3 px-3 pt-3 md:grid-cols-3 md:gap-4 md:px-5 md:pt-0 lg:grid-cols-5 lg:px-0">
+            <div className="grid grid-cols-2 gap-3 px-3 pt-3 md:grid-cols-3 md:gap-4 md:px-5 md:pt-0 lg:px-0">
               {Array.from({ length: TILE_COUNT }, (_, i) => (
                 <Tile key={i} />
               ))}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import ChromeLink from "./ChromeLink";
@@ -9,12 +9,14 @@ import { useHoveredModel } from "./HoveredModelContext";
 import FitText, { initialCaps } from "./FitText";
 import { agency, joinMailto } from "../../data/agency";
 
-// Left rail on /models: the hovered model's name sits directly above the two
-// portrait polaroids, with a caption and the stats right-aligned under it
-// beneath the pair, and the contact address at the panel's bottom-left. Every
-// vertical gap in the block matches the gutter between the two images. It holds the last model you hovered
-// rather than emptying out between tiles, so the panel never flashes blank;
-// before the first hover it shows a loading-style skeleton.
+// Left rail on /models: the hovered model's name sits at the rail's top — its
+// cap line level with the WOMEN/MEN/ALL filter labels across the column —
+// directly above the two portrait polaroids, with a caption and the stats
+// right-aligned under it beneath the pair, and the contact address at the
+// panel's bottom-left. Every vertical gap in the block matches the gutter
+// between the two images. It holds the last model you hovered rather than
+// emptying out between tiles, so the panel never flashes blank; before the
+// first hover it shows a loading-style skeleton.
 
 // The data stores both systems ("180 cm / 5'11\"", "38 EU / 7 US"); the rail
 // shows only the metric half.
@@ -55,41 +57,6 @@ export default function ModelRail({
   const { hoveredModel } = useHoveredModel() || {};
   const [shown, setShown] = useState(fallbackModel);
 
-  // The grid column opens with a sticky filter bar, so its first row of tiles
-  // starts well below the rail's own top. This inset drops the block by that
-  // difference, putting the name's cap line on the tiles' top edge.
-  //
-  // It measures the live gap between the two elements rather than reusing the
-  // filter bar's height: the rail and the bar don't share a top edge (the rail
-  // carries mt-5 and sticks at top-5, the bar sticks at top-0), so the bar's
-  // height alone overshoots by that offset.
-  const [gridOffset, setGridOffset] = useState(0);
-  const railRef = useRef(null);
-
-  useEffect(() => {
-    const bar = document.querySelector('[data-slot="models-filters"]');
-    // The <aside>, not this component's own root: it's the flex sibling of the
-    // grid column, so it shares an offset parent with the filter bar and the
-    // two offsetTop values are directly comparable.
-    const rail = railRef.current?.closest('[data-slot="models-rail"]');
-    if (!bar || !rail) return;
-
-    const measure = () => {
-      // Both columns are children of the same flex row, so offsetTop gives
-      // each one's static position in that row — independent of scroll and of
-      // either column's sticky offset. The grid's tiles begin one filter bar
-      // below the bar's own top, so that height minus the head start the rail
-      // already has (its mt-5) is exactly how far this block must drop.
-      const gap = bar.offsetHeight - (rail.offsetTop - bar.offsetTop);
-      setGridOffset(Math.max(0, gap));
-    };
-    measure();
-
-    const ro = new ResizeObserver(measure);
-    ro.observe(bar);
-    return () => ro.disconnect();
-  }, []);
-
   useEffect(() => {
     if (hoveredModel) setShown(hoveredModel);
   }, [hoveredModel]);
@@ -98,10 +65,7 @@ export default function ModelRail({
   const polaroids = (model?.polaroids || []).slice(0, 2);
 
   return (
-    <div
-      ref={railRef}
-      className={`relative flex h-full items-start ${className}`}
-    >
+    <div className={`relative flex h-full items-start ${className}`}>
       {/* CANDOR wordmark at the rail's bottom-left, with the contact
           addresses stacked beneath it. Absolute so none of it pushes the
           polaroids off centre. */}
@@ -110,10 +74,9 @@ export default function ModelRail({
           <LogoAnimation animate={false} className="w-[130px]" />
         </Link>
 
-        {/* wrapper carries any positioning: ChromeLink sets `relative` itself
-            (the arrow is absolute inside it), and two position utilities on
-            one element resolve by stylesheet order, not class order */}
-        <div className="mt-3 flex flex-col items-start text-xs italic text-[#1d1d1d]">
+        {/* the links stack down the wrapper's left edge; ChromeLink sets
+            its own face and case */}
+        <div className="mt-3 flex flex-col items-start text-xs text-[#1d1d1d]">
           <ChromeLink left href={joinMailto}>
             {agency.join.email}
           </ChromeLink>
@@ -123,12 +86,11 @@ export default function ModelRail({
         </div>
       </div>
 
-      {/* The whole block — name, images, caption and stats — is inset from the
-          top of the rail by the filter bar's height, so the name's cap line
-          meets the top edge of the grid's first row of tiles. The stats still
-          hang below the images (out of flow) so their presence never shifts
-          the pair. */}
-      <div className="relative w-full" style={{ paddingTop: gridOffset }}>
+      {/* The whole block — name, images, caption and stats — starts at the
+          rail's top, so the name's cap line sits level with the WOMEN/MEN/ALL
+          filter labels across the column. The stats still hang below the images
+          (out of flow) so their presence never shifts the pair. */}
+      <div className="relative w-full">
         {/* below the pair: caption flush with the left image's left edge,
             measurements flush right — both starting on the same top line, and
             every line box hugging the glyphs (leading-none + a matching gap)

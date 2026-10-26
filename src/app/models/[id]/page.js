@@ -8,6 +8,9 @@ import ModelProfileView from "./ModelProfileView";
 import { models } from "../../../../data/models";
 import { imageSize } from "../../../lib/imageSize";
 import { creditFor } from "../../../../data/credits";
+import { coversFor } from "../../../../data/covers";
+import { profileScrollItems } from "../../../lib/profileScrollItems";
+import { getProfileSections, isTalentOrCreative } from "../../../lib/profilePortfolio";
 
 export function generateStaticParams() {
   return models.map((m) => ({ id: m.id }));
@@ -84,26 +87,55 @@ async function pad(sources, id, size = BOARD_SIZE) {
   return out;
 }
 
+async function scrollingGallery(model, galleries) {
+  const items = profileScrollItems(model, Object.values(galleries).flat(), await pool());
+  return Promise.all(items.map(async (item) => {
+    if (item.pxW && item.pxH) return item;
+    const size = await imageSize(item.src);
+    return { ...item, pxW: size?.width || 3, pxH: size?.height || 4 };
+  }));
+}
+
 export default async function ModelProfilePage({ params }) {
   const { id } = await params;
   const model = models.find((m) => m.id === id);
   if (!model) notFound();
 
-  // One board per tab, keyed to match TABS in ModelProfileView. `campaigns` is
-  // the only one with anything behind it — the model records carry a
-  // `polaroids` array and nothing else — so covers, runway and videos fall
-  // through to their own empty state rather than inventing placeholder work.
-  //
-  // Campaigns takes that array, and takes it without a forced `kind`, so the
-  // board keeps its mixed credits: photographer lines with a client line on
-  // every third tile.
+  if (isTalentOrCreative(model)) {
+    // Keep authored sections and credits intact. The separate scrolling
+    // preview can be padded to six photos without inventing portfolio work.
+    const sections = await Promise.all(getProfileSections(model).map(async (section) => {
+      if (section.kind !== "gallery") return section;
+      const items = await Promise.all(section.items.map(async (item) => {
+        const size = await imageSize(item.src);
+        return { ...item, pxW: size?.width || item.pxW || 3, pxH: size?.height || item.pxH || 4 };
+      }));
+      return { ...section, items };
+    }));
+    const galleries = Object.fromEntries(sections
+      .filter((section) => section.kind === "gallery")
+      .map((section) => [section.key.toLowerCase(), section.items]));
+
+    const scrollItems = await scrollingGallery(model, galleries);
+    return <ModelProfileView key={model.id} model={model} sections={sections} scrollItems={scrollItems} />;
+  }
+
+  const covers = coversFor(model);
+  const coverItems = await gallery(
+    covers.map((cover) => cover.image),
+    `${model.name} cover`,
+    model,
+  );
+
+  // Covers use their own records and explicit study labels. Campaigns keep
+  // their existing mixed board; Runway and Videos retain their empty states.
   const galleries = {
-    covers: await gallery(
-      (model.covers ?? []).map((c) => c.image ?? c).filter(Boolean),
-      `${model.name} cover`,
-      model,
-      "brand"
-    ),
+    covers: coverItems.map((item, index) => ({
+      ...item,
+      label: covers[index].label || `Cover ${index + 1}`,
+      meta: covers[index].placeholder ? "Study" : "Cover",
+      alt: `${model.name} ${covers[index].placeholder ? "cover study" : "cover"} ${index + 1}`,
+    })),
     campaigns: await gallery(
       await pad(model.polaroids || [], model.id),
       `${model.name}`,
@@ -123,5 +155,6 @@ export default async function ModelProfilePage({ params }) {
     ),
   };
 
-  return <ModelProfileView model={model} galleries={galleries} />;
+  const scrollItems = await scrollingGallery(model, galleries);
+  return <ModelProfileView key={model.id} model={model} scrollItems={scrollItems} />;
 }

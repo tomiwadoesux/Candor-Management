@@ -144,8 +144,9 @@ const hollowConfig = {
 // ---------------------------------------------------------------------------
 const Rule = () => <span className="my-1.5 block h-px w-6 bg-black/25" />;
 
-// every heading on the page reads the same: small, all caps, bold
-const TOPIC = "text-[12px] font-bold uppercase tracking-[0.02em]";
+// every heading on the page reads the same: lowercase in the display serif,
+// set like the links beneath them
+const TOPIC = "font-display text-[11px] lowercase tracking-[0.02em]";
 
 const FADE = "transition-opacity duration-500";
 const fade = (hidden) => ({ opacity: hidden ? 0 : 1 });
@@ -206,16 +207,16 @@ function PageChrome({ hidden, embedded }) {
       >
         <div className="flex flex-col items-end text-[14px] leading-[1.45]">
           <span className={TOPIC}>MODELS &amp; TALENT</span>
-          <div className="mt-3 flex flex-col items-end">
-            <ChromeLink href={joinMailto}>{agency.join.email}</ChromeLink>
-            <ChromeLink href={agency.join.phoneHref}>
+          <div className="mt-3 flex flex-col items-end gap-1">
+            <ChromeLink pill href={joinMailto}>{agency.join.email}</ChromeLink>
+            <ChromeLink pill href={agency.join.phoneHref}>
               {agency.join.phone}
             </ChromeLink>
             <Rule />
-            <ChromeLink href="/get-scouted">Become a Talent</ChromeLink>
-            <ChromeLink href="/get-scouted">Submit Polaroids</ChromeLink>
+            <ChromeLink pill href="/get-scouted">Become a Talent</ChromeLink>
+            <ChromeLink pill href="/get-scouted">Submit Polaroids</ChromeLink>
             <Rule />
-            <ChromeLink>Model Policy</ChromeLink>
+            <ChromeLink pill>Model Policy</ChromeLink>
           </div>
         </div>
       </div>
@@ -228,20 +229,20 @@ function PageChrome({ hidden, embedded }) {
       >
         <div>
           <span className={TOPIC}>INFO</span>
-          <div className="mt-3 flex flex-col items-start">
-            <ChromeLink left>Instagram</ChromeLink>
-            <ChromeLink left>Linkedin</ChromeLink>
-            <ChromeLink left>Youtube</ChromeLink>
+          <div className="mt-3 flex flex-col items-start gap-1">
+            <ChromeLink pill>Instagram</ChromeLink>
+            <ChromeLink pill>Linkedin</ChromeLink>
+            <ChromeLink pill>Youtube</ChromeLink>
             <Rule />
-            <ChromeLink left href={contactMailto}>
+            <ChromeLink pill href={contactMailto}>
               {agency.contact.email}
             </ChromeLink>
-            <ChromeLink left href={agency.contact.phoneHref}>
+            <ChromeLink pill href={agency.contact.phoneHref}>
               {agency.contact.phone}
             </ChromeLink>
             <Rule />
-            <ChromeLink left>privacy policy</ChromeLink>
-            <ChromeLink left>terms and conditions</ChromeLink>
+            <ChromeLink pill href="/privacy">Privacy policy</ChromeLink>
+            <ChromeLink pill>Terms and conditions</ChromeLink>
           </div>
           <span className="mt-6 block text-[12px] text-black/45">
             © {new Date().getFullYear()} Candor Management Agency

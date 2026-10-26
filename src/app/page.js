@@ -1,8 +1,6 @@
 "use client";
 
-// useEffect / useRef are used only by the commented-out hero intro below.
-// eslint-disable-next-line no-unused-vars
-import React, { useEffect, useRef } from "react";
+import useLogoDock from "../hooks/useLogoDock";
 import SphereFooter from "../components/SphereFooter";
 import Header from "../components/header";
 import Hero2, { NUMBER_CARDS } from "../components/Hero2";
@@ -20,26 +18,6 @@ import Look from "@/components/Look";
 import SectionSnap from "../components/SectionSnap";
 // The intro. Same component /hero3 uses, so the two pages cannot drift apart.
 import CandorLine, { CandorFloatingLogo, SEEN_KEY } from "./hero3/CandorLine";
-import { agency, contactMailto } from "../../data/agency";
-
-const Rule = () => <span className="my-1.5 block h-px w-6 bg-black/25" />;
-const TOPIC = "text-[10px] font-bold uppercase tracking-[0.02em]";
-
-// The chrome's links, as PLAIN anchors. Deliberately not ChromeLink: that
-// component carries a hover arrow that slides its label aside to uncover it,
-// which fights the [ ] marker sitting at the head of each label here. It is
-// shared by the sphere board, Choose and the models rail, so the arrow is
-// removed by not using it rather than by changing it for every one of them.
-function ChromeItem({ href = "#", children }) {
-  return (
-    <a
-      href={href}
-      className="pointer-events-auto block whitespace-nowrap transition-opacity duration-300 hover:opacity-60"
-    >
-      {children}
-    </a>
-  );
-}
 
 export default function Home() {
   // Used only by the commented-out hero intro below.
@@ -47,246 +25,7 @@ export default function Home() {
   // const logoRef = useRef(null);
   // const logoNatRef = useRef(null);
 
-  // THE "models" DOCK.
-  //
-  // As Body's MODELS heading rises, it shrinks toward the floating CANDOR
-  // wordmark and slides right while CANDOR eases left, so the two meet as one
-  // centred line — CANDOR models — and un-form again when the section
-  // releases.
-  //
-  // This is a REWRITE of the dock that used to live in the commented-out hero
-  // effect below, not a revival of it. That version worked off the old hero's
-  // geometry: barW, targetScale and a `nat` snapshot taken while the wordmark
-  // shrank into the header. None of that exists now — the wordmark is a fixed
-  // element at a constant size — so the whole thing is measured from the real
-  // element instead, which is both simpler and cannot drift from what is on
-  // screen.
-  useEffect(() => {
-    const title = document.querySelector("[data-dock-title]");
-    const sticky = title?.closest("[data-dock-sticky]");
-    const logoHost = document.querySelector(".candor-intro-logo-host");
-    const logo = logoHost?.querySelector(".candor-logo");
-    if (!title || !sticky || !logoHost || !logo) return;
-
-    const prefersReduced = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-    if (prefersReduced) return;
-
-    let raf = 0;
-
-    // Skip redundant style writes, so a settled dock costs no layout at all.
-    //
-    // Keyed by the NODE, not by a two-way "is it the title" test. That test
-    // filed `sticky` and `logoHost` under the same "l" prefix, so the two
-    // shared one namespace — harmless only because they happen to write
-    // different properties (`top` vs `transform`). A WeakMap keyed off the
-    // element itself cannot collide however this grows.
-    const applied = new WeakMap();
-    const setStyle = (node, prop, value) => {
-      let m = applied.get(node);
-      if (!m) applied.set(node, (m = {}));
-      if (m[prop] === value) return;
-      m[prop] = value;
-      node.style[prop] = value;
-    };
-
-    const smoothstep = (x) => x * x * (3 - 2 * x);
-    const clamp01 = (x) => (x < 0 ? 0 : x > 1 ? 1 : x);
-
-    // ---- the measured constants -------------------------------------------
-    //
-    // EVERYTHING here is invariant under scrolling. It is measured on mount,
-    // on resize and once the webfont has landed — never per frame.
-    //
-    // That is the whole performance story of this effect. These reads used to
-    // sit inside frame(), which meant every scroll frame did: write
-    // `transform: none` on the heading, read its rect (a forced synchronous
-    // layout, on a text-9xl line in a webfont), write the transform back
-    // (dirtying layout again), then later write the sticky `top` and
-    // immediately read a rect off it (a second forced reflow, read-after-
-    // write). Two full layout flushes per frame, for numbers that had not
-    // changed since the last resize. At 120Hz that does not fit in the
-    // budget, and the dock visibly trailed the scroll.
-    //
-    // Scrolling cannot change any of it: the wordmark is position:fixed at a
-    // constant size, and the heading's untransformed box depends only on the
-    // viewport width and the font. So it is cached, and frame() below is left
-    // with a single clean rect read and two transform writes.
-    let titleRect = null; // the heading's UNTRANSFORMED box
-    let logoRect = null; // the wordmark's resting box
-    let dockTop = 0; // the pin line, written to sticky `top`
-    let target = 1; // the heading's docked scale
-    let shift = 0; // how far CANDOR eases left
-    let dockedW = 0;
-    const gapPx = 14;
-
-    const measure = () => {
-      // The wordmark's RESTING box: position from the host's rect, SIZE from
-      // offsetWidth/offsetHeight.
-      //
-      // The size cannot come from a rect. .candor-logo runs the intro's
-      // scale-in (0.86 -> 1 over 320ms) and getBoundingClientRect reports the
-      // TRANSFORMED box, so measuring inside that window would dock against a
-      // wordmark up to 14% too small — and since this sets the sticky `top`
-      // that pins the heading, the pair would stay mis-sized. Stripping the
-      // transform to measure does not work either: a CSS animation beats an
-      // inline style. Nor does measuring the <svg> inside, which inherits the
-      // parent's scale like any descendant. offsetWidth/offsetHeight are
-      // LAYOUT values and ignore transforms entirely, which is what is wanted.
-      //
-      // The host's `top` is read off a rect, and that IS safe: the host is
-      // position:fixed and the intro only ever animates its child, so its own
-      // top never moves. Its `transform` is written by frame() though, and an
-      // X translate does not affect `top`, so no strip is needed.
-      const hostRect = logoHost.getBoundingClientRect();
-
-      // The heading's UNTRANSFORMED box. The transform still has to be
-      // stripped to read it — a transformed rect would feed the last frame's
-      // scale back into the next one and the heading would collapse over a
-      // few frames. But now it happens on resize rather than 120 times a
-      // second, so the write-read-write costs nothing that matters.
-      const prevT = title.style.transform;
-      if (prevT && prevT !== "none") title.style.transform = "none";
-      const tr = title.getBoundingClientRect();
-      if (prevT && prevT !== "none") title.style.transform = prevT;
-
-      if (tr.height === 0 || logo.offsetWidth === 0) {
-        // The font has not landed, or the element is not laid out yet.
-        // Leave the cache empty and let frame() no-op until it is.
-        titleRect = null;
-        logoRect = null;
-        return;
-      }
-
-      titleRect = tr;
-      logoRect = {
-        top: hostRect.top,
-        width: logo.offsetWidth,
-        height: logo.offsetHeight,
-      };
-
-      // MODELS docks to the wordmark's HEIGHT, a hair smaller so CANDOR still
-      // reads as the lead. Tying it to a ratio of heights rather than to a
-      // fixed scale means it stays correct at every breakpoint, where the
-      // wordmark is 124px wide on mobile and 200px above md.
-      target = (logoRect.height / titleRect.height) * 0.95;
-      dockedW = titleRect.width * target;
-      // CANDOR eases left by half the pair's width, so the two together stay
-      // centred on the viewport rather than the wordmark staying put and the
-      // pair sitting off to one side.
-      shift = (dockedW + gapPx) / 2;
-
-      // Where the heading must be pinned for its docked box to sit on the
-      // wordmark's centre line. Set as the sticky `top` so the browser holds
-      // it natively — no per-frame vertical transform, so it cannot jitter.
-      //
-      // Written HERE, once, rather than every frame. It is derived entirely
-      // from the two cached boxes, so it is constant between resizes; writing
-      // it per frame was what forced the second reflow, because the very next
-      // line read a rect back off the element it had just laid out.
-      const dockedH = titleRect.height * target;
-      dockTop = logoRect.top + logoRect.height / 2 - dockedH / 2;
-      setStyle(sticky, "top", `${dockTop.toFixed(2)}px`);
-    };
-
-    const frame = () => {
-      raf = 0;
-      if (!titleRect || !logoRect) return;
-
-      // The ONLY layout read left in the frame, and a clean one: nothing has
-      // been written since the last flush, so it reads against already-valid
-      // layout instead of forcing a fresh one.
-      const wrapRect = sticky.getBoundingClientRect();
-
-      // Both are centred on the viewport, so the dock is symmetric about it.
-      const centreX = window.innerWidth / 2;
-
-      // Dock-in: how far the sticky row has travelled from where it enters to
-      // its pin line. Reaches 1 and holds there while stuck.
-      const startTop = window.innerHeight * 0.6;
-      const inward = smoothstep(
-        clamp01((startTop - wrapRect.top) / (startTop - dockTop)),
-      );
-
-      // Release: once the section scrolls the stuck row back up past its pin
-      // line, the pair un-forms. The heading rides up natively with the
-      // sticky release; this only has to take CANDOR back to centre.
-      const release = smoothstep(
-        clamp01((dockTop - wrapRect.top) / (logoRect.height * 2.5)),
-      );
-
-      // How present the heading is beside the wordmark: grows as it docks,
-      // fades as it releases, so the two track each other and never separate
-      // mid-slide.
-      const pin = inward * (1 - release);
-
-      setStyle(
-        logoHost,
-        "transform",
-        `translateX(${(-shift * pin).toFixed(2)}px)`,
-      );
-
-      // The heading scales about its top-centre and is flex-centred, so its
-      // centre stays on centreX; this slides it to sit beside the wordmark.
-      const scale = 1 + (target - 1) * inward;
-      const targetCX =
-        centreX - shift * pin + logoRect.width / 2 + gapPx + dockedW / 2;
-      const dx = (targetCX - centreX) * inward;
-      setStyle(
-        title,
-        "transform",
-        `translate(${dx.toFixed(2)}px, 0px) scale(${scale.toFixed(4)})`,
-      );
-    };
-
-    const onScroll = () => {
-      if (!raf) raf = requestAnimationFrame(frame);
-    };
-
-    // A resize invalidates the cache, so it has to re-measure — not just
-    // re-run frame(), which now reads the cache rather than the DOM.
-    const onResize = () => {
-      measure();
-      onScroll();
-    };
-
-    measure();
-    frame();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onResize);
-
-    // The heading is set in a webfont, so its untransformed width is wrong
-    // until that font has loaded — and with the measure now cached, a wrong
-    // value would STAY wrong for the life of the page rather than being
-    // corrected by the next frame. Re-measure once the fonts are in.
-    let cancelled = false;
-    if (document.fonts?.ready) {
-      document.fonts.ready.then(() => {
-        if (!cancelled) onResize();
-      });
-    }
-
-    // The wordmark's resting box also depends on the viewport width via its
-    // own responsive size (124px / 200px at the md breakpoint), and on the
-    // intro's scale-in having finished. A ResizeObserver on the two elements
-    // catches both without polling — and covers the first-visit case where
-    // this effect runs while the logo is still mid-animation at 0.86.
-    const ro = new ResizeObserver(() => onResize());
-    ro.observe(logo);
-    ro.observe(title);
-
-    return () => {
-      cancelled = true;
-      ro.disconnect();
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onResize);
-      cancelAnimationFrame(raf);
-      title.style.transform = "";
-      sticky.style.top = "";
-      logoHost.style.transform = "";
-    };
-  }, []);
+  useLogoDock();
 
   // ---------------------------------------------------------------------------
   // THE OLD HERO INTRO, kept for reference.
@@ -1045,11 +784,10 @@ export default function Home() {
     <section className="relative">
       {/* The bottom search island is held back through the intro and then
           arrives WITH the rest of the furniture.
-          4270ms is --at-furniture / --at-cards from styles/candor-intro.css —
+          1930ms is --at-furniture / --at-cards from styles/candor-intro.css —
           the single moment the wordmark, the corner chrome and the two cards
-          all begin coming in. It was briefly 4140 (that mark plus
-          --logo-in-ms), which waited for the wordmark to FINISH and left the
-          island arriving on its own a third of a second behind the group.
+          all begin coming in, just before CANDOR finishes forming.
+          The cards finish appearing at 2130ms, before the letters fall.
           These are two separate clocks — a CSS animation delay and a JS
           timeout — so they are kept in step by hand; if the intro's timeline
           moves, this moves with it.
@@ -1058,7 +796,7 @@ export default function Home() {
           holding off for an animation that is not running.
           <Header /> must stay ABOVE <CandorLine /> for that check to work —
           it reads the flag in an effect, and the intro writes it in one. */}
-      <Header delayMs={4270} skipWhenSeen={SEEN_KEY} />
+      <Header delayMs={1930} skipWhenSeen={SEEN_KEY} />
 
       {/* THE INTRO, from /hero3.
           Rides position:sticky at the top of the viewport and STAYS pinned;
@@ -1083,101 +821,7 @@ export default function Home() {
       </CandorFloatingLogo>
 
       <div className="sticky top-0 h-screen w-full overflow-hidden px-3 py-5 md:px-5">
-        <CandorLine
-          floatingLogo
-          chrome={
-            <>
-              {/* JOIN and INFO, stacked in the bottom-left corner and
-                  separated by the chrome's own rule. From lg up only: below
-                  that the corner cannot hold this and the copyright at once,
-                  so the small-screen version further down replaces it. */}
-              <div className="pointer-events-none absolute bottom-5 left-3 hidden text-[12px] font-light leading-[1.45] md:left-5 lg:block">
-                <div className="flex flex-col items-start">
-                  <span className={TOPIC}>JOIN</span>
-                  <div className="mt-1.5 flex flex-col items-start">
-                    <ChromeItem href="/get-scouted">
-                      [&nbsp;] Become a Talent
-                    </ChromeItem>
-                    <ChromeItem href="/get-scouted">
-                      [&nbsp;] Submit Polaroids
-                    </ChromeItem>
-                  </div>
-
-                  <Rule />
-
-                  <span className={TOPIC}>INFO</span>
-                  <div className="mt-1.5 flex flex-col items-start">
-                    <ChromeItem href={contactMailto}>
-                      [&nbsp;] {agency.contact.email}
-                    </ChromeItem>
-                  </div>
-                </div>
-              </div>
-
-              {/* Small screens: the same details, run VERTICALLY up the left
-                  and right edges.
-                  Rotated rather than set horizontally because of what each
-                  costs in width. A horizontal rail wide enough for "Become a
-                  Talent" takes ~64px a side, which on a 360px phone leaves
-                  the two cards 110px each — unusably narrow. Rotated, a rail
-                  is only as wide as the type is tall, ~30px, and the cards
-                  keep ~144px. The text reads bottom-to-top on the left and
-                  top-to-bottom on the right, so each runs away from the
-                  nearest corner rather than both leaning the same way. */}
-              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-1 lg:hidden">
-                <div
-                  className="flex items-center gap-4 whitespace-nowrap text-[10px] font-light tracking-[0.04em]"
-                  style={{ writingMode: "vertical-rl", rotate: "180deg" }}
-                >
-                  <ChromeItem href="/get-scouted">
-                    [&nbsp;] Become a Talent
-                  </ChromeItem>
-                  <ChromeItem href="/get-scouted">
-                    [&nbsp;] Submit Polaroids
-                  </ChromeItem>
-                </div>
-              </div>
-
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-1 lg:hidden">
-                <div
-                  className="flex items-center gap-4 whitespace-nowrap text-[10px] font-light tracking-[0.04em]"
-                  style={{ writingMode: "vertical-rl" }}
-                >
-                  <ChromeItem href={contactMailto}>
-                    [&nbsp;] {agency.contact.email}
-                  </ChromeItem>
-                </div>
-              </div>
-            </>
-          }
-          // Passed separately from `chrome` because it behaves differently: the
-          // rest of the furniture arrives at the end of the intro, but the
-          // copyright is present from the first frame — it is the page's
-          // footing, not something the intro delivers.
-          copyright={
-            /* Bottom-right from lg up, where it sits opposite the JOIN/INFO
-               block. Below that the chrome runs up the left and right edges,
-               so the foot of the screen is free and the copyright sits there
-               centred. It cannot go to the top on small screens: the wordmark
-               is centred at top-5 and they would overlap. */
-            <>
-              <div className="pointer-events-none absolute bottom-5 right-3 hidden text-[10px] text-black/45 md:right-5 lg:block">
-                <span>
-                  © {new Date().getFullYear()} Candor Management Agency
-                </span>
-              </div>
-              {/* bottom-20 on small screens, not bottom-3: Header renders a
-                  fixed search island centred at bottom-5, and the copyright
-                  would sit underneath it. On /hero3 there is no Header, so
-                  that page keeps it low. */}
-              <div className="pointer-events-none absolute inset-x-0 bottom-20 text-center text-[9px] text-black/40 lg:hidden">
-                <span>
-                  © {new Date().getFullYear()} Candor Management Agency
-                </span>
-              </div>
-            </>
-          }
-        />
+        <CandorLine floatingLogo />
       </div>
 
       {/* Travel before the next section begins sliding up. Real content rather
@@ -1196,7 +840,7 @@ export default function Home() {
         <Body />
         <section className="pt-14 md:pt-28 lg:pt-20">
           <div className="px-4">
-            <FilmPlayer films={films} inline panel />
+            <FilmPlayer films={films} inline bar="index" />
           </div>
         </section>
 

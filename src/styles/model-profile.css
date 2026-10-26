@@ -1,206 +1,832 @@
-/* Model profile chrome.
- *
- * The pictures in the pinned hero — the big frame, the polaroid strip, the
- * narrow-screen face — are clipped away from the bottom up as the board of
- * work scrolls over them. The board carries no background of its own, so
- * without this the profile's photographs sit behind the tiles and show through
- * every gap between them.
- *
- * --hero-clip is 0 while the board is still below the fold and 1 once it has
- * reached the top; ModelProfileView drives it from the board's own position,
- * scrubbed by scroll, so scrolling back up brings the pictures back.
- *
- * clip-path rather than height or opacity: it takes the picture away without
- * touching the layout around it, and it composites, so the scrub stays cheap.
- */
-
-.hero-clip {
-  clip-path: inset(0 0 calc(var(--hero-clip, 0) * 100%) 0);
+/* The profile stays on the right while the work scrolls in the left column. */
+.model-profile {
+  position: relative;
+  isolation: isolate;
+  --profile-bar-height: 0px;
+  --profile-rule: rgb(12 12 12 / 24%);
+  --profile-inset: 16px;
+  --profile-row-gap: clamp(72px, 12vw, 180px);
 }
 
-/* The polaroid strip leaves a different way: it scales out of its own centre
-   rather than being wiped from the bottom. Four small pictures in a row read
-   as a set, and a clip travelling up through all four at once looks like a
-   shutter closing on them; shrinking lets each one go on its own.
-   
-   Unlike the clip this needs no scrubbing — it is a plain CSS transition on
-   the same threshold, with a short stagger across the row so the strip
-   empties left to right. */
-.hero-scale {
-  transform: scale(1);
-  transform-origin: center;
-  transition: transform 480ms cubic-bezier(0.65, 0, 0.35, 1) var(--out, 0ms);
-  will-change: transform;
+.profile-background-brand {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 0;
+  display: grid;
+  place-items: center;
+  width: calc(100% * 1.618 / 2.618);
+  color: #0c0c0c;
+  pointer-events: none;
 }
 
-[data-shifted="true"] .hero-scale {
-  transform: scale(0);
-}
-
-/* No scroll-linked clipping when motion is turned down — the pictures simply
-   stay put. They read as part of the profile rather than as an effect. */
-@media (prefers-reduced-motion: reduce) {
-  .hero-clip {
-    clip-path: none;
-  }
-
-  .hero-scale {
-    transition: none;
-  }
-}
-
-/* ------------------------------------------------- hero text, sliding left --
-
-   On scroll the name, bio, measurements and button leave their centred
-   positions and go flush to the page's left edge — the same 16px the wordmark
-   and the board sit on.
-
-   Each block is moved by a transform, not by re-laying it out: --shift is the
-   distance from where the block rests to that edge, measured once by
-   ModelProfileView and again on resize. The motion itself is a plain CSS
-   transition, so nothing runs per frame.
-
-   They run at different speeds so the stack unfolds rather than sliding as one
-   slab. The wordmark is not part of this — it stays where it is. */
-
-/* easeInOutCubic, not the expo-ish ease-out this had before. That curve threw
-   the blocks 87% of the way in its first 100ms, which is what read as too
-   quick however long the duration was — the distance was gone before the eye
-   caught it. This one leaves and lands soft and spends its time in the middle
-   of the move, so the same trip reads as smooth without taking longer than it
-   has to. */
-.hero-slide {
-  transform: translateX(0);
-  transition: transform var(--slide, 720ms) cubic-bezier(0.65, 0, 0.35, 1);
-  will-change: transform;
-}
-
-/* Spread far enough apart that the stack arrives in order rather than as one
-   slab. */
-.hero-slide--name {
-  --slide: 700ms;
-}
-.hero-slide--facts {
-  --slide: 820ms;
-}
-.hero-slide--bio {
-  --slide: 940ms;
-}
-.hero-slide--button {
-  --slide: 1060ms;
-}
-
-[data-shifted="true"] .hero-slide {
-  transform: translateX(var(--shift, 0px));
-}
-
-/* ------------------------------------------------------------- the bio ----
-
-   Two things are going on in the bio that are not going on anywhere else.
-
-   First, its right edge steps in as it goes down — longest line on top, each
-   one after it a little shorter. That is a float with a triangular
-   shape-outside: it takes no width at the top of the paragraph and its full
-   width at the bottom, so every successive line has less room to run into. The
-   text is not re-measured or hyphenated; the wrap just happens inside a
-   narrowing column. */
-.hero-slide--bio {
-  text-align: left;
-}
-
-.hero-slide--bio::before {
-  content: "";
-  float: right;
-  width: 26%;
-  height: 5.6em;
-  shape-outside: polygon(100% 0, 100% 100%, 0 100%);
-}
-
-/* Once the lines are cut the shape has done its job, and leaving it in would
-   only give the frozen lines something to collide with. */
-.hero-slide--bio[data-split="true"]::before {
-  content: none;
-}
-
-/* Second, going flush left is a move rather than a switch. text-align cannot
-   transition, so centring by alignment would snap the lines into place under
-   the block's own slide. Instead the paragraph is set left and each line is
-   offset right by half its own slack — which looks identical at rest — and
-   the offsets run out to zero on the same beat the block travels. Every line
-   has a different distance to cover, so the ragged edge unfolds as it lands.
-   ModelProfileView splits the lines and measures --line-shift. */
-/* fit-content, not a full-width block: the offset that fakes the centring is
-   half the line's own slack, so the line has to be as wide as its text and no
-   wider. nowrap keeps a line that was cut to fit from re-wrapping on a
-   sub-pixel rounding difference. */
-.hero-line {
+.profile-background-logo {
   display: block;
+  width: min(64%, 440px);
+  height: auto;
+}
+
+.profile-mosaic button:focus-visible,
+.profile-contact a:focus-visible {
+  outline: 2px solid #00749e;
+  outline-offset: -3px;
+}
+
+.profile-hero {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.618fr) minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  align-items: start;
+}
+
+.profile-hero__left {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.profile-hero__measurements {
+  margin-top: 0;
+  padding: var(--profile-inset);
+}
+
+.profile-facts {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 4px;
+  width: 100%;
+  margin: 0;
+  text-align: right;
+  font-size: 13px;
+  line-height: 20px;
+  color: #0c0c0c;
+}
+
+.profile-facts__item {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0 5px;
+}
+
+.profile-facts dt {
+  font-family: var(--font-h1);
+  font-size: 16px;
+  font-weight: 400;
+  text-transform: none;
+}
+
+.profile-facts dt::after {
+  content: ":";
+}
+
+.profile-facts dd {
+  margin: 0;
+  text-transform: lowercase;
+}
+
+.profile-hero__primary {
+  grid-area: 1 / 1;
+  min-height: 0;
+  padding: var(--profile-inset);
+}
+
+.profile-hero__gallery {
+  min-height: 100%;
+}
+
+.profile-hero__right {
+  position: sticky;
+  background: #fafafa;
+  top: 0;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  display: grid;
+  grid-template-rows: minmax(min-content, var(--profile-photo-bottom, 62svh)) auto;
+  align-content: start;
+  min-width: 0;
+  min-height: 100svh;
+  max-height: 100svh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  border-left: 1px solid var(--profile-rule);
+}
+
+.profile-hero__identity {
+  display: grid;
+  grid-template-rows: auto minmax(160px, 1fr);
+  min-height: 0;
+  padding: var(--profile-inset);
+  padding-top: calc(var(--profile-inset) + 1px);
+}
+
+.profile-name-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-content: start;
+  min-width: 0;
+  min-height: 0;
+}
+
+.profile-name {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+
+/* FitText keeps long names inside the right column. */
+.profile-name > div {
+  width: 90%;
+  overflow: visible;
+  line-height: 0;
+}
+
+.profile-name__text {
+  font-family: var(--font-h1);
+  /* Allow for the raised initial above the trimmed capital height. */
+  padding-top: 0.07em;
+  letter-spacing: -0.035em;
+  text-box-trim: trim-both;
+  text-box-edge: cap alphabetic;
+}
+
+.profile-full-name {
   width: fit-content;
+  max-width: 100%;
+  margin: 4px 0 0;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+}
+
+.profile-doodle {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding-block: 16px;
+}
+
+.profile-doodle__art {
+  position: relative;
+  display: block;
+  width: min(100%, 340px);
+  height: auto;
+  min-height: 0;
+  max-height: calc(100% - 24px);
+  object-fit: contain;
+}
+
+.profile-doodle::before {
+  content: "";
+  position: absolute;
+  inset: 12px 0 28px;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, transparent 31px, rgb(201 73 73 / 55%) 31px, rgb(201 73 73 / 55%) 32px, transparent 32px),
+    repeating-linear-gradient(to bottom, transparent 0, transparent 27px, rgb(79 132 194 / 30%) 27px, rgb(79 132 194 / 30%) 28px);
+}
+
+.profile-doodle__caption {
+  position: absolute;
+  bottom: 0;
+  inset-inline: 0;
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.profile-hero__lower {
+  display: grid;
+  grid-template-columns: minmax(0, 1.618fr) minmax(0, 1fr);
+  min-height: 0;
+  border-top: 1px solid var(--profile-rule);
+}
+
+.profile-hero__details-column {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.profile-hero__copy-column {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+}
+
+.profile-actions {
+  margin-top: auto;
+  padding: var(--profile-inset);
+  text-align: right;
+  font-family: var(--font-body);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.profile-download {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  min-height: 34px;
+  max-width: 100%;
+  padding: 7px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #0c0c0c;
+  margin-top: 12px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.4;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 3px;
   white-space: nowrap;
-  transform: translateX(var(--line-shift, 0px));
-  transition: transform var(--slide, 940ms) cubic-bezier(0.65, 0, 0.35, 1);
-  will-change: transform;
 }
 
-[data-shifted="true"] .hero-line {
-  transform: translateX(0);
+.profile-socials {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  font-size: 10px;
 }
 
-[data-measuring="true"] .hero-line {
-  transform: none !important;
-  transition: none !important;
+.profile-socials::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: min(72px, 60%);
+  height: 1px;
+  background: var(--profile-rule);
 }
 
-/* --shift is measured off the resting position, so the measuring pass has to
-   see the blocks untransformed — and must not animate its way back. */
-[data-measuring="true"] .hero-slide {
-  transform: none !important;
-  transition: none !important;
+.profile-socials [aria-disabled="true"] {
+  opacity: 0.55;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .hero-slide {
-    transition: none;
+.profile-social {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.profile-social__icon {
+  flex: 0 0 14px;
+}
+
+.profile-social__username {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-actions a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.profile-download:hover {
+  background: transparent;
+  text-decoration: underline;
+}
+
+.profile-download svg {
+  flex-shrink: 0;
+}
+
+.profile-actions a:focus-visible,
+.profile-download:focus-visible {
+  outline: 2px solid #00749e;
+  outline-offset: 3px;
+}
+
+.profile-mosaic {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  grid-template-areas:
+    "photo-1 photo-1 photo-2"
+    "photo-1 photo-1 photo-3"
+    "photo-4 photo-4 photo-3";
+  gap: 3px;
+  width: 100%;
+  min-width: 0;
+  flex-shrink: 0;
+  aspect-ratio: 1052.3 / 650.36;
+  overflow: hidden;
+}
+
+.profile-mosaic--large {
+  grid-template-columns: minmax(0, 2.16fr) repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(5, minmax(0, 1fr));
+  grid-template-areas:
+    "photo-1 photo-2 photo-3"
+    "photo-1 photo-2 photo-3"
+    "photo-1 photo-2 photo-5"
+    "photo-1 photo-4 photo-5"
+    "photo-1 photo-4 photo-5";
+  gap: clamp(3px, 0.3vw, 5px);
+}
+
+.profile-mosaic[data-count="1"] {
+  grid-template: "photo-1" minmax(0, 1fr) / minmax(0, 1fr);
+}
+
+.profile-mosaic[data-count="2"] {
+  grid-template: "photo-1 photo-2" minmax(0, 1fr) / repeat(2, minmax(0, 1fr));
+}
+
+.profile-mosaic[data-count="3"] {
+  grid-template: "photo-1 photo-2" minmax(0, 1fr) "photo-1 photo-3" minmax(0, 1fr) / repeat(2, minmax(0, 1fr));
+}
+
+.profile-mosaic--large[data-count="4"] {
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  grid-template-areas:
+    "photo-1 photo-2 photo-2"
+    "photo-1 photo-3 photo-4";
+}
+
+.profile-mosaic__photo {
+  display: block;
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: #eeece9;
+}
+
+.profile-mosaic__image {
+  border-radius: 0;
+  object-position: center 20%;
+}
+
+@media (max-width: 640px) {
+  .profile-mosaic--large[data-count="5"] {
+    aspect-ratio: 0.9;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+    grid-template-areas:
+      "photo-1 photo-2"
+      "photo-1 photo-3"
+      "photo-4 photo-5";
   }
 }
 
-/* The bio is cut at four lines; this is what says so. Inert for now — it marks
-   the truncation as a decision rather than text that simply ran out. */
-.hero-more {
-  font-style: italic;
-  opacity: 0.55;
-  cursor: pointer;
+.profile-mosaic button {
+  cursor: zoom-in;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 160ms ease;
 }
 
-.hero-more:hover {
+.profile-mosaic button:active {
   opacity: 0.8;
 }
 
-/* ------------------------------------------------- holding the board back --
-
-   The board is in normal flow, so it rises with the scroll — which means it
-   was already arriving while the polaroid strip was still shrinking, and the
-   two moves read as one muddle. Holding it down and releasing it after a delay
-   lets the strip finish first.
-
-   The delay is measured off the strip: its scale-out is 480ms eased with a
-   70ms stagger, so the last of the four passes 85% gone at roughly 540ms. The
-   delay lives on the shifted rule alone, so scrolling back up returns the
-   board immediately instead of waiting the same beat out. */
-.board-hold {
-  transform: translateY(22vh);
-  transition: transform 760ms cubic-bezier(0.65, 0, 0.35, 1);
-  will-change: transform;
+.profile-contact {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: auto;
+  padding: 12px;
+  font-size: 10px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
-[data-shifted="true"] .board-hold {
-  transform: translateY(0);
-  transition-delay: 540ms;
+.profile-contact a {
+  text-underline-offset: 3px;
+}
+
+.profile-hero__bio-cell {
+  min-width: 0;
+  width: 100%;
+  padding: var(--profile-inset);
+}
+
+.profile-bio {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.profile-bio p {
+  font-weight: inherit;
+}
+
+.profile-bio strong {
+  font-weight: 600;
+}
+
+.profile-bio__details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+  margin-top: 12px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .profile-mosaic button:hover {
+    opacity: 0.85;
+  }
+  .profile-contact a:hover {
+    text-decoration: underline;
+  }
+}
+
+.profile-board {
+  grid-column: 1;
+  grid-row: 2;
+  min-width: 0;
+  min-height: 100svh;
+  padding: 0 var(--profile-inset) 100px;
+}
+
+.profile-scattered {
+  --gap: clamp(24px, 5vw, 88px);
+  gap: var(--profile-row-gap);
+  padding: 8px 0 15svh;
+}
+
+@media (min-width: 1024px) {
+  .profile-board > .profile-scattered {
+    /* Include the opening grid's bottom inset in the shared row spacing. */
+    padding-top: calc(var(--profile-row-gap) - var(--profile-inset));
+  }
+}
+
+.profile-intro-grid {
+  padding: 0;
+}
+
+.profile-intro-grid .morph-tile__caption {
+  display: none;
+}
+
+.profile-scattered .morph-row {
+  flex-wrap: nowrap;
+  justify-content: space-between;
+}
+
+.profile-scattered .morph-tile {
+  flex: none;
+  width: min(calc(var(--share) * (100% - var(--gap)) * 0.92), calc(var(--cap, 1) * 62svh));
+}
+
+.profile-scattered .morph-row:nth-child(3n + 1) > :last-child:not(:first-child) {
+  margin-top: 12svh;
+}
+
+.profile-scattered .morph-row:has(> :only-child) {
+  justify-content: center;
+}
+
+.profile-scattered .morph-row > :only-child {
+  width: min(62%, calc(var(--cap, 1) * 66svh));
+}
+
+.profile-intro-grid {
+  --intro-gap: clamp(32px, 5svh, 52px);
+  --intro-row-height: calc((100svh - 108px - var(--intro-gap)) / 2);
+  min-height: calc(100svh - 108px);
+  justify-content: space-between;
+  gap: var(--intro-gap);
+}
+
+.profile-intro-grid .morph-tile {
+  width: min(calc(var(--share) * (100% - var(--gap))), calc(var(--cap, 1) * var(--intro-row-height)));
+}
+
+.profile-intro-grid .morph-row:nth-child(3n + 1) > :last-child:not(:first-child) {
+  margin-top: clamp(24px, 6svh, 72px);
+}
+
+.profile-intro-grid .morph-row:nth-child(2) {
+  padding-inline: 10% 4%;
+}
+
+.profile-scattered .morph-tile__caption {
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 10px;
+}
+
+/* Let only a trace of the fixed wordmark show through an overlapping photo. */
+.profile-scattered .morph-tile__media {
+  opacity: 0.975;
+}
+
+.profile-scattered .morph-tile__photo img {
+  filter: none;
+  transform: scale(1.55);
+  scale: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .board-hold {
-    transform: none;
+  .profile-scattered .morph-tile__photo img {
+    transform: none !important;
+  }
+}
+
+.profile-scattered button:focus-visible {
+  outline: 2px solid #00749e;
+  outline-offset: 5px;
+}
+
+@media (max-width: 1023px) {
+  .profile-background-brand {
+    width: 100%;
+  }
+  .profile-hero {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+  }
+  .profile-hero__left {
+    min-height: 0;
+  }
+  .profile-hero__gallery {
+    min-height: 0;
+    aspect-ratio: auto;
+  }
+  .profile-hero__right {
+    position: static;
+    grid-column: 1;
+    grid-row: 2;
+    min-height: 0;
+    max-height: none;
+    overflow: visible;
+    grid-template-rows: auto auto;
+    border-left: 0;
+    border-top: 1px solid var(--profile-rule);
+  }
+  .profile-hero__identity {
+    grid-template-rows: auto minmax(180px, 28svh);
+  }
+  .profile-hero__lower {
+    padding-bottom: 48px;
+  }
+  .profile-board {
+    grid-row: 3;
+  }
+}
+
+@media (max-width: 767px) {
+  .model-profile {
+    --profile-inset: 12px;
+  }
+  .model-profile .fixed:has(> [data-bottombar]) {
+    bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-mosaic button {
     transition: none;
+  }
+}
+
+/* Non-image portfolio sections also stay inside the left column. */
+.profile-section-content {
+  min-height: calc(100svh - var(--profile-bar-height));
+  padding: 16px 0 32px;
+  background: #fafafa;
+}
+
+.profile-section-title,
+.profile-project-details h2 {
+  margin: 0 0 24px;
+  font-family: var(--font-h1);
+  font-size: clamp(32px, 4vw, 48px);
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.profile-about,
+.profile-project-details {
+  max-width: 62ch;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.profile-about__copy,
+.profile-project-details {
+  display: grid;
+  gap: 16px;
+}
+
+.profile-about__details {
+  display: grid;
+  gap: 12px;
+  margin-top: 32px;
+  font-size: 12px;
+}
+
+.profile-about__details > div {
+  display: grid;
+  grid-template-columns: minmax(80px, 1fr) minmax(0, 3fr);
+  gap: 16px;
+}
+
+.profile-about__details dt {
+  color: rgb(12 12 12 / 55%);
+}
+
+.profile-about__details dd {
+  margin: 0;
+}
+
+.profile-films {
+  display: grid;
+  gap: 48px;
+}
+
+.profile-film {
+  margin: 0;
+}
+
+.profile-film__player {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  background: #0c0c0c;
+}
+
+.profile-film figcaption {
+  margin-top: 12px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.profile-film figcaption p,
+.profile-credits p {
+  color: rgb(12 12 12 / 60%);
+  margin-top: 4px;
+}
+
+.profile-credits {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.profile-credits li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 24px;
+  padding: 20px 0;
+  border-top: 1px solid var(--profile-rule);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.profile-credits h3 {
+  font-weight: 500;
+  font-size: 15px;
+}
+
+.profile-content-link {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 44px;
+  color: #00749e;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  font-size: 13px;
+  touch-action: manipulation;
+}
+
+.profile-content-link:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+}
+
+.morph-modal__panel[data-has-description="true"] .morph-modal__media img {
+  max-height: 60svh;
+}
+
+.model-profile[data-has-photos="false"] .profile-hero__left {
+  display: none;
+}
+
+.model-profile[data-has-photos="false"] .profile-hero {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.model-profile[data-has-photos="false"] .profile-hero__right {
+  position: static;
+  grid-column: 1;
+  grid-row: 1;
+  min-height: 0;
+  max-height: none;
+}
+
+.model-profile[data-has-photos="false"] .profile-board {
+  grid-row: 2;
+}
+
+.profile-covers {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 20svh;
+}
+
+.profile-covers__item {
+  --cover-height: min(var(--cover-size, 60svh), calc((100vw - 32px) / var(--cover-ratio)));
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.profile-covers__frame {
+  position: relative;
+  display: block;
+  width: calc(var(--cover-height) * var(--cover-ratio));
+  height: var(--cover-height);
+  margin-inline: auto;
+  padding: 0;
+  overflow: clip;
+  border: 0;
+  border-radius: 3px;
+  background: #efefee;
+  pointer-events: auto;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.profile-covers__frame:focus-visible {
+  outline: 2px solid #00749e;
+  outline-offset: 4px;
+}
+
+.profile-covers__frame:active {
+  opacity: 0.85;
+}
+
+.profile-covers__image {
+  object-fit: cover;
+  transform: scale(1.16);
+}
+
+@media (orientation: portrait) {
+  .profile-covers__item {
+    --cover-width: calc((100vw - 24px) * var(--cover-width-factor, 1));
+    --cover-height: min(calc(var(--cover-width) / var(--cover-ratio)), calc(100svh - 144px));
+    min-height: calc(100svh - 144px);
+  }
+
+  .profile-covers__frame {
+    position: sticky;
+    top: max(72px, calc((100svh - var(--cover-height)) / 2));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-covers__image {
+    transform: none !important;
+  }
+
+  .profile-covers__frame {
+    position: relative;
+    top: auto;
   }
 }

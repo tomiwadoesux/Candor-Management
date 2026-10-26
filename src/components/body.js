@@ -1,4 +1,4 @@
-import News from "./News";
+import NewsFeature from "./NewsFeature";
 
 export default function Body() {
   return (
@@ -8,7 +8,7 @@ export default function Body() {
           section's end. Because the vertical pin is native (no per-frame
           transform chasing the scroll), the steady pinned state can't jitter.
           The scale + horizontal slide beside CANDOR are layered onto the h1
-          from app/page.js, which also sets this wrapper's sticky `top`.
+          from useLogoDock, which also sets this wrapper's sticky `top`.
           pointer-events-none so the invisible pinned box doesn't eat clicks.
 
           It has to stay a DIRECT child of the section: a sticky element can only
@@ -31,7 +31,6 @@ export default function Body() {
           data-dock-title
           className="text-center font-normal uppercase tracking-[0.03em] text-white text-6xl md:text-8xl lg:text-9xl whitespace-nowrap select-none"
           style={{
-            willChange: "transform",
             transformOrigin: "top center",
             fontFamily: "'Gwyner Condensed', Bitter, serif",
           }}
@@ -42,7 +41,7 @@ export default function Body() {
 
       {/* The models section carries the board: the pinned "MODELS" heading
           docks beside CANDOR and the work runs under it. */}
-      <News />
+      <NewsFeature />
     </section>
   );
 }

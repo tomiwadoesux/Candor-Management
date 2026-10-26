@@ -1,313 +1,308 @@
 "use client";
-import {
-  useEffect,
-  useState,
-  useCallback,
-  useRef,
-  useLayoutEffect,
-} from "react";
+
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
-import "./InNav.css";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
 import gsap from "gsap";
 import CustomEase from "gsap/CustomEase";
-import { MorphSVGPlugin } from "gsap/MorphSVGPlugin";
-import WhiteLogo from "./white-logo";
+import { agency, contactMailto } from "../../data/agency";
+import { useSearchOptional } from "./SearchContext";
+import SearchGlyph from "./SearchGlyph";
+import { ISLAND_EASE, ISLAND_OPEN, ISLAND_CLOSE, ISLAND_BUTTON, getSearchPanelWidth } from "../lib/islandMotion";
+import "./InNav.css";
 
-gsap.registerPlugin(MorphSVGPlugin);
+gsap.registerPlugin(CustomEase);
+CustomEase.create("candor-island", ISLAND_EASE.join(","));
+const ISLAND_CSS_EASE = `cubic-bezier(${ISLAND_EASE.join(",")})`;
 
-// Each group heads a division route, and each item deep-links into it. The
-// model boards filter by board; the talent and creative disciplines filter by
-// the job title a record carries (data/models.js `talent`), which is what
-// /talents and /creatives read out of the query string.
-//
-// Every one of these used to be <Link href="/">, so the whole index sent you
-// back to the home page whatever you picked.
-const NAV_GROUPS = [
-  {
-    title: "Models",
-    href: "/models",
-    items: [
-      { label: "New Faces", href: "/models?board=newfaces" },
-      { label: "Mainboard", href: "/models?board=mainboard" },
-      { label: "Women", href: "/models?gender=female" },
-      { label: "Men", href: "/models?gender=male" },
-    ],
-  },
-  {
-    title: "Talents",
-    href: "/talents",
-    items: [
-      { label: "Actor", href: "/talents?focus=Actor" },
-      { label: "Dancer", href: "/talents?focus=Dancer" },
-      { label: "Make Up Artist", href: "/talents?focus=Make+Up+Artist" },
-      { label: "Hair Stylist", href: "/talents?focus=Hair+Stylist" },
-    ],
-  },
-  {
-    title: "Creatives",
-    href: "/creatives",
-    items: [
-      { label: "Fashion Stylist", href: "/creatives?focus=Fashion+Stylist" },
-      { label: "Artist", href: "/creatives?focus=Artist" },
-      { label: "Photographer", href: "/creatives?focus=Photographer" },
-      { label: "Creative Director", href: "/creatives?focus=Creative+Director" },
-    ],
-  },
+const ROSTER_LINKS = [
+  ["Models", "/models"],
+  ["Talents", "/talents"],
+  ["Creatives", "/creatives"],
 ];
+const AGENCY_LINKS = [
+  ["Home", "/"],
+  ["About", "/about"],
+  ["Contact", "/contact"],
+];
+const GLYPH_CLOSED = ["M3 8 L29 8", "M7 14 L25 14", "M11 20 L21 20"];
+const GLYPH_OPEN = ["M8 6 L24 22", "M7 14 L25 14", "M8 22 L24 6"];
 
-const InNav = ({ searchOpen = false }) => {
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef(null);
-  const isInitializedRef = useRef(false);
-  const svgRef = useRef(null);
+export default function InNav({ searchOpen = false }) {
+  const search = useSearchOptional();
+  const setMenuOpen = search?.setMenuOpen;
+  const setMenuLabelActive = search?.setMenuLabelActive;
+  const [active, setActive] = useState(false);
+  const id = useId();
+  const pathname = usePathname();
+  const triggerRef = useRef(null);
+  const dialogRef = useRef(null);
+  const panelRef = useRef(null);
+  const paperRef = useRef(null);
+  const contentRef = useRef(null);
+  const seedRef = useRef(null);
+  const dockRef = useRef(null);
+  const dockIconRef = useRef(null);
+  const dockLabelRef = useRef(null);
+  const timelineRef = useRef(null);
+  const geometryRef = useRef(null);
+  const wantsOpen = useRef(false);
+  const previousOverflow = useRef(null);
+  const previousPath = useRef(pathname);
 
-  useLayoutEffect(() => {
-    gsap.registerPlugin(CustomEase);
-    CustomEase.create(
-      "hop",
-      "M0,0 C0.354,0 0.464,0.133 0.498,0.502 0.532,0.872 0.651,1 1,1"
-    );
-  }, []);
-
-  useEffect(() => {
-    if (menuRef.current) {
-      const menu = menuRef.current;
-      const groups = menu.querySelectorAll(".nav-group");
-      const items = menu.querySelectorAll(".nav-item");
-      const meta = menu.querySelectorAll(".meta-line");
-
-      gsap.set(menu, {
-        clipPath: "polygon(100% 0%, 100% 0%, 100% 100%, 100% 100%)",
-      });
-      gsap.set(groups, { y: 30, opacity: 0 });
-      gsap.set(items, { y: 20, opacity: 0 });
-      gsap.set(meta, { y: 20, opacity: 0 });
-      gsap.set(".nav-wordmark span", { y: 200, rotateX: 60, opacity: 0 });
-
-      gsap.set("#dbear2, #bbear2, #mbear2", { visibility: "hidden" });
-
-      isInitializedRef.current = true;
+  const finishClose = useCallback(() => {
+    wantsOpen.current = false;
+    if (dialogRef.current?.open) dialogRef.current.close();
+    if (previousOverflow.current !== null) {
+      document.body.style.overflow = previousOverflow.current;
+      previousOverflow.current = null;
     }
-  }, []);
+    setActive(false);
+    setMenuOpen?.(false);
+    setMenuLabelActive?.(false);
+    if (triggerRef.current) {
+      triggerRef.current.style.visibility = "";
+      triggerRef.current.focus({ preventScroll: true });
+    }
+  }, [setMenuOpen, setMenuLabelActive]);
 
-  const animateMenu = useCallback((open) => {
-    if (!menuRef.current) return;
-
-    const menu = menuRef.current;
-    const groups = menu.querySelectorAll(".nav-group");
-    const items = menu.querySelectorAll(".nav-item");
-    const meta = menu.querySelectorAll(".meta-line");
-
-    setIsAnimating(true);
-
-    if (open) {
-      gsap.to(menu, {
-        clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
-        ease: "power4.inOut",
-        duration: 0.9,
-        onStart: () => {
-          menu.style.pointerEvents = "all";
-        },
-        onComplete: () => setIsAnimating(false),
-      });
-
-      gsap.to(groups, {
-        y: 0,
-        opacity: 1,
-        stagger: 0.08,
-        delay: 0.5,
-        duration: 0.8,
-        ease: "power3.out",
-      });
-
-      gsap.to(items, {
-        y: 0,
-        opacity: 1,
-        stagger: 0.03,
-        delay: 0.55,
-        duration: 0.7,
-        ease: "power3.out",
-      });
-
-      gsap.to(meta, {
-        y: 0,
-        opacity: 1,
-        stagger: 0.05,
-        delay: 0.7,
-        duration: 0.7,
-        ease: "power3.out",
-      });
-
-      gsap.to(".nav-wordmark span", {
-        y: 0,
-        rotateX: 0,
-        opacity: 1,
-        stagger: 0.04,
-        delay: 0.6,
-        duration: 1.1,
-        ease: "power4.out",
-      });
+  const closeMenu = useCallback((instant = false) => {
+    if (!dialogRef.current?.open) return;
+    wantsOpen.current = false;
+    contentRef.current.inert = true;
+    seedRef.current.inert = false;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (instant || reduced || !timelineRef.current) {
+      timelineRef.current?.pause(0, true);
+      finishClose();
     } else {
-      gsap.to(menu, {
-        clipPath: "polygon(100% 0%, 100% 0%, 100% 100%, 100% 100%)",
-        ease: "power4.inOut",
-        duration: 0.7,
-        onComplete: () => {
-          menu.style.pointerEvents = "none";
-          gsap.set(menu, {
-            clipPath: "polygon(100% 0%, 100% 0%, 100% 100%, 100% 100%)",
-          });
-          gsap.set(groups, { y: 30, opacity: 0 });
-          gsap.set(items, { y: 20, opacity: 0 });
-          gsap.set(meta, { y: 20, opacity: 0 });
-          gsap.set(".nav-wordmark span", { y: 200, rotateX: 60, opacity: 0 });
-          setIsAnimating(false);
-        },
-      });
+      // Search exits with the same ease-out, not the entrance curve reversed.
+      // Start at the current values so an interrupted entrance stays continuous.
+      timelineRef.current.kill();
+      const { collapsed } = geometryRef.current;
+      const panelVisible = getComputedStyle(panelRef.current).visibility === "visible";
+      const collapseEnd = panelVisible ? ISLAND_CLOSE.verticalDelay + ISLAND_CLOSE.vertical : 0;
+      const returnAt = panelVisible ? ISLAND_BUTTON.exitDelay : 0;
+      const timeline = gsap.timeline({ onComplete: finishClose });
+      const [topLine, middleLine, bottomLine] = seedRef.current.querySelectorAll("[data-menu-line]");
+      if (panelVisible) {
+        timeline
+          .to(panelRef.current, { left: collapsed.left, width: collapsed.width, duration: ISLAND_CLOSE.horizontal, ease: "candor-island" }, 0)
+          .to(panelRef.current, { top: collapsed.top, height: collapsed.height, duration: ISLAND_CLOSE.vertical, ease: "candor-island" }, ISLAND_CLOSE.verticalDelay)
+          .to(contentRef.current, { opacity: 0, duration: 0.15, ease: "none" }, 0)
+          .to(paperRef.current, { opacity: 0, duration: ISLAND_CLOSE.vertical, ease: "candor-island" }, ISLAND_CLOSE.verticalDelay)
+          .set(panelRef.current, { visibility: "hidden" }, collapseEnd);
+      }
+      timeline
+        .to(topLine, { attr: { d: GLYPH_CLOSED[0] }, duration: 0.25, ease: "candor-island" }, 0)
+        .to(bottomLine, { attr: { d: GLYPH_CLOSED[2] }, duration: 0.25, ease: "candor-island" }, 0)
+        .to(middleLine, { opacity: 1, duration: 0.2, ease: "none" }, 0.08)
+        .to(dockRef.current, { left: collapsed.left, width: collapsed.width, duration: ISLAND_CLOSE.horizontal, ease: "candor-island" }, 0)
+        .call(() => setMenuLabelActive?.(false), null, returnAt)
+        .to(dockIconRef.current, { x: 0, opacity: 1, duration: ISLAND_BUTTON.exit, ease: "candor-island" }, returnAt)
+        .to(dockLabelRef.current, { x: 0, duration: ISLAND_BUTTON.exit, ease: "candor-island" }, returnAt);
+      timelineRef.current = timeline;
     }
+  }, [finishClose, setMenuLabelActive]);
+
+  const buildTimeline = useCallback(({ fromCurrent = false } = {}) => {
+    const trigger = triggerRef.current;
+    const dialog = dialogRef.current;
+    const panel = panelRef.current;
+    const rect = trigger.getBoundingClientRect();
+    const searchBar = trigger.closest("[data-bottombar]")?.querySelector('[aria-label="Open search"]');
+    const barRect = searchBar?.getBoundingClientRect();
+    const center = window.innerWidth / 2;
+    const bottom = window.innerHeight - rect.bottom;
+
+    dialog.style.setProperty("--nav-bottom", `${bottom}px`);
+    dialog.style.setProperty("--nav-bar-height", `${rect.height}px`);
+    const width = getSearchPanelWidth(window.innerWidth) * 0.9;
+    contentRef.current.style.width = `${width}px`;
+    const height = Math.min(contentRef.current.scrollHeight, Math.max(0, rect.top - 20));
+    const target = { left: center - width / 2, top: rect.top - height, width, height };
+    const collapsed = { left: barRect?.left ?? rect.left, top: rect.top, width: rect.right - (barRect?.left ?? rect.left), height: 0 };
+    geometryRef.current = { collapsed };
+
+    timelineRef.current?.kill();
+    seedRef.current.inert = false;
+    const [topLine, middleLine, bottomLine] = seedRef.current.querySelectorAll("[data-menu-line]");
+    if (!fromCurrent) {
+      gsap.set(topLine, { attr: { d: GLYPH_CLOSED[0] } });
+      gsap.set(bottomLine, { attr: { d: GLYPH_CLOSED[2] } });
+      gsap.set(middleLine, { opacity: 1 });
+      gsap.set(dockRef.current, { ...collapsed, height: rect.height });
+      gsap.set(dockIconRef.current, { x: 0, opacity: 1 });
+      gsap.set(dockLabelRef.current, { x: 0 });
+      gsap.set(panel, { ...collapsed, visibility: "hidden" });
+      gsap.set(paperRef.current, { opacity: 0 });
+      gsap.set(contentRef.current, { opacity: 0, scale: 0.9, transformOrigin: "50% 100%" });
+    }
+
+    const timeline = gsap.timeline({
+      paused: true,
+      onComplete: () => {
+        if (!wantsOpen.current) return;
+        contentRef.current.inert = false;
+        contentRef.current.querySelector("[data-nav-first]")?.focus({ preventScroll: true });
+      },
+    });
+    timeline
+      .to(topLine, { attr: { d: GLYPH_OPEN[0] }, duration: 0.28, ease: "candor-island" }, 0.08)
+      .to(bottomLine, { attr: { d: GLYPH_OPEN[2] }, duration: 0.28, ease: "candor-island" }, 0.08)
+      .to(middleLine, { opacity: 0, duration: 0.14, ease: "none" }, 0.08)
+      .to(dockRef.current, { left: target.left, width: target.width, duration: ISLAND_OPEN.horizontal, ease: "candor-island" }, 0)
+      .to(dockIconRef.current, { x: -40, opacity: 0, duration: ISLAND_BUTTON.enter, ease: "candor-island" }, 0)
+      .to(dockLabelRef.current, { x: -28, duration: ISLAND_BUTTON.enter, ease: "candor-island" }, 0)
+      // Match Search's real bounds animation: horizontal movement and growth
+      // begin together, with vertical growth overlapping after 100ms.
+      .set(panel, { visibility: "visible" }, 0)
+      .to(panel, { left: target.left, width: target.width, duration: ISLAND_OPEN.horizontal, ease: "candor-island" }, 0)
+      .to(panel, { top: target.top, height: target.height, duration: ISLAND_OPEN.vertical, ease: "candor-island" }, ISLAND_OPEN.verticalDelay)
+      .to(paperRef.current, { opacity: 1, duration: ISLAND_OPEN.vertical, ease: "candor-island" }, ISLAND_OPEN.verticalDelay)
+      .to(contentRef.current, { opacity: 1, duration: 0.3, ease: "power1.out" }, ISLAND_OPEN.verticalDelay + 0.05)
+      .to(contentRef.current, { scale: 1, duration: ISLAND_OPEN.vertical, ease: "candor-island" }, ISLAND_OPEN.verticalDelay);
+    timelineRef.current = timeline;
+    return timeline;
   }, []);
 
+  const openMenu = useCallback((instant = false) => {
+    if (searchOpen || search?.isSearchOpen) return;
+    wantsOpen.current = true;
+    setMenuLabelActive?.(true);
+    if (dialogRef.current.open) {
+      const timeline = buildTimeline({ fromCurrent: true });
+      if (instant || window.matchMedia("(prefers-reduced-motion: reduce)").matches) timeline.progress(1);
+      else timeline.play();
+      return;
+    }
+    const dialog = dialogRef.current;
+    previousOverflow.current = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    dialog.showModal();
+    dialog.focus({ preventScroll: true });
+    contentRef.current.inert = true;
+    contentRef.current.scrollTop = 0;
+    const timeline = buildTimeline();
+    triggerRef.current.style.visibility = "hidden";
+    setActive(true);
+    setMenuOpen?.(true);
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (instant || reduced) timeline.progress(1);
+    else timeline.play();
+  }, [buildTimeline, searchOpen, search?.isSearchOpen, setMenuOpen, setMenuLabelActive]);
+
   useEffect(() => {
-    if (isInitializedRef.current) {
-      animateMenu(isOpen);
-    }
-  }, [isOpen, animateMenu]);
+    if (searchOpen) closeMenu(true);
+  }, [searchOpen, closeMenu]);
 
-  const toggleMenu = useCallback(() => {
-    if (!isAnimating) {
-      setIsOpen((prev) => {
-        const next = !prev;
-        if (next) {
-          gsap.to("#dbear", {
-            duration: 0.4,
-            morphSVG: "#dbear2",
-            ease: "power2.inOut",
-          });
-          gsap.to("#bbear", {
-            duration: 0.4,
-            morphSVG: "#bbear2",
-            ease: "power2.inOut",
-          });
-        } else {
-          gsap.to("#dbear", { duration: 0.4, morphSVG: 0, ease: "power2.inOut" });
-          gsap.to("#bbear", { duration: 0.4, morphSVG: 0, ease: "power2.inOut" });
-        }
-        return next;
-      });
-    }
-  }, [isAnimating]);
+  useEffect(() => {
+    if (previousPath.current !== pathname) closeMenu(true);
+    previousPath.current = pathname;
+  }, [pathname, closeMenu]);
 
-  const splitWord = (text) =>
-    text
-      .split("")
-      .map((char, i) =>
-        char === " " ? (
-          <span key={i}>&nbsp;</span>
-        ) : (
-          <span key={i}>{char}</span>
-        )
-      );
+  useEffect(() => {
+    const resize = () => {
+      if (!dialogRef.current?.open) return;
+      if (!wantsOpen.current) return closeMenu(true);
+      buildTimeline().progress(1);
+    };
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    window.addEventListener("resize", resize);
+    motion.addEventListener("change", resize);
+    return () => {
+      window.removeEventListener("resize", resize);
+      motion.removeEventListener("change", resize);
+      timelineRef.current?.kill();
+      if (previousOverflow.current !== null) {
+        document.body.style.overflow = previousOverflow.current;
+        previousOverflow.current = null;
+      }
+      setMenuOpen?.(false);
+      setMenuLabelActive?.(false);
+    };
+  }, [buildTimeline, closeMenu, setMenuOpen, setMenuLabelActive]);
 
   return (
-    <div>
-      <div
-        className="menu-icon"
-        onClick={toggleMenu}
-        ref={svgRef}
+    <div className="island-nav">
+      <button ref={triggerRef} type="button" className="island-nav-trigger"
+        aria-label="Open navigation" aria-haspopup="dialog" aria-controls={id} aria-expanded={active}
+        disabled={searchOpen}
+        onClick={(event) => openMenu(event.detail === 0)}
         style={{
           transform: searchOpen ? "translateX(-64px)" : "translateX(0px)",
-          pointerEvents: searchOpen ? "none" : "auto",
-          // Slides out with the panel immediately; slides back in starting
-          // ~2/3 into the close morph (~0.46s total), on a longer, softer run.
           transition: searchOpen
-            ? "transform 0.45s cubic-bezier(0.32, 0.72, 0, 1)"
-            : "transform 0.55s cubic-bezier(0.32, 0.72, 0, 1) 0.3s",
+            ? `transform ${ISLAND_BUTTON.enter}s ${ISLAND_CSS_EASE}`
+            : `transform ${ISLAND_BUTTON.exit}s ${ISLAND_CSS_EASE} ${ISLAND_BUTTON.exitDelay}s`,
+        }}>
+        <MenuGlyph />
+      </button>
+      <dialog ref={dialogRef} id={id} className="island-nav-dialog" aria-label="Candor navigation" tabIndex={-1}
+        data-lenis-prevent
+        onCancel={(event) => { event.preventDefault(); closeMenu(true); }}
+        onKeyDown={(event) => {
+          if (event.key !== "Tab") return;
+          const content = contentRef.current;
+          if (content.inert) { event.preventDefault(); return; }
+          const dialog = dialogRef.current;
+          const controls = dialog.querySelectorAll("a[href], button:not([disabled])");
+          const first = controls[0];
+          const last = controls[controls.length - 1];
+          const focused = document.activeElement;
+          if (event.shiftKey && (focused === first || !dialog.contains(focused))) {
+            event.preventDefault(); last?.focus();
+          } else if (!event.shiftKey && (focused === last || !dialog.contains(focused))) {
+            event.preventDefault(); first?.focus();
+          }
         }}
-      >
-        {/* viewBox cropped to the lines' bounding box so the glyph sits
-            dead-center in the 46×46 wrapper */}
-        <svg
-          id="menu-svg"
-          width="28.79"
-          height="14.5"
-          viewBox="5 10.5 28.79 14.5"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <g id="Group 177">
-            <g id="Group 168">
-              <g id="Frame 168">
-                <line id="dbear" x1="6.25" y1="11.75" x2="32.5357" y2="11.75" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-                <line id="mbear" x1="10.4286" y1="17.75" x2="28.3572" y2="17.75" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-                <line id="bbear" x1="14.1428" y1="23.75" x2="24.6428" y2="23.75" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-              </g>
-              <g id="Frame 190">
-                <line id="dbear2" x1="14.1428" y1="11.75" x2="24.6428" y2="11.75" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-                <line id="mbear2" x1="10.4286" y1="17.75" x2="28.3572" y2="17.75" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-                <line id="bbear2" x1="6.2478" y1="23.75" x2="32.5378" y2="23.75" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-              </g>
-            </g>
-          </g>
-        </svg>
-      </div>
-
-      <div className="menu" ref={menuRef}>
-        <div className="menu-inner">
-          {/* Top bar */}
-          <div className="menu-topbar">
-            <span className="menu-eyebrow">Index — Candor 2025</span>
-          </div>
-
-          {/* Categories */}
-          <div className="menu-grid">
-            {NAV_GROUPS.map((group) => (
-              <div key={group.title} className="nav-group">
-                <h3 className="nav-group-title">
-                  <Link href={group.href}>{group.title}</Link>
-                </h3>
-                <ul className="nav-list">
-                  {group.items.map((item) => (
-                    <li key={item.label} className="nav-item">
-                      <Link href={item.href}>
-                        <span className="nav-item-arrow">→</span>
-                        <span className="nav-item-label">{item.label}</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-
-          {/* Meta — contact + socials */}
-          <div className="menu-meta">
-            <div className="meta-col">
-              <span className="meta-line meta-eyebrow">Contact</span>
-              <span className="meta-line">contact@candor.com</span>
-              <span className="meta-line">modelboard@candor.com</span>
-              <span className="meta-line">+234 814 350 8163</span>
-            </div>
-            <div className="meta-col">
-              <span className="meta-line meta-eyebrow">Studios</span>
-              <span className="meta-line">Lagos, Nigeria</span>
-              <span className="meta-line">Manchester, UK</span>
-              <span className="meta-line">Dallas, USA</span>
-            </div>
-            <div className="meta-col">
-              <span className="meta-line meta-eyebrow">Follow</span>
-              <span className="meta-line">Instagram</span>
-              <span className="meta-line">LinkedIn</span>
-              <span className="meta-line">Twitter</span>
-            </div>
-          </div>
-
-          {/* Wordmark */}
-          <div className="nav-wordmark">{splitWord("CANDOR")}</div>
+        onPointerDown={(event) => { if (event.target === event.currentTarget) closeMenu(); }}>
+        <div ref={dockRef} className="island-nav-dock">
+          <span ref={dockIconRef} className="island-nav-dock-icon" aria-hidden="true"><SearchGlyph /></span>
+          <span ref={dockLabelRef} className="island-nav-dock-label" data-menu-active={search?.menuLabelActive ?? active}>{search?.searchLabel ?? "Menu"}</span>
+          <button ref={seedRef} type="button" className="island-nav-seed" aria-label="Close navigation"
+            aria-expanded={active}
+            onClick={(event) => wantsOpen.current ? closeMenu(event.detail === 0) : openMenu(event.detail === 0)}><MenuGlyph /></button>
         </div>
-      </div>
+        <div ref={panelRef} className="island-nav-panel">
+          <div ref={paperRef} className="island-nav-paper" aria-hidden="true" />
+          <div ref={contentRef} className="island-nav-content">
+            <div className="island-nav-editorial">
+              <div className="island-nav-index">
+                <p className="island-nav-eyebrow">Candor Management <span aria-hidden="true">*</span></p>
+                <p className="island-nav-intro">A different<br />point of view.</p>
+                <nav className="island-nav-links" aria-label="Our people">
+                  {ROSTER_LINKS.map(([label, href], index) => <Link key={href} href={href} data-nav-first={index === 0 ? "" : undefined}
+                    aria-current={pathname === href ? "page" : undefined} onClick={() => closeMenu(true)}><span>{label}</span><span className="island-nav-number" aria-hidden="true">0{index + 1}</span></Link>)}
+                </nav>
+                <p className="island-nav-note">Models, talent & creative voices.<br />Lagos. Manchester. Dallas.</p>
+                <nav className="island-nav-secondary" aria-label="The agency">
+                  {AGENCY_LINKS.map(([label, href]) => <Link key={href} href={href} aria-current={pathname === href ? "page" : undefined} onClick={() => closeMenu(true)}>{label}</Link>)}
+                </nav>
+              </div>
+              <Link href="/get-scouted" className="island-nav-feature" aria-label="Get scouted" aria-current={pathname === "/get-scouted" ? "page" : undefined} onClick={() => closeMenu(true)}>
+                <Image src="/photos/img19.jpeg" alt="Black-and-white fashion portrait with a long braid and sculptural earrings" fill sizes="(max-width: 620px) 85vw, 360px" loading="eager" />
+                <span className="island-nav-feature-veil" aria-hidden="true" />
+                <span className="island-nav-feature-top">New faces. New possibilities.</span>
+                <div className="island-nav-feature-copy">
+                  <p>Your story<br />starts here.</p>
+                  <span>Get scouted <span aria-hidden="true">↗</span></span>
+                </div>
+              </Link>
+            </div>
+            <footer className="island-nav-footer">
+              <div className="island-nav-enquiries"><p>Start a conversation.</p><a href={contactMailto}>{agency.contact.email}</a></div>
+              <div className="island-nav-footer-meta"><span>Independent voices.<br />Worldwide possibilities.</span><Link href="/privacy" onClick={() => closeMenu(true)}>Privacy</Link></div>
+            </footer>
+          </div>
+        </div>
+      </dialog>
     </div>
   );
-};
+}
 
-export default InNav;
+function MenuGlyph() {
+  return <svg width="32" height="28" viewBox="0 0 32 28" fill="none" aria-hidden="true">
+    {GLYPH_CLOSED.map((d, index) => <path key={index} data-menu-line d={d} stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" />)}
+  </svg>;
+}

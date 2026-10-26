@@ -18,6 +18,9 @@ export const useSearchOptional = () => useContext(SearchContext);
 
 export const SearchProvider = ({ children }) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isMenuOpen, setMenuOpen] = useState(false);
+  const [menuLabelActive, setMenuLabelActive] = useState(false);
+  const [searchLabel, setSearchLabel] = useState("Search talent");
 
   const openSearch = () => setIsSearchOpen(true);
   const closeSearch = () => setIsSearchOpen(false);
@@ -27,6 +30,12 @@ export const SearchProvider = ({ children }) => {
     <SearchContext.Provider
       value={{
         isSearchOpen,
+        isMenuOpen,
+        setMenuOpen,
+        menuLabelActive,
+        setMenuLabelActive,
+        searchLabel,
+        setSearchLabel,
         openSearch,
         closeSearch,
         toggleSearch,

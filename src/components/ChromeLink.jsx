@@ -1,30 +1,103 @@
-import ArrowOut from "./ArrowOut";
+import Link from "next/link";
 
-// The arrow never moves: it sits at the outer edge of the link, scaled down
-// and invisible, and only scales up on hover. What moves is the text, which
-// steps aside to uncover it — left in the right-hand column, right in the
-// left-hand one, where the arrow is on the left. Both are absolutely
-// positioned, so a hover never changes a row's width or reflows the column.
-const ARROW =
-  "pointer-events-none absolute scale-50 opacity-0 transition duration-300 ease-out group-hover:scale-100 group-hover:opacity-100";
-
-export default function ChromeLink({ href = "#", left = false, className = "", children }) {
+/**
+ * The site's one link style: "↳ label", set in the display serif, lowercase.
+ * Used for every text link and call to action — the footer, the landing
+ * page's chrome, the rail, the CTAs — so the look only lives here.
+ *
+ * The ↳ is drawn rather than typed: Arno is subset to Latin and has no arrows,
+ * so the character would fall back to whatever system face has one and look
+ * different on every machine. Drawn in currentColor it follows the text on
+ * light and dark sections alike, held back to 40% so the label leads.
+ *
+ * `vertical` is for links set in a vertical writing mode (the small-screen
+ * rails on the landing page). The text turns with the writing mode but an
+ * inline SVG stays upright, so the arrow is turned by hand to match.
+ *
+ * The type runs at 0.95em of wherever the link sits, so every link on the
+ * site steps down together without touching each column's own size.
+ *
+ * `left` is accepted and ignored: it chose which side the old hover arrow
+ * appeared on. The arrow now always leads, and the parent column aligns rows.
+ */
+export function HookArrow({ className = "" }) {
   return (
-    <a
-      href={href}
-      className={`group pointer-events-auto relative flex items-center ${
-        left ? "justify-start" : "justify-end"
-      } ${className}`}
+    <svg
+      viewBox="0 0 12 12"
+      fill="none"
+      aria-hidden="true"
+      className={`h-[0.8em] w-[0.8em] shrink-0 opacity-40 ${className}`}
     >
-      {left && <ArrowOut size={12} className={`${ARROW} left-0`} />}
-      <span
-        className={`whitespace-nowrap transition-transform duration-300 ease-out ${
-          left ? "group-hover:translate-x-4" : "group-hover:-translate-x-4"
-        }`}
+      <path
+        d="M2 1.5V8.5H10M7.5 6L10 8.5L7.5 11"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeLinecap="square"
+      />
+    </svg>
+  );
+}
+
+// A plain → for the pill variant, drawn for the same reason as the hook.
+function StraightArrow({ className = "" }) {
+  return (
+    <svg
+      viewBox="0 0 12 12"
+      fill="none"
+      aria-hidden="true"
+      className={`h-[0.8em] w-[0.8em] shrink-0 ${className}`}
+    >
+      <path
+        d="M1.5 6H10M6.5 2.5L10 6L6.5 9.5"
+        stroke="currentColor"
+        strokeWidth="1.1"
+        strokeLinecap="square"
+      />
+    </svg>
+  );
+}
+
+/**
+ * `pill` is the footer's button: the label in the body sans, as written,
+ * on a 4% black block with the arrow trailing. Hover darkens the block and
+ * nudges the arrow on, so the press reads without the whole thing fading.
+ */
+export default function ChromeLink({
+  href = "#",
+  left, // eslint-disable-line no-unused-vars
+  vertical = false,
+  pill = false,
+  className = "",
+  children,
+  ...rest
+}) {
+  if (pill) {
+    return (
+      <Link
+        href={href}
+        className={`group pointer-events-auto inline-flex items-center gap-[0.4em] whitespace-nowrap rounded-[1px] bg-black/[0.04] px-[0.6em] py-[0.3em] leading-none transition-colors duration-200 hover:bg-black/[0.08] ${className}`}
+        {...rest}
       >
-        {children}
+        <span>{children}</span>
+        <StraightArrow className="transition-transform duration-200 ease-out group-hover:translate-x-[0.15em]" />
+      </Link>
+    );
+  }
+
+  return (
+    <Link
+      href={href}
+      className={`font-display group pointer-events-auto inline-flex whitespace-nowrap lowercase tracking-[0.02em] transition-opacity duration-300 hover:opacity-60 ${className}`}
+      {...rest}
+    >
+      <span className="inline-flex items-baseline gap-[0.15em] text-[0.95em]">
+        <HookArrow
+          className={`transition-transform duration-300 ease-out ${
+            vertical ? "rotate-90" : "group-hover:translate-x-[0.15em]"
+          }`}
+        />
+        <span>{children}</span>
       </span>
-      {!left && <ArrowOut size={12} className={`${ARROW} right-0`} />}
-    </a>
+    </Link>
   );
 }

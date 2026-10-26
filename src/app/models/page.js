@@ -80,8 +80,9 @@ function Models() {
                 // inline: globals.css styles h1 un-layered (display face,
                 // line-height 1), which beats Tailwind's utilities. leading-none
                 // makes the line box hug the glyphs, so the cap sits on the
-                // same top edge as the filter labels either side.
-                style={{ fontFamily: "var(--font-sub)", lineHeight: 1 }}
+                // same top edge as the filter labels either side. --font-h1 is
+                // the serif display face (Arno Pro) the rail name also uses.
+                style={{ fontFamily: "var(--font-h1)", lineHeight: 1 }}
               >
                 Models
               </h1>
