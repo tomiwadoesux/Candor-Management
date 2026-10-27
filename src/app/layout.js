@@ -6,6 +6,10 @@ import SmoothScroll from "../components/SmoothScroll";
 // Leave the tab and come back and the page resolves rather than just being
 // there. Mounted at the root so it covers every route, not only home.
 import ReturnReveal from "../components/ReturnReveal";
+// Click a link and the destination's recorded layout covers the screen, in
+// SVG, for at least a second while the page loads under it. In dev it also
+// records each page's layout into public/skeletons/ as you browse.
+import PageSkeleton from "../components/pageSkeleton/PageSkeleton";
 
 export const metadata = {
   title: "Create Next App",
@@ -18,6 +22,7 @@ export default function RootLayout({ children }) {
       <body className="antialiased">
         <SmoothScroll />
         <ReturnReveal />
+        <PageSkeleton />
         <HoveredModelProvider>
           {children}
           <ModelImageCursor />

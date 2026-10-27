@@ -1,0 +1,89 @@
+/* /word-paint — a study page for the drawn word. */
+
+.wl {
+  --an-pad: 40px;
+  --an-ink: #000;
+  --an-paper: #fff;
+  --an-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  min-height: 100vh;
+  background: #141414;
+  color: #ddd;
+  font-family: "Inter", Arial, sans-serif;
+}
+
+.wl-head {
+  padding: 120px var(--an-pad) 60px;
+  max-width: 720px;
+}
+
+.wl-head h1 {
+  font: 500 32px/1.1 "Inter", Arial, sans-serif;
+  color: #fff;
+}
+
+.wl-head p,
+.wl-row-head p {
+  padding-top: 14px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #9a9a9a;
+}
+
+.wl-row {
+  padding-bottom: 80px;
+}
+
+.wl-row-head {
+  padding: 24px var(--an-pad) 20px;
+  border-top: 1px solid #2a2a2a;
+}
+
+.wl-row-head h2 {
+  font: 500 15px/1.2 "Inter", Arial, sans-serif;
+  color: #fff;
+}
+
+/* Each item is a band the word fills. */
+.wl-item {
+  padding: 60px 0 60px;
+}
+
+.wl-word {
+  padding: 0 var(--an-pad);
+}
+
+.wl-fit {
+  line-height: 1;
+}
+
+.wl-arno .wl-fit {
+  padding-right: 0.24em;
+  padding-left: 0.16em;
+  font-family: var(--font-h1);
+  font-style: italic;
+  font-weight: 400;
+  line-height: 0.92;
+  letter-spacing: -0.01em;
+}
+
+.wl-sans .wl-fit {
+  font-family: "Inter", Arial, sans-serif;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+}
+
+.wl-sans-caps .wl-fit {
+  font-family: "Inter", Arial, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+@media (max-width: 760px) {
+  .wl {
+    --an-pad: 16px;
+  }
+
+  .wl-head {
+    padding-top: 80px;
+  }
+}

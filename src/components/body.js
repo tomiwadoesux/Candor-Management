@@ -1,4 +1,5 @@
-import NewsFeature from "./NewsFeature";
+// TEMPORARY: three takes on the board behind a switcher; see ModelBoardOptions.
+import ModelBoardOptions from "./modelBoard/ModelBoardOptions";
 
 export default function Body() {
   return (
@@ -41,7 +42,7 @@ export default function Body() {
 
       {/* The models section carries the board: the pinned "MODELS" heading
           docks beside CANDOR and the work runs under it. */}
-      <NewsFeature />
+      <ModelBoardOptions />
     </section>
   );
 }

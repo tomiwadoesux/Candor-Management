@@ -2,32 +2,23 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import gsap from "gsap";
 import CustomEase from "gsap/CustomEase";
-import { agency, contactMailto } from "../../data/agency";
 import { useSearchOptional } from "./SearchContext";
 import SearchGlyph from "./SearchGlyph";
-import { ISLAND_EASE, ISLAND_OPEN, ISLAND_CLOSE, ISLAND_BUTTON, getSearchPanelWidth } from "../lib/islandMotion";
+import { ISLAND_EASE, ISLAND_OPEN, ISLAND_CLOSE, ISLAND_BUTTON, MENU_LABEL, getSearchPanelWidth } from "../lib/islandMotion";
+import CastingMenu from "./castingMenu/CastingMenu";
 import "./InNav.css";
 
 gsap.registerPlugin(CustomEase);
 CustomEase.create("candor-island", ISLAND_EASE.join(","));
 const ISLAND_CSS_EASE = `cubic-bezier(${ISLAND_EASE.join(",")})`;
 
-const ROSTER_LINKS = [
-  ["Models", "/models"],
-  ["Talents", "/talents"],
-  ["Creatives", "/creatives"],
-];
-const AGENCY_LINKS = [
-  ["Home", "/"],
-  ["About", "/about"],
-  ["Contact", "/contact"],
-];
 const GLYPH_CLOSED = ["M3 8 L29 8", "M7 14 L25 14", "M11 20 L21 20"];
-const GLYPH_OPEN = ["M8 6 L24 22", "M7 14 L25 14", "M8 22 L24 6"];
+// The close X is drawn a size down from the menu lines (11 units, not 16) so
+// it sits lighter in the dock.
+const GLYPH_OPEN = ["M10.5 8.5 L21.5 19.5", "M7 14 L25 14", "M10.5 19.5 L21.5 8.5"];
 
 export default function InNav({ searchOpen = false }) {
   const search = useSearchOptional();
@@ -259,7 +250,10 @@ export default function InNav({ searchOpen = false }) {
         onPointerDown={(event) => { if (event.target === event.currentTarget) closeMenu(); }}>
         <div ref={dockRef} className="island-nav-dock">
           <span ref={dockIconRef} className="island-nav-dock-icon" aria-hidden="true"><SearchGlyph /></span>
-          <span ref={dockLabelRef} className="island-nav-dock-label" data-menu-active={search?.menuLabelActive ?? active}>{search?.searchLabel ?? "Menu"}</span>
+          {/* Open, the bar's label is the way home — the one page the
+              menu's index doesn't list. */}
+          <Link ref={dockLabelRef} href="/" className="island-nav-dock-label" data-menu-active={search?.menuLabelActive ?? active}
+            onClick={() => closeMenu(true)}>{search?.searchLabel ?? MENU_LABEL}</Link>
           <button ref={seedRef} type="button" className="island-nav-seed" aria-label="Close navigation"
             aria-expanded={active}
             onClick={(event) => wantsOpen.current ? closeMenu(event.detail === 0) : openMenu(event.detail === 0)}><MenuGlyph /></button>
@@ -267,33 +261,7 @@ export default function InNav({ searchOpen = false }) {
         <div ref={panelRef} className="island-nav-panel">
           <div ref={paperRef} className="island-nav-paper" aria-hidden="true" />
           <div ref={contentRef} className="island-nav-content">
-            <div className="island-nav-editorial">
-              <div className="island-nav-index">
-                <p className="island-nav-eyebrow">Candor Management <span aria-hidden="true">*</span></p>
-                <p className="island-nav-intro">A different<br />point of view.</p>
-                <nav className="island-nav-links" aria-label="Our people">
-                  {ROSTER_LINKS.map(([label, href], index) => <Link key={href} href={href} data-nav-first={index === 0 ? "" : undefined}
-                    aria-current={pathname === href ? "page" : undefined} onClick={() => closeMenu(true)}><span>{label}</span><span className="island-nav-number" aria-hidden="true">0{index + 1}</span></Link>)}
-                </nav>
-                <p className="island-nav-note">Models, talent & creative voices.<br />Lagos. Manchester. Dallas.</p>
-                <nav className="island-nav-secondary" aria-label="The agency">
-                  {AGENCY_LINKS.map(([label, href]) => <Link key={href} href={href} aria-current={pathname === href ? "page" : undefined} onClick={() => closeMenu(true)}>{label}</Link>)}
-                </nav>
-              </div>
-              <Link href="/get-scouted" className="island-nav-feature" aria-label="Get scouted" aria-current={pathname === "/get-scouted" ? "page" : undefined} onClick={() => closeMenu(true)}>
-                <Image src="/photos/img19.jpeg" alt="Black-and-white fashion portrait with a long braid and sculptural earrings" fill sizes="(max-width: 620px) 85vw, 360px" loading="eager" />
-                <span className="island-nav-feature-veil" aria-hidden="true" />
-                <span className="island-nav-feature-top">New faces. New possibilities.</span>
-                <div className="island-nav-feature-copy">
-                  <p>Your story<br />starts here.</p>
-                  <span>Get scouted <span aria-hidden="true">↗</span></span>
-                </div>
-              </Link>
-            </div>
-            <footer className="island-nav-footer">
-              <div className="island-nav-enquiries"><p>Start a conversation.</p><a href={contactMailto}>{agency.contact.email}</a></div>
-              <div className="island-nav-footer-meta"><span>Independent voices.<br />Worldwide possibilities.</span><Link href="/privacy" onClick={() => closeMenu(true)}>Privacy</Link></div>
-            </footer>
+            <CastingMenu pathname={pathname} open={active} onNavigate={() => closeMenu(true)} />
           </div>
         </div>
       </dialog>

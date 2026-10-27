@@ -1,0 +1,84 @@
+/* The island's open menu (CastingMenu.jsx). Sits on InNav's cream paper. */
+
+.cm {
+  --cm-ink: #24231f;
+  --cm-mute: #77736b;
+  --cm-accent: #00749e;
+  --cm-ease: cubic-bezier(0.32, 0.72, 0, 1);
+  display: grid;
+  /* The paper kept slim so the portrait gets the larger share. */
+  grid-template-columns: .78fr 1fr;
+  /* Fixed to the room the island has, capped at the design height, so the
+     panel never has to scroll: on a short screen everything tightens instead. */
+  height: min(560px, var(--nav-room, 560px));
+  color: var(--cm-ink);
+}
+.cm a { text-decoration: none; }
+.cm-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* The index: boards, then Archives and About, sized to the column's width
+   (cqi) so "Creatives" always fits the slimmer paper. */
+.cm-index { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; padding: 26px 30px; container-type: inline-size; }
+/* Centred in the room between the panel's top and the foot. */
+.cm-links { position: relative; display: flex; flex-direction: column; margin-block: auto; }
+.cm-links > a { position: relative; display: flex; align-items: flex-start; gap: .1em; color: var(--cm-ink); font-family: var(--font-h1); font-size: clamp(32px, min(23cqi, 8.4dvh), 70px); font-weight: 400; line-height: 1.1; letter-spacing: -.05em; transition: opacity 380ms var(--cm-ease); touch-action: manipulation; }
+.cm-mask { display: block; overflow: hidden; padding: 0 .06em; margin: 0 -.06em; }
+.cm-line { display: block; white-space: nowrap; }
+.cm-char { position: relative; display: inline-block; transition: transform 620ms var(--cm-ease); transition-delay: calc(var(--i) * 16ms); }
+.cm-char::after { content: attr(data-char); position: absolute; left: 0; top: 100%; color: var(--cm-accent); }
+.cm-links > a[data-active] .cm-char { transform: translateY(-100%); }
+.cm-arrow { align-self: center; margin-left: auto; font-family: var(--font-body); font-size: 22px; letter-spacing: 0; color: var(--cm-accent); opacity: 0; transform: translate(-10px, 10px); transition: opacity 300ms ease, transform 500ms var(--cm-ease); }
+.cm-links > a[data-active] .cm-arrow { opacity: 1; transform: none; }
+.cm-links[data-hovering] > a:not([data-active]) { opacity: .22; }
+/* The marker says which board you are on; the name stays in ink. */
+.island-nav-content .cm-links > a[aria-current="page"] { color: var(--cm-ink); }
+.cm-marker { position: absolute; top: 0; left: -19px; width: 7px; height: 7px; margin-top: -3.5px; background: var(--cm-accent); transform: scale(0); pointer-events: none; }
+
+/* The portrait window; castingGL draws into the canvas once it is ready. */
+.cm-window { position: relative; display: flex; flex-direction: column; justify-content: space-between; min-width: 0; min-height: 0; overflow: hidden; background: #1c1c1b; color: #fff; }
+.cm-window > canvas, .cm-fallback { position: absolute; inset: 0; width: 100%; height: 100%; }
+.cm-fallback { object-fit: cover; object-position: 48% 38%; filter: grayscale(1); }
+.cm-window > canvas { opacity: 0; transition: opacity 500ms ease; }
+.cm-window[data-ready] > canvas { opacity: 1; }
+.cm-veil { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgb(0 0 0 / 55%), transparent 22%, transparent 48%, rgb(0 0 0 / 70%)); }
+.cm-top { position: relative; padding: 26px 22px; font-family: var(--font-body); font-size: 9px; line-height: 1.5; letter-spacing: .08em; text-transform: uppercase; pointer-events: none; }
+.cm-copy { position: relative; display: flex; flex-direction: column; gap: 20px; padding: 30px 26px 26px; pointer-events: none; }
+.cm-title { font-family: var(--font-h1); font-size: 46px; line-height: .99; letter-spacing: -.03em; animation: cm-rise 700ms var(--cm-ease) both; }
+/* A ruled line: label left, arrow right. On hover the rule brightens and
+   the arrow steps on, so the whole window reads as the press. */
+.cm-cta { display: flex; align-items: center; justify-content: space-between; padding-top: 13px; border-top: 1px solid rgb(255 255 255 / 40%); font-family: var(--font-body); font-size: 12px; line-height: 16px; transition: border-color 300ms ease; }
+.cm-cta > svg { width: 16px; height: 16px; transition: transform 400ms var(--cm-ease); }
+.cm-window:hover .cm-cta { border-color: rgb(255 255 255 / 85%); }
+.cm-window:hover .cm-cta > svg { transform: translateX(4px); }
+@keyframes cm-rise { from { opacity: 0; transform: translateY(14px); } }
+.cm-links > a:focus-visible { outline: 1px solid var(--cm-accent); outline-offset: 4px; }
+.cm-window:focus-visible { outline: 2px solid var(--cm-accent); outline-offset: -5px; }
+
+/* The foot: contact above, then a ruled row of small links. The rule, the
+   row and the 26px inset all match the window's CTA, so the two ruled lines
+   run level across the gutter. */
+.cm-foot { display: flex; flex-direction: column; gap: 16px; padding-top: 24px; font-family: var(--font-body); }
+.cm-fine { display: flex; flex-direction: column; gap: 2px; font-size: 11px; font-weight: 400; line-height: 1.4; color: var(--cm-mute); }
+.cm-fine a { width: fit-content; color: inherit; transition: color 200ms ease; }
+.cm-fine a:hover { color: var(--cm-ink); }
+.cm-sub { display: flex; gap: 20px; padding-top: 13px; border-top: 1px solid rgb(0 0 0 / 12%); font-size: 12px; line-height: 16px; }
+.cm-sub > a { color: var(--cm-ink); transition: opacity 200ms ease; }
+.cm-sub:hover > a:not(:hover) { opacity: .35; }
+
+
+@media (max-width: 620px) {
+  /* Stacked: the boards take what they need, the window gets the rest. */
+  .cm { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); height: var(--nav-room, 640px); }
+  .cm-links > a { font-size: clamp(30px, 6dvh, 46px); }
+  .cm-index { padding: 28px 24px; }
+  .cm-marker { left: -14px; }
+  .cm-arrow { opacity: .5; transform: none; }
+  .cm-window { min-height: 0; }
+  .cm-top { padding: 18px 22px; }
+  .cm-copy { gap: 14px; padding: 20px 22px 22px; }
+  .cm-title { font-size: 38px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cm-title { animation: none; }
+  .cm-char, .cm-arrow { transition: none; }
+}

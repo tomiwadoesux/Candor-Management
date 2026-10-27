@@ -1,0 +1,521 @@
+/* The landing page's model board, three takes (components/modelBoard).
+   Shared pieces first, then one block per layout, then the temporary
+   switcher. Spacing on text elements is padding, not margin: globals.css
+   zeroes p / h2 margins outside any layer. */
+
+.mb {
+  --ink: #0c0c0c;
+  --mute: #6b6b6b;
+  --faint: #9a9a9a;
+  --rule: rgba(12, 12, 12, 0.12);
+  --accent: #00749e;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  /* Not positioned, on purpose: the docked MODELS heading before it is
+     sticky, and a positioned board would paint over it. */
+  min-height: 100svh;
+  background: #fff;
+  color: var(--ink);
+  outline: none;
+}
+
+.mb-label {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+
+.mb-count { display: inline-flex; gap: 6px; overflow: hidden; }
+.mb-count__now { display: inline-block; animation: mb-count 500ms var(--ease) both; }
+.mb-count__of { color: var(--faint); }
+@keyframes mb-count { from { transform: translateY(100%); opacity: 0; } }
+
+/* Names: the condensed face the docked MODELS heading is set in, so the
+   board's type carries the same weight as its title. */
+.mb-name {
+  font-family: "Gwyner Condensed", "Arno Pro", serif;
+  font-weight: 400;
+  line-height: 0.84;
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+.mb-word { display: block; overflow: hidden; padding-bottom: 0.03em; }
+.mb-word > span { display: inline-block; }
+[data-animate] .mb-word > span {
+  animation: mb-rise 1000ms var(--ease) both;
+  animation-delay: calc(120ms + var(--i) * 80ms);
+}
+@keyframes mb-rise { from { transform: translateY(104%); } }
+
+.mb-lede[data-animate] > :not(h2) { animation: mb-fade 800ms var(--ease) both; animation-delay: 340ms; }
+.mb-lede[data-animate] > :nth-child(3) { animation-delay: 400ms; }
+.mb-lede[data-animate] > :nth-child(4) { animation-delay: 460ms; }
+@keyframes mb-fade { from { opacity: 0; transform: translateY(12px); } }
+
+.mb dd { margin: 0; }
+
+/* A picture window: the still holds the frame until the canvas has drawn. */
+.mb-print { position: relative; width: 100%; height: 100%; overflow: hidden; }
+.mb-print__still { object-fit: cover; object-position: center 38%; }
+.mb-print__canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; opacity: 0; }
+.mb-print[data-ready] .mb-print__canvas { opacity: 1; }
+
+.mb button { font: inherit; }
+.mb button:focus-visible,
+.mb a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+/* ── A · Spread ──────────────────────────────────────────────────────────── */
+
+.mb-spread {
+  --frame-h: clamp(440px, calc(100svh - 196px), 900px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: end;
+  column-gap: 24px;
+  padding: 104px 44px 60px;
+}
+
+.mbs-copy {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  min-width: 0;
+  padding-right: 32px;
+}
+
+/* The full name, small, where the board's header used to be; the stage name
+   is the headline below it. */
+.mbs-fullname { color: var(--mute); animation: mb-fade 700ms var(--ease) both; }
+
+.mbs-lede { display: flex; flex-direction: column; align-items: flex-start; margin-block: auto; }
+.mbs-name { font-size: clamp(64px, 7vw, 156px); }
+.mbs-bio {
+  max-width: 30ch;
+  padding-top: 28px;
+  font-family: var(--font-h1);
+  font-size: clamp(17px, 1.15vw, 21px);
+  font-weight: 400;
+  line-height: 1.4;
+  color: #2b2b2b;
+}
+
+.mbs-spec {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: min(100%, 420px);
+  margin-top: 28px;
+  border-top: 1px solid var(--rule);
+}
+.mbs-spec > div { padding: 12px 10px 0 0; }
+.mbs-spec > div + div { padding-left: 12px; border-left: 1px solid var(--rule); }
+.mbs-spec dt { color: var(--faint); }
+.mbs-spec dd { padding-top: 6px; font-size: 15px; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.mbs-link { margin-top: 30px; color: var(--accent); font-size: 20px; }
+
+.mbs-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--rule);
+}
+.mbs-step { display: flex; gap: 6px; }
+/* On larger screens the arrows sit on the cards (.mbs-flip); this pair is
+   the phone fallback, where the second card is hidden. */
+.mbs-step--phone { display: none; }
+.mbs-arrow {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 1px solid var(--rule);
+  background: none;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background-color 200ms, color 200ms, border-color 200ms, transform 150ms;
+}
+.mbs-arrow:active { transform: scale(0.95); }
+
+.mbs-next { display: flex; align-items: center; gap: 14px; padding: 0; border: 0; background: none; color: var(--ink); text-align: left; cursor: pointer; }
+.mbs-next__thumb { position: relative; flex: none; width: 44px; height: 56px; overflow: hidden; background: #eee; }
+.mbs-next__thumb img { object-fit: cover; object-position: center 30%; transition: transform 800ms var(--ease); }
+.mbs-next__text { display: grid; gap: 5px; }
+.mbs-next__text .mb-label { color: var(--faint); }
+.mbs-next__name { font-family: var(--font-h1); font-size: 17px; line-height: 1.1; }
+
+@media (hover: hover) and (pointer: fine) {
+  .mbs-arrow:hover { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .mbs-next:hover .mbs-next__thumb img { transform: scale(1.08); }
+}
+
+.mbs-frame { position: relative; margin: 0; justify-self: start; }
+
+/* The arrows on the cards, both measured from the second card: next stands
+   on its top edge, outside it, flush left; previous drops to that edge, on
+   the first card (the taller one) across the 24px gutter, flush to its
+   right. Accent at 70%, so the next arrow still reads on paper while the
+   previous one lets the picture through; solid when hovered. */
+.mbs-flip {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  color: #fff;
+  background: rgba(0, 116, 158, 0.7);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 200ms, transform 150ms;
+}
+.mbs-flip svg { width: 16px; height: 16px; transition: transform 300ms var(--ease); }
+.mbs-flip--next { bottom: 100%; left: 0; }
+.mbs-flip--previous { top: 0; right: calc(100% + 24px); }
+.mbs-flip:active { transform: scale(0.94); }
+@media (hover: hover) and (pointer: fine) {
+  .mbs-flip:hover { background: var(--accent); }
+  .mbs-flip--next:hover svg { transform: translateX(3px); }
+  /* The previous arrow is the next one turned round inline, so the nudge
+     has to keep the turn. */
+  .mbs-flip--previous:hover svg { transform: rotate(180deg) translateX(3px) !important; }
+}
+.mbs-frame--main { height: var(--frame-h); aspect-ratio: 4 / 5; }
+.mbs-frame--aside { height: calc(var(--frame-h) * 0.58); aspect-ratio: 3 / 4; }
+.mbs-frame figcaption,
+.mbc-gate figcaption,
+.mbc-aside figcaption,
+.mbk-frame figcaption {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+  color: var(--faint);
+}
+
+@media (max-width: 1023px) {
+  .mb-spread { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); row-gap: 64px; padding: 88px 28px 48px; }
+  .mbs-frame { justify-self: stretch; width: 100%; height: auto; }
+  .mbs-copy { grid-row: 2; grid-column: 1 / -1; padding-right: 0; }
+  .mbs-name { font-size: clamp(56px, 11vw, 110px); }
+}
+@media (max-width: 767px) {
+  .mb-spread { grid-template-columns: minmax(0, 1fr); row-gap: 44px; padding: 72px 20px 40px; }
+  .mbs-frame--aside { display: none; }
+  .mbs-step--phone { display: flex; }
+  .mbs-name { font-size: clamp(52px, 15vw, 88px); }
+}
+
+/* ── B · Contact sheet ───────────────────────────────────────────────────── */
+
+.mb-sheet {
+  /* The gate takes what the viewport has left after the padding, the row
+     gap and the strip (62px of film around a 4:5 frame), so the whole sheet
+     sits on one screen. */
+  --thumb-w: clamp(46px, 4.2vw, 80px);
+  --gap: 6px;
+  --gate-h: clamp(360px, calc(100svh - 254px - var(--thumb-w) * 1.25), 760px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-rows: auto auto;
+  column-gap: 44px;
+  row-gap: 48px;
+  padding: 104px 44px 40px;
+}
+
+.mbc-copy { grid-column: 1; grid-row: 1; display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+.mbc-head { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 14px; border-bottom: 1px solid var(--rule); }
+.mbc-head > :first-child { color: var(--mute); }
+.mbc-lede { display: flex; flex-direction: column; align-items: flex-start; margin-top: auto; }
+.mbc-name { font-size: clamp(56px, 5.8vw, 128px); }
+.mbc-bio { max-width: 32ch; padding-top: 22px; font-size: 14px; line-height: 1.6; color: var(--mute); }
+.mbc-spec { width: min(100%, 300px); margin-top: 24px; border-top: 1px solid var(--rule); }
+.mbc-spec > div { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--rule); }
+.mbc-spec dt { color: var(--faint); }
+.mbc-spec dd { font-size: 15px; font-variant-numeric: tabular-nums; }
+.mbc-link { margin-top: 26px; color: var(--accent); font-size: 19px; }
+
+.mbc-gate { grid-column: 2; grid-row: 1; position: relative; align-self: end; height: var(--gate-h); aspect-ratio: 4 / 5; margin: 0; }
+.mbc-gate__step { display: flex; gap: 2px; }
+.mbc-gate__step button { display: grid; place-items: center; width: 36px; height: 26px; padding: 0; border: 0; background: none; color: var(--ink); cursor: pointer; transition: color 200ms; }
+/* Enlarger crop marks, just outside the gate. */
+.mbc-crop { position: absolute; width: 16px; height: 16px; pointer-events: none; }
+.mbc-crop--tl { top: -10px; left: -10px; border-top: 1px solid var(--ink); border-left: 1px solid var(--ink); }
+.mbc-crop--br { right: -10px; bottom: -10px; border-right: 1px solid var(--ink); border-bottom: 1px solid var(--ink); }
+
+.mbc-aside { grid-column: 3; grid-row: 1; align-self: end; position: relative; height: calc(var(--gate-h) * 0.6); aspect-ratio: 3 / 4; margin: 0; }
+
+.mbc-strip { grid-column: 1 / -1; grid-row: 2; overflow-x: auto; scrollbar-width: none; }
+.mbc-strip::-webkit-scrollbar { display: none; }
+.mbc-strip__film {
+  position: relative;
+  display: grid;
+  gap: 7px;
+  width: max-content;
+  min-width: 100%;
+  padding: 16px 22px;
+  background: #0c0c0c;
+}
+/* Sprocket holes, top and bottom. */
+.mbc-strip__film::before,
+.mbc-strip__film::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: repeating-linear-gradient(90deg, transparent 0 9px, #262626 9px 17px, transparent 17px 22px);
+}
+.mbc-strip__film::before { top: 4px; }
+.mbc-strip__film::after { bottom: 4px; }
+
+.mbc-strip__edge {
+  position: relative;
+  display: flex;
+  gap: var(--gap);
+  font-family: var(--font-body);
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: rgba(232, 214, 170, 0.72);
+}
+.mbc-strip__edge > span { flex: none; width: var(--thumb-w); }
+.mbc-strip__edge > .mbc-strip__brand { position: absolute; right: 0; width: auto; }
+
+.mbc-strip__frames { position: relative; display: flex; gap: var(--gap); }
+.mbc-thumb {
+  position: relative;
+  flex: none;
+  width: var(--thumb-w);
+  aspect-ratio: 4 / 5;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: #1a1a1a;
+  opacity: 0.72;
+  cursor: pointer;
+  transition: opacity 250ms;
+}
+.mbc-thumb img { object-fit: cover; object-position: center 30%; }
+.mbc-thumb[aria-selected="true"] { opacity: 1; }
+.mbc-mark {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  width: calc(var(--thumb-w) + 16px);
+  height: calc(var(--thumb-w) * 1.25 + 16px);
+  transform: translateX(calc(var(--at) * (var(--thumb-w) + var(--gap))));
+  overflow: visible;
+  pointer-events: none;
+}
+.mbc-mark path {
+  fill: none;
+  stroke: #e2452f;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: mbc-draw 620ms 180ms cubic-bezier(0.6, 0, 0.3, 1) forwards;
+}
+@keyframes mbc-draw { to { stroke-dashoffset: 0; } }
+
+@media (hover: hover) and (pointer: fine) {
+  .mbc-thumb:hover { opacity: 1; }
+  .mbc-gate__step button:hover { color: var(--accent); }
+}
+
+@media (max-width: 1023px) {
+  .mb-sheet { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); row-gap: 52px; padding: 88px 28px 40px; }
+  .mbc-gate { grid-column: 1; height: auto; width: 100%; }
+  .mbc-aside { grid-column: 2; width: 100%; height: auto; }
+  .mbc-copy { grid-column: 1 / -1; grid-row: 2; }
+  .mbc-strip { grid-row: 3; }
+  .mbc-name { font-size: clamp(56px, 11vw, 110px); }
+}
+@media (max-width: 767px) {
+  .mb-sheet { grid-template-columns: minmax(0, 1fr); row-gap: 44px; padding: 72px 20px 40px; }
+  .mbc-aside { display: none; }
+  .mbc-name { font-size: clamp(52px, 15vw, 88px); }
+  .mbc-strip { margin-inline: -20px; }
+}
+
+/* ── C · Cinema ──────────────────────────────────────────────────────────── */
+
+.mb-cinema {
+  --ink: #efece6;
+  --mute: rgba(239, 236, 230, 0.66);
+  --faint: rgba(239, 236, 230, 0.42);
+  --rule: rgba(239, 236, 230, 0.14);
+  --frame-h: clamp(420px, calc(100svh - 196px), 900px);
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-rows: auto 1fr auto;
+  column-gap: 24px;
+  padding: 104px 44px 60px;
+  background: #0c0c0c;
+}
+
+.mbk-head {
+  grid-column: 1 / span 4;
+  grid-row: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--rule);
+}
+.mbk-head > .mb-label { color: var(--mute); }
+.mbk-count { display: inline-flex; align-items: flex-start; gap: 4px; overflow: hidden; font-family: "Gwyner Condensed", serif; font-size: 44px; line-height: 0.8; }
+.mbk-count__of { padding-top: 2px; font-family: var(--font-body); font-size: 10px; letter-spacing: 0.09em; color: var(--faint); }
+
+.mbk-frame {
+  grid-column: 6 / span 4;
+  grid-row: 1 / 4;
+  justify-self: center;
+  position: relative;
+  height: var(--frame-h);
+  aspect-ratio: 4 / 5;
+  margin: 0;
+  cursor: none;
+}
+.mbk-cursor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  padding: 9px 12px;
+  margin: -16px 0 0 -40px;
+  white-space: nowrap;
+  color: #0c0c0c;
+  background: var(--ink);
+  pointer-events: none;
+}
+
+/* Difference against the print: where the name crosses the picture it
+   inverts, so it stays legible on any frame and reads as one with it. The
+   blend sits on the h2, which never transforms; the words move inside it. */
+.mbk-name {
+  grid-column: 1 / span 9;
+  grid-row: 2;
+  align-self: center;
+  z-index: 2;
+  font-size: clamp(88px, 11.5vw, 240px);
+  line-height: 0.8;
+  color: #efece6;
+  mix-blend-mode: difference;
+  pointer-events: none;
+}
+
+.mbk-info { grid-column: 1 / span 4; grid-row: 3; display: flex; flex-direction: column; align-items: flex-start; }
+.mbk-bio { max-width: 30ch; font-family: var(--font-h1); font-size: clamp(17px, 1.15vw, 21px); font-weight: 400; line-height: 1.4; color: var(--mute); }
+.mbk-spec { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); width: min(100%, 420px); margin-top: 26px; border-top: 1px solid var(--rule); }
+.mbk-spec > div { padding: 12px 10px 0 0; }
+.mbk-spec > div + div { padding-left: 12px; border-left: 1px solid var(--rule); }
+.mbk-spec dt { color: var(--faint); }
+.mbk-spec dd { padding-top: 6px; font-size: 15px; font-variant-numeric: tabular-nums; }
+.mbk-link { margin-top: 28px; color: var(--ink); font-size: 20px; }
+
+.mbk-side { grid-column: 11 / -1; grid-row: 1 / 4; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; }
+.mbk-step { display: flex; gap: 6px; }
+.mbk-step button {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 1px solid var(--rule);
+  background: none;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background-color 200ms, color 200ms, transform 150ms;
+}
+.mbk-step button:active { transform: scale(0.95); }
+.mbk-next { display: grid; justify-items: start; gap: 8px; width: min(100%, 180px); padding: 0; border: 0; background: none; color: var(--ink); text-align: left; cursor: pointer; }
+.mbk-next__thumb { position: relative; width: 100%; aspect-ratio: 4 / 5; overflow: hidden; background: #1a1a1a; animation: mb-fade 700ms var(--ease) both; }
+.mbk-next__thumb img { object-fit: cover; object-position: center 30%; filter: grayscale(1) brightness(0.8); transition: filter 500ms, transform 900ms var(--ease); }
+.mbk-next > .mb-label { padding-top: 4px; color: var(--faint); }
+.mbk-next__name { font-family: var(--font-h1); font-size: 18px; line-height: 1.1; }
+
+@media (hover: hover) and (pointer: fine) {
+  .mbk-step button:hover { background: var(--ink); color: #0c0c0c; }
+  .mbk-next:hover .mbk-next__thumb img { filter: none; transform: scale(1.05); }
+}
+
+@media (max-width: 1023px) {
+  .mb-cinema { display: flex; flex-direction: column; padding: 88px 28px 48px; }
+  .mbk-head { order: 0; }
+  .mbk-frame { order: 1; width: 100%; height: auto; margin-top: 32px; cursor: pointer; }
+  .mbk-cursor { display: none; }
+  /* Gwyner runs ~0.56em a letter: 15vw keeps a nine-letter name on one
+     line at phone width. */
+  .mbk-name { order: 2; margin-top: -0.5em; font-size: clamp(48px, 15vw, 150px); }
+  .mbk-frame figcaption { display: none; }
+  .mbk-info { order: 3; padding-top: 32px; }
+  .mbk-side { order: 4; flex-direction: row-reverse; align-items: flex-end; padding-top: 40px; }
+  .mbk-next { width: 120px; }
+}
+
+/* Set by BoardCinema while it lies under the fixed wordmark. */
+:root[data-board-dark] .candor-intro-logo-host > .candor-logo { filter: invert(1); }
+
+/* ── Switcher (temporary) ────────────────────────────────────────────────── */
+
+.mb-switch {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 45;
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  background: rgba(12, 12, 12, 0.9);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition: opacity 300ms, transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.mb-switch[data-show] { opacity: 1; transform: none; pointer-events: auto; }
+.mb-switch button {
+  padding: 8px 11px;
+  border: 0;
+  background: none;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: background-color 200ms, color 200ms;
+}
+.mb-switch button:hover { color: #fff; }
+.mb-switch button[aria-checked="true"] { background: #fff; color: #0c0c0c; }
+/* Clear of the search island on narrow screens. */
+@media (max-width: 767px) { .mb-switch { bottom: 76px; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .mb *,
+  .mb *::before,
+  .mb *::after { animation: none !important; transition: none !important; }
+  .mbc-mark path { stroke-dashoffset: 0; }
+}

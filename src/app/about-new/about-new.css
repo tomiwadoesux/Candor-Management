@@ -1,0 +1,2220 @@
+/* /about-new
+ *
+ * Plain, namespaced CSS (.an-*) rather than utilities: the globals set fonts
+ * and margins on bare h1/h2/p, which beat Tailwind's margin utilities, so the
+ * page resets its own elements below and owns its spacing outright.
+ *
+ * Desktop grid: 12 columns, 40px margins, 20px gutters. Type is light Inter
+ * set tight, scaled off the viewport width so the measure holds at any size.
+ */
+
+.an {
+  --an-pad: 40px;
+  --an-gap: 20px;
+  --an-ink: #000;
+  --an-paper: #fff;
+  --an-mute: #8c8c8c;
+  --an-mute-ink: #8f8f8f;
+  --an-olive: #5c5e55;
+  --an-rule: #e6e6e6;
+  --an-ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --an-xl: 4.306vw;
+  --an-l: 3.23vw;
+  --an-m: 20px;
+  --an-s: 16px;
+
+  position: relative;
+  background: var(--an-paper);
+  color: var(--an-ink);
+  font-family: "Inter", Arial, sans-serif;
+  font-weight: 300;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Undo the global element rules (Arno on h1/h2, weight 500 on p, etc.). */
+.an :where(h1, h2, h3, p, ol, ul, li, hr, figure, dl, dt, dd, details, summary) {
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  list-style: none;
+}
+
+.an a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.an a:focus-visible,
+.an button:focus-visible,
+.an input:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 3px;
+}
+
+/* ---- type ---------------------------------------------------------------- */
+
+.an-xl {
+  font-size: var(--an-xl);
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+}
+
+.an-l {
+  font-size: var(--an-l);
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+}
+
+.an-m {
+  font-size: var(--an-m);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.an-s {
+  font-size: var(--an-s);
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+}
+
+.an-mute {
+  color: var(--an-mute);
+}
+
+.an-arrow {
+  display: inline-block;
+  font-size: 0.9em;
+}
+
+.an-line {
+  display: block;
+}
+
+/* ---- grid ---------------------------------------------------------------- */
+
+.an-pad {
+  padding-left: var(--an-pad);
+  padding-right: var(--an-pad);
+}
+
+.an-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--an-gap);
+}
+
+.an-col-label {
+  grid-column: 1 / span 6;
+}
+
+.an-col-read {
+  grid-column: 7 / span 4;
+}
+
+/* Two columns in: the line the image column starts on. */
+.an-indent {
+  text-indent: calc((100% + var(--an-gap)) / 12 * 2);
+}
+
+/* ---- header -------------------------------------------------------------- */
+
+.an-head {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px var(--an-pad);
+  color: #fff;
+  mix-blend-mode: difference;
+  font-size: 14px;
+}
+
+.an-logo {
+  font-weight: 500;
+  font-size: 17px;
+  letter-spacing: -0.04em;
+}
+
+.an-nav {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.4em;
+}
+
+.an-nav a,
+.an-cta,
+.an-link-plain {
+  transition: opacity 0.2s ease;
+}
+
+.an-nav a:hover,
+.an-cta:hover,
+.an-link-plain:hover,
+.an-nav a.is-current {
+  opacity: 0.5;
+}
+
+/* ---- statement ----------------------------------------------------------- */
+
+.an-statement {
+  padding-top: 220px;
+  padding-bottom: 140px;
+}
+
+/* Opening the page, it fills the screen and sits on the bottom edge. */
+.an-statement.is-lead {
+  min-height: 90svh;
+  display: flex;
+  align-items: flex-end;
+  padding-top: 120px;
+  padding-bottom: 100px;
+}
+
+.an-statement h1 {
+  max-width: 92%;
+}
+
+/* ---- promises ------------------------------------------------------------ */
+
+.an-promises {
+  row-gap: 64px;
+  padding-bottom: 260px;
+}
+
+.an-num {
+  display: inline-block;
+  width: 3.4em;
+}
+
+.an-note {
+  grid-column: 7 / span 3;
+}
+
+/* ---- the giant word ------------------------------------------------------ */
+
+.an-big {
+  padding-top: 140px;
+  padding-bottom: 220px;
+}
+
+.an-big-word {
+  position: relative;
+}
+
+/* The display face, italic. Arno ships as a single Regular cut, so the italic
+   is the browser's synthesised slant, which leans the tops of the capitals
+   right and pushes anything below the baseline (the J's tail) left. FitText
+   fits the upright advance, not the ink, so the padding on each side makes
+   room for the lean inside the fitted width. */
+.an-big-fit {
+  padding-right: 0.24em;
+  padding-left: 0.16em;
+  font-family: var(--font-h1);
+  font-style: italic;
+  font-weight: 400;
+  line-height: 0.92;
+  letter-spacing: -0.01em;
+}
+
+/* Under the word, set like the header: the name left, the way in right. */
+.an-big-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+  padding-top: 18px;
+}
+
+.an-big-cta {
+  transition: opacity 0.2s ease;
+}
+
+.an-big-cta:hover {
+  opacity: 0.5;
+}
+
+/* ---- the wall ------------------------------------------------------------ */
+
+.an-wall {
+  position: relative;
+  height: 120vh;
+  overflow: hidden;
+  background: var(--an-olive);
+}
+
+.an-wall-tilt {
+  position: absolute;
+  inset: -25% -15%;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: center;
+  gap: 2.2vw;
+  transform: rotate(9deg);
+}
+
+.an-wall-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2.2vw;
+  transform: translate3d(0, calc((var(--p, 0.5) - 0.5) * var(--speed) * 1vh), 0);
+  will-change: transform;
+}
+
+.an-wall-card {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: #6b6d63;
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.45);
+}
+
+.an-wall-card.is-wide {
+  aspect-ratio: 4 / 3;
+}
+
+.an-wall-card img {
+  object-fit: cover;
+}
+
+/* ---- belief -------------------------------------------------------------- */
+
+.an-belief {
+  padding-top: 180px;
+  padding-bottom: 260px;
+}
+
+/* Lit in reading order as the paragraph's --p runs 0 → 1, each word fading
+   up over the span of three. --p defaults to 1, so without script the
+   paragraph is simply there. */
+.an-sw {
+  opacity: clamp(0.14, calc((var(--p, 1) * (var(--n) + 3) - var(--i)) / 3), 1);
+  transition: opacity 0.15s linear;
+}
+
+/* ---- founder + team ------------------------------------------------------ */
+
+.an-img {
+  position: relative;
+  overflow: hidden;
+}
+
+.an-img img {
+  object-fit: cover;
+}
+
+/* The label sits at the foot of a column as tall as its row and sticks to
+   the bottom of the screen, so it rides up with the pictures and settles
+   level with the last one. */
+.an-sticky-col {
+  grid-column: 1 / span 2;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.an-sticky {
+  position: sticky;
+  bottom: var(--an-pad);
+}
+
+.an-founder {
+  align-items: start;
+  padding-top: 120px;
+  padding-bottom: 240px;
+}
+
+.an-founder-img {
+  grid-column: 3 / span 5;
+  aspect-ratio: 4 / 5;
+}
+
+.an-founder-text {
+  grid-column: 9 / span 3;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.an-link {
+  text-decoration: underline !important;
+  text-decoration-thickness: 1px !important;
+  text-underline-offset: 0.18em;
+}
+
+.an-person {
+  padding-top: 10px;
+}
+
+.an-founder-text .an-person {
+  padding-top: 0;
+}
+
+.an-team {
+  padding-bottom: 260px;
+}
+
+.an-team-list {
+  grid-column: 3 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: var(--an-gap);
+  row-gap: 64px;
+}
+
+.an-team-img {
+  aspect-ratio: 4 / 5;
+}
+
+/* ---- approach: the black band -------------------------------------------- */
+
+.an-approach-body {
+  align-items: end;
+  padding-top: 220px;
+  padding-bottom: 200px;
+  background: var(--an-ink);
+  color: #fff;
+}
+
+.an-approach-title {
+  grid-column: 1 / span 6;
+  grid-row: 1;
+}
+
+.an-approach-text {
+  grid-column: 7 / span 3;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+}
+
+.an-block-p {
+  padding-top: 22px;
+  color: var(--an-mute-ink);
+}
+
+.an-close {
+  max-width: 14em;
+  padding-top: 24px;
+}
+
+/* The band ends halfway down the pictures. */
+.an-approach-imgs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--an-gap);
+  background: linear-gradient(to bottom, var(--an-ink) 50%, transparent 50%);
+}
+
+.an-approach-img {
+  aspect-ratio: 3 / 2;
+}
+
+/* ---- the strip ----------------------------------------------------------- */
+
+.an-strip {
+  padding-top: 220px;
+  padding-bottom: 240px;
+}
+
+.an-strip-title {
+  text-align: center;
+}
+
+.an-rule {
+  margin-top: 48px;
+  border: 0;
+  border-top: 1px solid var(--an-rule);
+}
+
+.an-marquee {
+  overflow: hidden;
+  padding-top: 20px;
+}
+
+.an-marquee-track {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--an-gap);
+  width: max-content;
+  animation: an-marquee 70s linear infinite;
+}
+
+.an-marquee:hover .an-marquee-track {
+  animation-play-state: paused;
+}
+
+.an-marquee-item {
+  position: relative;
+  flex: none;
+  width: 23vw;
+  overflow: hidden;
+  background: #eee;
+}
+
+.an-marquee-item img {
+  object-fit: cover;
+}
+
+/* The track holds the list twice; half its length plus half a gutter is
+   exactly one copy, so the loop has no seam. */
+@keyframes an-marquee {
+  to {
+    transform: translate3d(calc(-50% - var(--an-gap) / 2), 0, 0);
+  }
+}
+
+.an-email-wrap {
+  padding-top: 220px;
+  text-align: center;
+}
+
+.an-email {
+  overflow-wrap: anywhere;
+  transition: opacity 0.2s ease;
+}
+
+.an-email:hover {
+  opacity: 0.5;
+}
+
+/* ---- requirements (from /get-scouted) ------------------------------------ */
+
+.an-req {
+  padding-top: 200px;
+  padding-bottom: 200px;
+}
+
+.an-req-head {
+  row-gap: 14px;
+}
+
+.an-req-list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: var(--an-gap);
+  row-gap: 40px;
+  margin-top: 40px;
+}
+
+.an-req-item {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--an-ink);
+}
+
+.an-req-small {
+  max-width: 22em;
+  color: var(--an-mute);
+}
+
+/* ---- the fee rule -------------------------------------------------------- */
+
+.an-fees {
+  row-gap: 48px;
+  padding-top: 220px;
+  padding-bottom: 220px;
+}
+
+.an-fees-label {
+  grid-column: 1 / span 2;
+  grid-row: 1;
+}
+
+.an-fees-title {
+  grid-column: 3 / -1;
+  grid-row: 1;
+}
+
+.an-fees-body {
+  grid-column: 7 / span 4;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* ---- the digitals brief ---------------------------------------------------
+   Default: a horizontal scroller, which is what phones, reduced motion and
+   no-script get. Above phone width with motion on, the stage pins and the
+   track is driven by --p across --travel. */
+
+.an-dig-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+  padding: 200px 0;
+}
+
+.an-dig-head {
+  align-items: end;
+  row-gap: 18px;
+}
+
+.an-dig-label {
+  grid-column: 1 / span 2;
+}
+
+.an-dig-title {
+  grid-column: 3 / span 5;
+}
+
+.an-dig-intro {
+  grid-column: 9 / span 4;
+}
+
+.an-dig-track {
+  display: flex;
+  gap: var(--an-gap);
+  padding: 0 var(--an-pad);
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scroll-padding: 0 var(--an-pad);
+  scrollbar-width: none;
+}
+
+.an-dig-track::-webkit-scrollbar {
+  display: none;
+}
+
+.an-dig-card {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: clamp(220px, 20vw, 340px);
+  scroll-snap-align: start;
+}
+
+.an-dig-frame {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 6 / 7;
+  margin-bottom: 8px;
+  background: #f1f1ef;
+  color: #1a1a1a;
+}
+
+.an-dig-frame svg {
+  width: 72%;
+  height: auto;
+}
+
+.an-dig-n {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+}
+
+/* The last card is the list of what not to send, struck through. */
+.an-dig-avoid {
+  gap: 18px;
+  padding: 16px 18px;
+  background: var(--an-ink);
+  color: #fff;
+}
+
+.an-dig-avoid li {
+  padding: 12px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+@media (min-width: 641px) {
+  .an.is-motion .an-dig {
+    height: calc(100vh + var(--travel, 0px));
+  }
+
+  .an.is-motion .an-dig-stage {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    justify-content: center;
+    overflow: hidden;
+    padding: 60px 0 0;
+  }
+
+  .an.is-motion .an-dig-track {
+    width: max-content;
+    overflow: visible;
+    transform: translate3d(calc(var(--p, 0) * var(--travel, 0px) * -1), 0, 0);
+    will-change: transform;
+  }
+}
+
+/* ---- what comes next ------------------------------------------------------ */
+
+.an-steps {
+  align-items: start;
+  padding-top: 200px;
+  padding-bottom: 200px;
+}
+
+.an-steps-aside {
+  grid-column: 1 / span 6;
+  grid-row: 1;
+  align-self: stretch;
+}
+
+.an-steps-sticky {
+  position: sticky;
+  top: 110px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* A one-digit-tall window onto a column of numbers, rolled to --step. */
+.an-steps-counter {
+  height: 1em;
+  margin-top: 40px;
+  overflow: hidden;
+  font-size: 17vw;
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+}
+
+.an-steps-roll {
+  display: flex;
+  flex-direction: column;
+  transform: translate3d(0, calc(var(--step, 0) * -1em), 0);
+  transition: transform 0.9s var(--an-ease);
+}
+
+.an-steps-roll span {
+  display: block;
+  height: 1em;
+}
+
+.an-steps-list {
+  grid-column: 7 / -1;
+  grid-row: 1;
+}
+
+.an-step {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-height: 62vh;
+  padding-top: 18px;
+  border-top: 1px solid var(--an-rule);
+}
+
+.an-step:last-child {
+  min-height: 40vh;
+}
+
+.an-step p {
+  max-width: 26em;
+}
+
+.an.is-motion .an-step {
+  opacity: 0.22;
+  transition: opacity 0.6s ease;
+}
+
+.an.is-motion .an-step.is-current {
+  opacity: 1;
+}
+
+/* ---- questions ------------------------------------------------------------ */
+
+.an-faq {
+  align-items: start;
+  padding-top: 200px;
+  padding-bottom: 200px;
+  interpolate-size: allow-keywords;
+}
+
+.an-faq-aside {
+  grid-column: 1 / span 4;
+  grid-row: 1;
+  position: sticky;
+  top: 110px;
+}
+
+.an-faq-list {
+  grid-column: 5 / -1;
+  grid-row: 1;
+  border-bottom: 1px solid var(--an-rule);
+}
+
+.an-faq-item {
+  border-top: 1px solid var(--an-rule);
+}
+
+.an-faq-item summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 26px 0;
+  font-size: max(20px, 1.6vw);
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  list-style: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.an-faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.an-faq-item summary:hover {
+  opacity: 0.6;
+}
+
+/* A plus, built from two hairlines, that turns to a cross when open. */
+.an-faq-icon {
+  position: relative;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  transition: transform 0.5s var(--an-ease);
+}
+
+.an-faq-icon::before,
+.an-faq-icon::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: currentColor;
+}
+
+.an-faq-icon::after {
+  transform: rotate(90deg);
+}
+
+.an-faq-item[open] .an-faq-icon {
+  transform: rotate(135deg);
+}
+
+.an-faq-a {
+  max-width: 36em;
+  padding-bottom: 30px;
+  opacity: 0.7;
+}
+
+.an-faq-a li {
+  padding-top: 6px;
+}
+
+.an-faq-a li::before {
+  content: "— ";
+}
+
+/* Eases open where the browser can animate to `auto`; snaps elsewhere. */
+.an-faq-item::details-content {
+  block-size: 0;
+  overflow-y: clip;
+  transition:
+    block-size 0.6s var(--an-ease),
+    content-visibility 0.6s allow-discrete;
+}
+
+.an-faq-item[open]::details-content {
+  block-size: auto;
+}
+
+/* ---- the way in ----------------------------------------------------------- */
+
+.an-apply {
+  background: var(--an-olive);
+  color: #fff;
+  transition: background-color 0.6s ease;
+}
+
+.an-apply:hover {
+  background: #4d4f47;
+}
+
+.an-apply-link {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 80px;
+  min-height: 90svh;
+  padding-top: 40px;
+  padding-bottom: 40px;
+}
+
+.an-apply-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.an-apply-note {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.an-apply-title {
+  font-size: 7.4vw;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.an-apply-go {
+  align-self: flex-end;
+  transition: transform 0.6s var(--an-ease);
+}
+
+.an-apply-link:hover .an-apply-go {
+  transform: translateX(-12px);
+}
+
+.an-apply-link .an-arrow {
+  transition: transform 0.6s var(--an-ease);
+}
+
+.an-apply-link:hover .an-arrow {
+  transform: translate(4px, -4px);
+}
+
+/* ---- the boards (from the original /about) ------------------------------- */
+
+.an-boards {
+  padding-top: 200px;
+  padding-bottom: 200px;
+}
+
+.an-boards-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 18px;
+}
+
+.an-boards-list {
+  border-bottom: 1px solid var(--an-rule);
+}
+
+.an-boards-list > li {
+  border-top: 1px solid var(--an-rule);
+}
+
+.an-board {
+  position: relative;
+  align-items: end;
+  row-gap: 10px;
+  padding: 22px 0 26px;
+}
+
+.an-board-label {
+  grid-column: 1 / span 6;
+  grid-row: 1;
+  transition: transform 0.7s var(--an-ease);
+}
+
+.an-board-subs {
+  grid-column: 8 / span 4;
+  grid-row: 1;
+}
+
+.an-board-count {
+  grid-column: 12;
+  grid-row: 1;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Taller than the row, so it breaks the hairlines; wiped down from the top. */
+.an-board-img {
+  position: absolute;
+  top: 50%;
+  left: 41%;
+  z-index: 2;
+  height: 150%;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  pointer-events: none;
+  transform: translateY(-50%);
+  clip-path: inset(0 0 100% 0);
+  transition: clip-path 0.7s var(--an-ease);
+}
+
+.an-board-img img {
+  object-fit: cover;
+}
+
+.an-board:hover .an-board-label,
+.an-board:focus-visible .an-board-label {
+  transform: translateX(0.12em);
+}
+
+.an-board:hover .an-board-img,
+.an-board:focus-visible .an-board-img {
+  clip-path: inset(0);
+}
+
+@media (hover: none) {
+  .an-board-img {
+    display: none;
+  }
+}
+
+/* ---- the cities (from the original /about) ------------------------------- */
+
+.an-offices {
+  padding-top: 200px;
+  padding-bottom: 200px;
+}
+
+.an-offices-label {
+  padding-bottom: 18px;
+}
+
+.an-offices-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: var(--an-gap);
+  row-gap: 56px;
+}
+
+.an-office {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--an-ink);
+}
+
+.an-office-clock {
+  display: block;
+  padding-top: 48px;
+  font-size: 7vw;
+  font-weight: 300;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.an-office-status {
+  padding-top: 8px;
+}
+
+.an-office-meta {
+  padding-top: 28px;
+}
+
+.an .ag-dot {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #c9c9c9;
+}
+
+.an .ag-dot[data-open="true"] {
+  background: #1f9d55;
+  animation: an-breathe 2.8s ease-in-out infinite;
+}
+
+.an .ag-colon {
+  animation: an-tick 1s steps(1, end) infinite;
+}
+
+@keyframes an-breathe {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes an-tick {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .an .ag-dot[data-open="true"],
+  .an .ag-colon {
+    animation: none;
+  }
+}
+
+/* ---- jump links ----------------------------------------------------------- */
+
+/* Anchored sections land below the fixed header, not under it. */
+.an section[id] {
+  scroll-margin-top: 64px;
+}
+
+.an-index {
+  row-gap: 18px;
+  padding-top: 48px;
+  padding-bottom: 48px;
+  border-bottom: 1px solid var(--an-rule);
+}
+
+.an-index-label {
+  grid-column: 1 / span 3;
+}
+
+.an-index-list {
+  grid-column: 4 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 28px;
+}
+
+.an-index-link {
+  transition: opacity 0.2s ease;
+}
+
+.an-index-link:hover {
+  opacity: 0.5;
+}
+
+/* ---- the numbers ------------------------------------------------------------ */
+
+.an-stats {
+  padding-top: 200px;
+  padding-bottom: 200px;
+}
+
+.an-stats-label {
+  padding-bottom: 18px;
+}
+
+.an-stats-list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: var(--an-gap);
+  row-gap: 48px;
+}
+
+.an-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--an-ink);
+}
+
+.an-stat-n {
+  font-size: 11vw;
+  font-weight: 300;
+  line-height: 0.9;
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+}
+
+.an-stat-l {
+  max-width: 16em;
+}
+
+/* ---- principles that expand ---------------------------------------------- */
+
+.an-principles {
+  padding-top: 200px;
+  padding-bottom: 200px;
+  interpolate-size: allow-keywords;
+}
+
+.an-principles-head {
+  padding-bottom: 18px;
+}
+
+.an-principles-list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: start;
+  column-gap: var(--an-gap);
+  row-gap: 40px;
+}
+
+.an-principle {
+  border-top: 1px solid var(--an-ink);
+}
+
+.an-principle summary {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  padding: 14px 0 24px;
+  list-style: none;
+  cursor: pointer;
+}
+
+.an-principle summary::-webkit-details-marker {
+  display: none;
+}
+
+.an-principle-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.an-principle-title {
+  max-width: 9em;
+  transition: opacity 0.2s ease;
+}
+
+.an-principle summary:hover .an-principle-title {
+  opacity: 0.6;
+}
+
+.an-principle[open] .an-faq-icon {
+  transform: rotate(135deg);
+}
+
+.an-principle-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 24em;
+  padding-bottom: 28px;
+  opacity: 0.75;
+}
+
+.an-principle::details-content {
+  block-size: 0;
+  overflow-y: clip;
+  transition:
+    block-size 0.7s var(--an-ease),
+    content-visibility 0.7s allow-discrete;
+}
+
+.an-principle[open]::details-content {
+  block-size: auto;
+}
+
+/* ---- the names ------------------------------------------------------------ */
+
+.an-names {
+  padding-top: 200px;
+  padding-bottom: 200px;
+}
+
+.an-names-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 40px;
+}
+
+.an-names-stage {
+  position: relative;
+}
+
+/* The portraits sit behind the type, one at a time, in the middle. */
+.an-names-faces {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.an-name-img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18vw;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.94);
+  transition:
+    opacity 0.35s ease,
+    transform 0.7s var(--an-ease);
+}
+
+.an-name-img.is-on {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.an-name-img img {
+  object-fit: cover;
+}
+
+/* White, differenced: black on the paper, inverted over a portrait. */
+.an-names-list {
+  color: #fff;
+  mix-blend-mode: difference;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.an-name {
+  transition: opacity 0.3s ease;
+}
+
+.an-names-list.is-hovering .an-name {
+  opacity: 0.3;
+}
+
+.an-names-list.is-hovering .an-name.is-on {
+  opacity: 1;
+}
+
+.an-name-n {
+  margin-left: 0.15em;
+  font-size: 0.3em;
+  letter-spacing: 0;
+  vertical-align: 1.6em;
+}
+
+.an-name-sep {
+  opacity: 0.35;
+}
+
+@media (hover: none) {
+  .an-names-faces,
+  .an-names-hint {
+    display: none;
+  }
+}
+
+/* ---- mirrored versions of the sections above ----------------------------- */
+
+@media (min-width: 641px) {
+  .an-fees.is-flip .an-fees-label {
+    grid-column: 11 / -1;
+    text-align: right;
+  }
+
+  .an-fees.is-flip .an-fees-title {
+    grid-column: 1 / span 10;
+  }
+
+  .an-fees.is-flip .an-fees-body {
+    grid-column: 1 / span 4;
+  }
+
+  .an-dig.is-flip .an-dig-label {
+    grid-column: 11 / -1;
+    grid-row: 1;
+    text-align: right;
+  }
+
+  .an-dig.is-flip .an-dig-title {
+    grid-column: 6 / span 5;
+    grid-row: 1;
+  }
+
+  .an-dig.is-flip .an-dig-intro {
+    grid-column: 1 / span 4;
+    grid-row: 1;
+  }
+
+  .an-steps.is-flip .an-steps-aside {
+    grid-column: 7 / -1;
+    text-align: right;
+  }
+
+  .an-steps.is-flip .an-steps-list {
+    grid-column: 1 / span 6;
+  }
+
+  .an-faq.is-flip .an-faq-aside {
+    grid-column: 9 / -1;
+    text-align: right;
+  }
+
+  .an-faq.is-flip .an-faq-list {
+    grid-column: 1 / span 8;
+  }
+
+  .an-boards.is-flip .an-board-label {
+    grid-column: 7 / -1;
+    text-align: right;
+  }
+
+  .an-boards.is-flip .an-board-subs {
+    grid-column: 2 / span 4;
+  }
+
+  .an-boards.is-flip .an-board-count {
+    grid-column: 1;
+    text-align: left;
+  }
+
+  .an-boards.is-flip .an-board-img {
+    left: auto;
+    right: 41%;
+  }
+
+  .an-boards.is-flip .an-board:hover .an-board-label,
+  .an-boards.is-flip .an-board:focus-visible .an-board-label {
+    transform: translateX(-0.12em);
+  }
+
+  .an-principles.is-flip .an-principles-head .an-col-label {
+    grid-column: 7 / -1;
+    grid-row: 1;
+    text-align: right;
+  }
+
+  .an-principles.is-flip .an-principles-head .an-col-read {
+    grid-column: 1 / span 4;
+    grid-row: 1;
+  }
+
+  .an-stats.is-flip .an-stats-label,
+  .an-names.is-flip .an-names-list {
+    text-align: right;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .an-stats-list,
+  .an-principles-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .an-stat-n {
+    font-size: 16vw;
+  }
+
+  .an-name-img {
+    width: 28vw;
+  }
+}
+
+@media (max-width: 640px) {
+  .an-index,
+  .an-stats,
+  .an-principles,
+  .an-names {
+    padding-top: 120px;
+    padding-bottom: 120px;
+  }
+
+  .an-index {
+    padding-top: 32px;
+    padding-bottom: 32px;
+  }
+
+  .an-index-label,
+  .an-index-list {
+    grid-column: 1 / -1;
+  }
+
+  .an-index-list {
+    gap: 8px 18px;
+  }
+
+  .an-stats-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 32px;
+  }
+
+  .an-stat-n {
+    font-size: 20vw;
+  }
+
+  .an-principles-list {
+    grid-template-columns: 1fr;
+    row-gap: 0;
+  }
+
+  .an-principle summary {
+    gap: 28px;
+  }
+
+  .an-names-head {
+    padding-bottom: 24px;
+  }
+
+  .an-names-list {
+    font-size: 6.4vw;
+    text-align: left;
+  }
+
+  .an-names-faces {
+    display: none;
+  }
+}
+
+/* ---- footer -------------------------------------------------------------- */
+
+.an-foot {
+  overflow: hidden;
+  padding-top: 50px;
+  background: var(--an-ink);
+  color: #fff;
+}
+
+.an-foot-top {
+  row-gap: 44px;
+}
+
+.an-foot-lead {
+  grid-column: 1 / span 5;
+  grid-row: 1 / span 2;
+  display: flex;
+  flex-direction: column;
+  gap: 34px;
+}
+
+.an-foot-tag {
+  font-size: max(24px, 2vw);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.an-foot-links {
+  grid-column: 10 / span 2;
+  grid-row: 1;
+}
+
+.an-foot-socials {
+  grid-column: 12 / span 1;
+  grid-row: 1;
+}
+
+.an-foot-cities {
+  grid-column: 10 / span 2;
+  grid-row: 2;
+}
+
+.an-foot-legal {
+  grid-column: 12 / span 1;
+  grid-row: 2;
+}
+
+.an-news-label {
+  display: block;
+  padding-bottom: 12px;
+}
+
+.an-news-field {
+  display: flex;
+  align-items: center;
+  max-width: 380px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.55);
+}
+
+.an-news input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  outline: none;
+}
+
+.an-news input::placeholder {
+  color: #6f6f6f;
+}
+
+.an-news button {
+  padding: 8px 0 8px 12px;
+  border: 0;
+  background: none;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.an-foot-mark {
+  padding-top: 120px;
+  padding-bottom: 18px;
+}
+
+.an-foot-fit {
+  font-weight: 400;
+  line-height: 0.92;
+  letter-spacing: -0.06em;
+}
+
+/* ---- motion -------------------------------------------------------------
+   Words and letters sit in boxes clipped along the bottom edge only, so they
+   can rise from under the baseline without negative tracking clipping their
+   sides. Start states apply only under .is-motion (set by AboutMotion) so the
+   page is whole without script. */
+
+.an-w,
+.an-c {
+  display: inline-block;
+  vertical-align: top;
+  /* The indent belongs to the paragraph's first line; inherited into each
+     word's own box it would push every word sideways. */
+  text-indent: 0;
+  padding-bottom: 0.12em;
+  margin-bottom: -0.12em;
+  clip-path: inset(-1em -1em 0 -1em);
+}
+
+.an-wi,
+.an-ci {
+  display: inline-block;
+}
+
+.an-fade:where(span, a) {
+  display: inline-block;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The opening section plays as the page loads: pure CSS, so it runs from
+     first paint instead of flashing in at hydration. */
+  [data-an-load] .an-wi,
+  [data-an-load] .an-ci {
+    animation: an-rise 1.3s var(--an-ease) both;
+    animation-delay: calc(150ms + var(--i) * 28ms);
+  }
+
+  [data-an-load] .an-fade {
+    animation: an-fade-up 1.1s var(--an-ease) both;
+    animation-delay: calc(450ms + var(--i, 0) * 70ms);
+  }
+
+  .an-img[data-an-load] img {
+    animation: an-unclip 1.6s var(--an-ease) 150ms both;
+  }
+
+  .an.is-motion [data-an-reveal] .an-wi,
+  .an.is-motion [data-an-reveal] .an-ci {
+    transform: translate3d(0, 110%, 0);
+    transition: transform 1.2s var(--an-ease);
+    transition-delay: calc(var(--i) * 45ms);
+  }
+
+  .an.is-motion [data-an-reveal].is-in .an-wi,
+  .an.is-motion [data-an-reveal].is-in .an-ci {
+    transform: none;
+  }
+
+  .an.is-motion [data-an-reveal] .an-fade {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
+    transition:
+      opacity 0.9s ease,
+      transform 1.1s var(--an-ease);
+    transition-delay: calc(var(--i, 0) * 70ms);
+  }
+
+  .an.is-motion [data-an-reveal].is-in .an-fade {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* The clip goes on the picture, not the observed box: Chrome's
+     IntersectionObserver honours a target's own clip-path, so a fully clipped
+     box would only count as visible once its bottom edge was on screen. */
+  .an.is-motion .an-img[data-an-reveal] img {
+    clip-path: inset(100% 0 0 0);
+    transform: scale(1.18);
+    transition:
+      clip-path 1.4s var(--an-ease),
+      transform 1.9s var(--an-ease);
+  }
+
+  .an.is-motion .an-img[data-an-reveal].is-in img {
+    clip-path: inset(0);
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .an-marquee-track {
+    animation: none;
+  }
+}
+
+@keyframes an-rise {
+  from {
+    transform: translate3d(0, 110%, 0);
+  }
+}
+
+@keyframes an-fade-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
+  }
+}
+
+@keyframes an-unclip {
+  from {
+    clip-path: inset(100% 0 0 0);
+    transform: scale(1.18);
+  }
+}
+
+/* ---- opening sections ----------------------------------------------------
+   Whichever section opens the page fills the first screen. */
+
+.an-wall.is-lead {
+  height: 100svh;
+}
+
+.an-big.is-lead {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding-top: 120px;
+  padding-bottom: 100px;
+}
+
+.an-approach.is-lead .an-approach-body {
+  min-height: 100svh;
+  padding-top: 160px;
+}
+
+/* ---- mirrored sections (.is-flip) ----------------------------------------
+   Column swaps only apply above phone width; on a phone every section is a
+   single column already. Reorderings apply everywhere. */
+
+/* The name-and-link line comes first, the word under it. */
+.an-big.is-flip {
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+.an-big.is-flip .an-big-row {
+  padding-top: 0;
+  padding-bottom: 18px;
+}
+
+/* Tilted the other way, the columns drifting in reverse. */
+.an-wall.is-flip .an-wall-tilt {
+  transform: rotate(-9deg);
+}
+
+.an-wall.is-flip .an-wall-col {
+  transform: translate3d(0, calc((var(--p, 0.5) - 0.5) * var(--speed) * -1vh), 0);
+}
+
+/* The pictures first, and the band rises out of them. */
+.an-approach.is-flip {
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+.an-approach.is-flip .an-approach-imgs {
+  background: linear-gradient(to top, var(--an-ink) 50%, transparent 50%);
+}
+
+.an-approach.is-flip .an-approach-body {
+  padding-top: 160px;
+}
+
+/* Heading to the left, the address to the right, the faces the other way. */
+.an-strip.is-flip .an-strip-title {
+  text-align: left;
+}
+
+.an-strip.is-flip .an-email-wrap {
+  text-align: right;
+}
+
+.an-strip.is-flip .an-marquee-track {
+  animation-direction: reverse;
+}
+
+@media (min-width: 641px) {
+  /* The paragraph moves to the right three-quarters and drops its indent. */
+  .an-statement.is-flip h1,
+  .an-belief.is-flip p {
+    max-width: none;
+    padding-left: calc((100% + var(--an-gap)) / 12 * 3);
+    text-indent: 0;
+  }
+
+  .an-promises.is-flip .an-promises-label {
+    grid-column: 9 / -1;
+    grid-row: 1;
+    text-align: right;
+  }
+
+  .an-promises.is-flip .an-list {
+    grid-column: 1 / span 4;
+    grid-row: 1;
+  }
+
+  .an-promises.is-flip .an-note {
+    grid-column: 1 / span 3;
+    grid-row: 2;
+  }
+
+  /* Text at the left edge, the picture right of centre, the label on the
+     right edge. */
+  .an-founder.is-flip .an-founder-text {
+    grid-column: 1 / span 3;
+    grid-row: 1;
+  }
+
+  .an-founder.is-flip .an-founder-img {
+    grid-column: 6 / span 5;
+    grid-row: 1;
+  }
+
+  .an-founder.is-flip .an-sticky-col,
+  .an-team.is-flip .an-sticky-col {
+    grid-column: 11 / -1;
+    grid-row: 1;
+    text-align: right;
+  }
+
+  .an-team.is-flip .an-team-list {
+    grid-column: 1 / span 10;
+    grid-row: 1;
+  }
+
+  .an-approach.is-flip .an-approach-text {
+    grid-column: 1 / span 3;
+  }
+
+  .an-approach.is-flip .an-approach-title {
+    grid-column: 7 / -1;
+    text-align: right;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .an-promises.is-flip .an-list,
+  .an-promises.is-flip .an-note,
+  .an-approach.is-flip .an-approach-text {
+    grid-column: 1 / span 6;
+  }
+
+  .an-founder.is-flip .an-founder-text {
+    grid-column: 1 / span 4;
+  }
+
+  .an-founder.is-flip .an-founder-img {
+    grid-column: 5 / span 6;
+  }
+}
+
+
+/* ---- tablet -------------------------------------------------------------- */
+
+@media (max-width: 1024px) {
+  .an {
+    --an-pad: 24px;
+    --an-gap: 14px;
+    --an-xl: 5.6vw;
+    --an-l: 4.8vw;
+    --an-m: 18px;
+    --an-s: 15px;
+  }
+
+  .an-col-read,
+  .an-note {
+    grid-column: 7 / -1;
+  }
+
+  .an-founder-text {
+    grid-column: 9 / -1;
+  }
+
+  .an-approach-text {
+    grid-column: 7 / -1;
+  }
+
+  .an-statement h1 {
+    max-width: none;
+  }
+
+  .an-foot-lead {
+    grid-column: 1 / span 6;
+  }
+
+  .an-foot-links,
+  .an-foot-cities {
+    grid-column: 8 / span 2;
+  }
+
+  .an-foot-socials,
+  .an-foot-legal {
+    grid-column: 10 / span 3;
+  }
+
+  .an-req-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .an-fees-body {
+    grid-column: 5 / -1;
+  }
+
+  .an-dig-label {
+    grid-column: 1 / -1;
+  }
+
+  .an-dig-title {
+    grid-column: 1 / span 6;
+  }
+
+  .an-dig-intro {
+    grid-column: 7 / -1;
+  }
+
+  .an-faq-aside {
+    grid-column: 1 / span 3;
+  }
+
+  .an-faq-list {
+    grid-column: 4 / -1;
+  }
+
+  .an-board-subs {
+    grid-column: 7 / span 5;
+  }
+}
+
+/* ---- phone --------------------------------------------------------------- */
+
+@media (max-width: 640px) {
+  .an {
+    --an-pad: 16px;
+    --an-gap: 10px;
+    --an-xl: 8.6vw;
+    --an-l: 8.6vw;
+    --an-m: 16px;
+    --an-s: 14px;
+  }
+
+  /* Logo and call to action on the first row, the links on the second. Two
+     rows fixed over a narrow screen would overprint everything they pass, so
+     here the header stays at the top of the page and scrolls away. */
+  .an-head {
+    position: absolute;
+    flex-wrap: wrap;
+    row-gap: 8px;
+    padding-top: 14px;
+    padding-bottom: 14px;
+    font-size: 13px;
+  }
+
+  .an-nav {
+    position: static;
+    order: 3;
+    width: 100%;
+    transform: none;
+    gap: 14px;
+  }
+
+  .an-statement {
+    padding-top: 120px;
+    padding-bottom: 80px;
+  }
+
+  .an-statement.is-lead {
+    min-height: 88svh;
+    padding-bottom: 64px;
+  }
+
+  /* The word is only a third of the screen tall here; a full screen of
+     paper above it would read as a page that failed to load. */
+  .an-big.is-lead {
+    min-height: 72svh;
+  }
+
+  .an-approach.is-flip .an-approach-imgs {
+    background: linear-gradient(to top, var(--an-ink) 25%, transparent 25%);
+  }
+
+
+  .an-col-label,
+  .an-col-read,
+  .an-note {
+    grid-column: 1 / -1;
+  }
+
+  .an-promises {
+    row-gap: 28px;
+    padding-bottom: 140px;
+  }
+
+  .an-big {
+    padding-top: 80px;
+    padding-bottom: 130px;
+  }
+
+  .an-wall {
+    height: 85vh;
+  }
+
+  .an-wall-tilt {
+    inset: -30% -35%;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 3.5vw;
+  }
+
+  .an-wall-col {
+    gap: 3.5vw;
+  }
+
+  .an-wall-col:nth-child(4) {
+    display: none;
+  }
+
+  .an-belief {
+    padding-top: 100px;
+    padding-bottom: 140px;
+  }
+
+  /* The labels become plain headings above their pictures. */
+  .an-sticky-col {
+    grid-column: 1 / -1;
+  }
+
+  .an-sticky {
+    position: static;
+    padding-bottom: 14px;
+  }
+
+  .an-founder {
+    padding-top: 40px;
+    padding-bottom: 120px;
+  }
+
+  .an-founder-img,
+  .an-founder-text,
+  .an-team-list {
+    grid-column: 1 / -1;
+  }
+
+  .an-founder-text {
+    gap: 18px;
+    padding-top: 24px;
+  }
+
+  .an-team {
+    padding-bottom: 140px;
+  }
+
+  .an-team-list {
+    row-gap: 28px;
+  }
+
+  .an-approach-body {
+    align-items: start;
+    row-gap: 56px;
+    padding-top: 120px;
+    padding-bottom: 100px;
+  }
+
+  .an-approach-title,
+  .an-approach-text {
+    grid-column: 1 / -1;
+  }
+
+  .an-approach-text {
+    grid-row: 2;
+    gap: 36px;
+  }
+
+  .an-block-p {
+    padding-top: 12px;
+  }
+
+  .an-approach-imgs {
+    grid-template-columns: 1fr;
+    background: linear-gradient(to bottom, var(--an-ink) 25%, transparent 25%);
+  }
+
+  .an-strip {
+    padding-top: 120px;
+    padding-bottom: 140px;
+  }
+
+  .an-rule {
+    margin-top: 32px;
+  }
+
+  .an-marquee-item {
+    width: 46vw;
+  }
+
+  .an-email-wrap {
+    padding-top: 120px;
+  }
+
+  .an-email {
+    font-size: 6.2vw;
+  }
+
+  .an-foot-top {
+    row-gap: 36px;
+  }
+
+  .an-foot-lead {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .an-foot-links {
+    grid-column: 1 / span 6;
+    grid-row: 2;
+  }
+
+  .an-foot-socials {
+    grid-column: 7 / -1;
+    grid-row: 2;
+  }
+
+  .an-foot-cities {
+    grid-column: 1 / span 6;
+    grid-row: 3;
+  }
+
+  .an-foot-legal {
+    grid-column: 7 / -1;
+    grid-row: 3;
+  }
+
+  .an-foot-mark {
+    padding-top: 72px;
+  }
+
+  /* ---- the borrowed sections, single column ---- */
+
+  .an-req,
+  .an-fees,
+  .an-steps,
+  .an-faq,
+  .an-boards,
+  .an-offices {
+    padding-top: 120px;
+    padding-bottom: 120px;
+  }
+
+  .an-req-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 28px;
+    margin-top: 28px;
+  }
+
+  .an-req-item .an-l {
+    font-size: 6.4vw;
+  }
+
+  .an-fees {
+    row-gap: 24px;
+  }
+
+  .an-fees-label,
+  .an-fees-title,
+  .an-fees-body {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+
+  .an-dig-stage {
+    gap: 32px;
+    padding: 120px 0;
+  }
+
+  .an-dig-label,
+  .an-dig-title,
+  .an-dig-intro {
+    grid-column: 1 / -1;
+  }
+
+  .an-dig-card {
+    width: 64vw;
+  }
+
+  .an-steps-aside,
+  .an-steps-list {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+
+  .an-steps-sticky {
+    position: static;
+    padding-bottom: 36px;
+  }
+
+  .an-steps-counter {
+    display: none;
+  }
+
+  .an-step,
+  .an-step:last-child {
+    min-height: 0;
+    padding-bottom: 36px;
+  }
+
+  .an.is-motion .an-step {
+    opacity: 1;
+  }
+
+  .an-faq-aside,
+  .an-faq-list {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+
+  .an-faq-aside {
+    position: static;
+    padding-bottom: 18px;
+  }
+
+  .an-faq-item summary {
+    padding: 20px 0;
+    font-size: 17px;
+  }
+
+  .an-apply-link {
+    min-height: 80svh;
+    padding-top: 24px;
+    padding-bottom: 24px;
+  }
+
+  .an-apply-top {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .an-apply-title {
+    font-size: 12vw;
+  }
+
+  .an-board-label {
+    grid-column: 1 / -1;
+  }
+
+  .an-board-subs {
+    grid-column: 1 / span 10;
+    grid-row: 2;
+  }
+
+  .an-board-count {
+    grid-column: 11 / -1;
+    grid-row: 2;
+  }
+
+  .an-board-img {
+    display: none;
+  }
+
+  .an-offices-grid {
+    grid-template-columns: 1fr;
+    row-gap: 48px;
+  }
+
+  .an-office-clock {
+    padding-top: 28px;
+    font-size: 18vw;
+  }
+}

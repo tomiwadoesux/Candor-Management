@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import ChromeLink from "./ChromeLink";
+import Link from "next/link";
+import { HookArrow } from "./ChromeLink";
 import { models } from "../../data/models";
 import "../styles/news-feature.css";
 
@@ -122,7 +123,10 @@ export default function NewsFeature() {
             ))}
           </dl>
 
-          <ChromeLink href={`/models/${model.id}`} className="news-feature__link">model portfolio</ChromeLink>
+          <Link href={`/models/${model.id}`} className="news-feature__link font-display">
+            <span className="news-feature__link-arrow"><HookArrow className="!opacity-100" /></span>
+            <span>model portfolio</span>
+          </Link>
         </div>
 
         <div className="news-feature__nav">

@@ -39,7 +39,7 @@ export function HookArrow({ className = "" }) {
 }
 
 // A plain → for the pill variant, drawn for the same reason as the hook.
-function StraightArrow({ className = "" }) {
+export function StraightArrow({ className = "" }) {
   return (
     <svg
       viewBox="0 0 12 12"
@@ -59,7 +59,7 @@ function StraightArrow({ className = "" }) {
 
 /**
  * `pill` is the footer's button: the label in the body sans, as written,
- * on a 4% black block with the arrow trailing. Hover darkens the block and
+ * on a 7% black block with the arrow trailing. Hover darkens the block and
  * nudges the arrow on, so the press reads without the whole thing fading.
  */
 export default function ChromeLink({
@@ -75,7 +75,7 @@ export default function ChromeLink({
     return (
       <Link
         href={href}
-        className={`group pointer-events-auto inline-flex items-center gap-[0.4em] whitespace-nowrap rounded-[1px] bg-black/[0.04] px-[0.6em] py-[0.3em] leading-none transition-colors duration-200 hover:bg-black/[0.08] ${className}`}
+        className={`group pointer-events-auto inline-flex items-center gap-[0.4em] whitespace-nowrap rounded-[1px] bg-black/[0.07] px-[0.6em] py-[0.3em] leading-none transition-colors duration-200 hover:bg-black/[0.12] ${className}`}
         {...rest}
       >
         <span>{children}</span>
@@ -84,18 +84,30 @@ export default function ChromeLink({
     );
   }
 
+  // At rest the link is only its label: the arrow's slot is zero wide and the
+  // arrow inside it scaled to nothing. On hover the slot opens, pushing the
+  // label over, while the arrow grows out of its left edge and travels right
+  // into place. inline-size rather than width so the slot opens along the line
+  // in the vertical rails too, where "width" would be across it.
   return (
     <Link
       href={href}
-      className={`font-display group pointer-events-auto inline-flex whitespace-nowrap lowercase tracking-[0.02em] transition-opacity duration-300 hover:opacity-60 ${className}`}
+      className={`font-display group pointer-events-auto inline-flex whitespace-nowrap lowercase tracking-[0.02em] ${className}`}
       {...rest}
     >
-      <span className="inline-flex items-baseline gap-[0.15em] text-[0.95em]">
-        <HookArrow
-          className={`transition-transform duration-300 ease-out ${
-            vertical ? "rotate-90" : "group-hover:translate-x-[0.15em]"
-          }`}
-        />
+      <span className="inline-flex items-baseline text-[0.95em]">
+        <span
+          aria-hidden="true"
+          className="inline-flex overflow-hidden [inline-size:0] transition-[inline-size] duration-300 ease-out group-hover:[inline-size:0.95em] group-focus-visible:[inline-size:0.95em]"
+        >
+          <HookArrow
+            className={`origin-left scale-0 transition-[scale,translate] duration-300 ease-out group-hover:scale-100 group-focus-visible:scale-100 ${
+              vertical
+                ? "rotate-90"
+                : "-translate-x-[0.4em] group-hover:translate-x-0 group-focus-visible:translate-x-0"
+            }`}
+          />
+        </span>
         <span>{children}</span>
       </span>
     </Link>

@@ -119,6 +119,9 @@ export default function ModelImageCursor({ hoveredModel, show }) {
   return (
     <div
       ref={cursorRef}
+      // It sits wherever the pointer happens to be, so it is no part of the
+      // page's layout — keep it out of the skeleton maps.
+      data-skeleton="skip"
       style={{
         position: "absolute",
         top: 0,

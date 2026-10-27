@@ -11,6 +11,16 @@
   font-style: normal;
   font-display: swap;
 }
+/* Geist Regular: the variable Geist (Latin subset, wght 400–600) that ships
+   with Next.js, pinned to 400 so it never competes with the Medium file
+   above for h4s. Same OFL license. */
+@font-face {
+  font-family: "Geist";
+  src: url("/fonts/Geist-Variable-latin.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
 @font-face {
   font-family: "Arno Pro";

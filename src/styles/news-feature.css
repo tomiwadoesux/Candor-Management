@@ -104,7 +104,56 @@
 .news-feature__spec dt { color: #999; }
 .news-feature__spec dd { padding-top: 6px; font-size: 15px; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
 
-.news-feature__link { margin-top: 32px; color: var(--accent); font-size: 19px; }
+/* The portfolio link is a tinted block. On desktop the hook arrow is hidden
+   until hover, then grows in from the left: the block lengthens and pushes the
+   label right to make room. Touch screens show the arrow all the time. */
+.news-feature__link {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  margin-top: 32px;
+  padding: 0.4em 0.75em 0.45em;
+  color: var(--accent);
+  background: rgba(0, 116, 158, 0.25);
+  font-size: 19px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: lowercase;
+  white-space: nowrap;
+  transition: background-color 300ms var(--ease);
+}
+.news-feature__link-arrow {
+  display: inline-flex;
+  align-items: center;
+  width: 0.8em;
+  margin-right: 0.3em;
+  overflow: hidden;
+}
+@media (hover: hover) and (pointer: fine) {
+  .news-feature__link-arrow {
+    width: 0;
+    margin-right: 0;
+    opacity: 0;
+    transform: translateX(-0.5em);
+    clip-path: inset(0 100% 0 0);
+    transition:
+      width 450ms var(--ease),
+      margin-right 450ms var(--ease),
+      opacity 250ms var(--ease),
+      transform 450ms var(--ease),
+      clip-path 450ms var(--ease);
+  }
+  .news-feature__link:hover,
+  .news-feature__link:focus-visible { background: rgba(0, 116, 158, 0.32); }
+  .news-feature__link:hover .news-feature__link-arrow,
+  .news-feature__link:focus-visible .news-feature__link-arrow {
+    width: 0.8em;
+    margin-right: 0.3em;
+    opacity: 1;
+    transform: none;
+    clip-path: inset(0 0 0 0);
+  }
+}
 
 /* ── Progress strip ──────────────────────────────────────────────────────── */
 
@@ -189,7 +238,7 @@
   border: 0;
   border-radius: 0;
   color: white;
-  background: rgba(12, 12, 12, 0.1);
+  background: rgba(0, 116, 158, 0.25);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   cursor: pointer;

@@ -6,7 +6,7 @@ import { models } from "../../data/models";
 import { useSearchOptional } from "./SearchContext";
 import HoverText from "./HoverText";
 import SearchGlyph from "./SearchGlyph";
-import { ISLAND_EASE as EASE, ISLAND_OPEN, ISLAND_CLOSE, ISLAND_BUTTON, getSearchPanelWidth } from "../lib/islandMotion";
+import { ISLAND_EASE as EASE, ISLAND_OPEN, ISLAND_CLOSE, ISLAND_BUTTON, MENU_LABEL, getSearchPanelWidth } from "../lib/islandMotion";
 
 const BAR_H = 46; // uniform search-bar height (closed === bottom row when open)
 const BOTTOM_GAP = 20; // matches the fixed bottom-5 offset
@@ -233,10 +233,11 @@ export default function Search() {
   useEffect(() => {
     clearInterval(scrambleTimer.current);
     if (menuLabelActive) {
-      // Let the label move into the magnifier's place, then resolve to Menu
-      // before the blue button finishes its slide and starts expanding.
-      if (prefersReduced) { applyDisplay("Menu"); return; }
-      const timer = setTimeout(() => scrambleTo("Menu", 7), ISLAND_BUTTON.enter * 350);
+      // Let the label move into the magnifier's place, then resolve to Go home
+      // before the blue button finishes its slide and starts expanding. With
+      // the menu open the label is a link home (InNav.js).
+      if (prefersReduced) { applyDisplay(MENU_LABEL); return; }
+      const timer = setTimeout(() => scrambleTo(MENU_LABEL, 7), ISLAND_BUTTON.enter * 350);
       return () => clearTimeout(timer);
     }
     scrambleTo(isOpen ? OPEN_LABEL : `Search ${SEARCH_WORDS[wordIdx]}`);

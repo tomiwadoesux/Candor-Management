@@ -1,0 +1,16 @@
+{
+  "routes": {
+    "/": "_root.json",
+    "/about": "about.json",
+    "/about-new": "about-new.json",
+    "/agency": "agency.json",
+    "/contact": "contact.json",
+    "/creatives": "creatives.json",
+    "/get-scouted": "get-scouted.json",
+    "/models": "models.json",
+    "/models/[id]": "models__[id].json",
+    "/privacy": "privacy.json",
+    "/talents": "talents.json",
+    "/word-paint": "word-paint.json"
+  }
+}

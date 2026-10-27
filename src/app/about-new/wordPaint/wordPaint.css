@@ -1,0 +1,37 @@
+/* ---- the giant word, drawn (WordPaint) ------------------------------------
+   The canvas sits under everything in the section. The DOM word stays where
+   FitText put it, for layout, selection and screen readers, and goes
+   transparent once the canvas is live. */
+
+.wp {
+  position: relative;
+  isolation: isolate;
+  /* The ground, matched to the shader so nothing flashes before the first
+     frame. */
+  background: #0a0908;
+  color: #f2efe9;
+}
+
+.wp-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s linear;
+}
+
+.wp[data-wp-live] .wp-canvas {
+  opacity: 1;
+}
+
+.wp[data-wp-live] .wp-word {
+  color: transparent;
+}
+
+.wp > :not(.wp-canvas) {
+  position: relative;
+  z-index: 1;
+}
