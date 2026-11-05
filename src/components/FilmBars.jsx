@@ -1,12 +1,16 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import Image from "next/image";
+import { motion, useMotionTemplate, useMotionValue, useReducedMotion, useSpring } from "framer-motion";
 import "../styles/film-bars.css";
 
 /**
  * The inline showreel's control bar, swapped in for the original hairline row
  * by FilmPlayer's `bar` prop (the fullscreen /video player keeps the row).
- * The title is set large, and a chapter strip — one segment per film — doubles
- * as the scrubber for the current cut and the navigation for the rest.
+ * The title stays above the picture. Film names span the centred seek line,
+ * with the icon controls directly below it.
  */
 
 const pad = (n) => String(n).padStart(2, "0");
@@ -39,73 +43,177 @@ const Sound = ({ muted }) => (
 );
 
 export default function FilmBar({
-  film, films, filmIndex, playing, muted, progress, duration,
-  creditsOpen, onPlay, onMute, onCredits, onJump, scrubProps,
+  film, films, filmIndex, playing, muted, progress, duration, onPlay, onMute, onJump, onSeek,
 }) {
+  const [preview, setPreview] = useState(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const chaptersRef = useRef(null);
+  const previewMode = useRef("pointer");
+  const previewVisible = useRef(false);
+  const reduceMotion = useReducedMotion();
+  const x = useSpring(0, { duration: 0.35, bounce: 0 });
+  const y = useMotionValue(0);
+  const transform = useMotionTemplate`translate3d(${x}px, ${y}px, 0)`;
+
+  const hidePreview = () => {
+    previewVisible.current = false;
+    setPreviewOpen(false);
+  };
+
+  useEffect(() => {
+    const hide = () => {
+      previewVisible.current = false;
+      setPreviewOpen(false);
+    };
+    window.addEventListener("scroll", hide, { passive: true });
+    window.addEventListener("resize", hide);
+    window.addEventListener("blur", hide);
+    return () => {
+      window.removeEventListener("scroll", hide);
+      window.removeEventListener("resize", hide);
+      window.removeEventListener("blur", hide);
+    };
+  }, []);
+
+  const positionPreview = (clientX, rowBottom, instant) => {
+    // Centre the 192 × 140px preview below the row. Only its horizontal position
+    // follows the pointer, so moving between names never lifts it over the text.
+    const left = Math.max(16, Math.min(clientX - 96, window.innerWidth - 208));
+    const top = Math.max(16, Math.min(rowBottom + 8, window.innerHeight - 156));
+    x[instant ? "jump" : "set"](left);
+    y.set(top);
+  };
+
+  const showPreview = (index, clientX, rowBottom, keyboard = false) => {
+    previewMode.current = keyboard ? "keyboard" : "pointer";
+    positionPreview(clientX, rowBottom, keyboard || reduceMotion || !previewVisible.current);
+    previewVisible.current = true;
+    setPreview(index);
+    setPreviewOpen(true);
+  };
+
+  const previewNearestFilm = (event) => {
+    if (event.pointerType === "touch" ||
+      !window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    const row = event.currentTarget;
+    const names = row.querySelectorAll(".fb-c__ch-name");
+    let nearest = 0;
+    let nearestCenter = event.clientX;
+    let distance = Infinity;
+    names.forEach((name, index) => {
+      const rect = name.getBoundingClientRect();
+      const center = rect.left + rect.width / 2;
+      const nextDistance = Math.abs(event.clientX - center);
+      if (nextDistance < distance) {
+        nearest = index;
+        nearestCenter = center;
+        distance = nextDistance;
+      }
+    });
+    showPreview(nearest, reduceMotion ? nearestCenter : event.clientX, row.getBoundingClientRect().bottom);
+  };
+
+  const previewFocusedFilm = (event, index) => {
+    if (!event.currentTarget.matches(":focus-visible")) return;
+    const rect = event.currentTarget.querySelector(".fb-c__ch-name").getBoundingClientRect();
+    showPreview(index, rect.left + rect.width / 2, chaptersRef.current.getBoundingClientRect().bottom, true);
+  };
+
   return (
     <div className="fb fb-c">
       <div className="fb-c__top">
+        {/* The look's name and credits resolve into these two centred lines. */}
         <div className="fb-c__lede" key={film.id}>
-          <p className="fb-c__kicker">
-            {pad(filmIndex + 1)} — {film.disciplines}
-          </p>
-          <h3 className="fb-c__title">
-            {film.client}
-            <span>✕</span>
-            {film.collaborator}
-          </h3>
-          <p className="fb-c__dir">Directed by {film.director}</p>
-        </div>
-
-        <div className="fb-c__ctrls">
-          <span className="fb-c__time">
-            {clock(progress * duration)} / {clock(duration)}
-          </span>
-          <button type="button" onClick={onPlay}>
-            <Play playing={playing} /> {playing ? "Pause" : "Play"}
-          </button>
-          <button type="button" onClick={onMute}>
-            <Sound muted={muted} /> {muted ? "Sound off" : "Sound on"}
-          </button>
-          <button
-            type="button"
-            onClick={onCredits}
-            aria-expanded={creditsOpen}
-            aria-controls="film-credits"
-          >
-            {creditsOpen ? "Hide credits" : "Credits"}
-          </button>
+          <h4 className="fb-c__title" data-handoff-line="title">
+            {film.client} ✕ {film.collaborator}
+          </h4>
+          <p className="fb-c__dir" data-handoff-line="credits">Directed by {film.director}</p>
         </div>
       </div>
 
-      <div className="fb-c__chapters">
-        {films.map((f, i) =>
-          i === filmIndex ? (
-            <div key={f.id} className="fb-c__ch fb-c__ch--on" {...scrubProps}>
-              <span className="fb-c__bar">
-                <span style={{ "--p": progress }} />
-              </span>
-              <span className="fb-c__label">
-                {pad(i + 1)} {f.client}
-              </span>
-            </div>
-          ) : (
+      <div className="fb-c__bottom">
+        <nav
+          ref={chaptersRef}
+          className="fb-c__chapters"
+          aria-label="Choose a film"
+          onPointerEnter={previewNearestFilm}
+          onPointerMove={previewNearestFilm}
+          onPointerLeave={() => { if (previewMode.current === "pointer") hidePreview(); }}
+          onKeyDown={(event) => { if (event.key === "Escape") hidePreview(); }}
+        >
+          {films.map((f, i) => (
             <button
               key={f.id}
               type="button"
-              className="fb-c__ch"
+              className={i === filmIndex ? "fb-c__ch fb-c__ch--on" : "fb-c__ch"}
+              aria-label={`${f.client} ✕ ${f.collaborator}. Directed by ${f.director}. Duration ${clock(f.duration)}`}
+              aria-current={i === filmIndex || undefined}
+              onFocus={(event) => previewFocusedFilm(event, i)}
+              onBlur={() => { if (previewMode.current === "keyboard") hidePreview(); }}
               onClick={() => onJump(i)}
             >
-              <span className="fb-c__bar">
-                <span style={{ "--p": i < filmIndex ? 1 : 0 }} />
-              </span>
-              <span className="fb-c__label">
-                {pad(i + 1)} {f.client}
-              </span>
+              <span className="fb-c__ch-name">{f.client}</span>
+              <span className="fb-c__ch-credit">Directed by {f.director}</span>
+              <span className="fb-c__ch-duration">{clock(f.duration)}</span>
             </button>
-          )
-        )}
+          ))}
+        </nav>
+        <div className="fb-c__ctrls">
+          <div className="fb-c__seek">
+            <span className="fb-c__track" aria-hidden="true">
+              <span style={{ transform: `scaleX(${progress})` }} />
+            </span>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="0.1"
+              value={progress * 100}
+              disabled={!duration}
+              aria-label="Playback position"
+              aria-valuetext={`${clock(progress * duration)} of ${clock(duration)}`}
+              onChange={(event) => onSeek(Number(event.target.value) / 100)}
+            />
+          </div>
+          <div className="fb-c__actions">
+            <button type="button" onClick={onPlay} aria-label={playing ? "Pause" : "Play"}>
+              <Play playing={playing} />
+            </button>
+            <button type="button" onClick={onMute} aria-label={muted ? "Turn sound on" : "Turn sound off"}>
+              <Sound muted={muted} />
+            </button>
+          </div>
+        </div>
       </div>
+
+      {preview !== null && createPortal(
+        <motion.div
+          className="fb-c-preview"
+          data-open={previewOpen}
+          data-keyboard={previewMode.current === "keyboard"}
+          style={{ transform }}
+          aria-hidden="true"
+        >
+          <div className="fb-c-preview__image">
+            {films.map((f, i) => (
+              <Image
+                key={f.id}
+                src={f.poster}
+                alt=""
+                fill
+                sizes="192px"
+                quality={35}
+                loading="eager"
+                style={{ opacity: i === preview ? 1 : 0 }}
+              />
+            ))}
+          </div>
+          <div className="fb-c-preview__duration">
+            {clock(films[preview].duration)}
+          </div>
+        </motion.div>,
+        document.body,
+      )}
     </div>
   );
 }

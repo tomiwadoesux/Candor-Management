@@ -10,8 +10,8 @@
 //
 // PLACEHOLDER MEDIA. `src` points at MDN's open sample clips so the transport
 // has something real to scrub while the actual cuts are still in post. Drop
-// the finished files into public/video/ and swap the strings; nothing else has
-// to change. The posters are real board images, so the page reads correctly
+// the finished files into public/video/ and update each src and its duration
+// in seconds. The posters are real board images, so the page reads correctly
 // either way.
 //
 // Not the gtv-videos-bucket URLs that Showcase.js and Showcase2.js still point
@@ -31,6 +31,7 @@ export const films = [
     disciplines: "Video, Stills",
     year: "2026",
     src: `${SAMPLE}/flower.mp4`,
+    duration: 5.055,
     poster: "/photos/img7.jpeg",
     credits: [
       { role: "Direction", name: "Marguerite Oduya" },
@@ -52,6 +53,7 @@ export const films = [
     disciplines: "Video, Runway",
     year: "2026",
     src: `${SAMPLE}/tears-of-steel-battle-clip-medium.mp4`,
+    duration: 70.54222222222222,
     poster: "/photos/img14.jpeg",
     credits: [
       { role: "Direction", name: "Tobi Ajayi" },
@@ -73,6 +75,7 @@ export const films = [
     disciplines: "Video, Campaign",
     year: "2025",
     src: `${SAMPLE}/sintel-short.mp4`,
+    duration: 120,
     poster: "/photos/img22.jpeg",
     credits: [
       { role: "Direction", name: "Ines Ferreira" },
@@ -94,6 +97,7 @@ export const films = [
     disciplines: "Video, Stills",
     year: "2025",
     src: `${SAMPLE}/friday.mp4`,
+    duration: 6.166,
     poster: "/photos/img30.jpeg",
     credits: [
       { role: "Direction", name: "Kelechi Nwosu" },

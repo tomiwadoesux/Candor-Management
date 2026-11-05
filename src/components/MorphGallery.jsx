@@ -41,9 +41,13 @@ import { packRows, entranceOrder, originFor } from "@/lib/packRows";
  *   rowSizes   — tiles per row, cycled (see lib/packRows.js)
  *   layout     — a full set of packRows options, e.g. LAYOUTS.pairs; wins
  *                over rowSizes
- *   reveal     — viewport (default), static preview, or after-scroll for a
- *                profile whose first gallery row starts above the fold
+ *   reveal     — viewport (default), viewport-fit to finish before page end,
+ *                static preview, or after-scroll for a profile whose first
+ *                gallery row starts above the fold
  *   parallax   — optional inner-photo drift; leaves the reveal frame intact
+ *   intro      — optional "animate" / "instant" opening for a layout switch;
+ *                initially visible rows finish open, later rows follow scroll
+ *   unoptimized — reuse already prepared local image assets as-is
  */
 
 // Entrance timing. Two numbers, both in plain terms — turn these to retune.
@@ -94,6 +98,8 @@ export default function MorphGallery({
   layout,
   reveal = "viewport",
   parallax = false,
+  intro = false,
+  unoptimized = false,
 }) {
   const rootRef = useRef(null);
 
@@ -124,6 +130,9 @@ export default function MorphGallery({
       return;
     }
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const animateIntro = intro === "animate";
+    const introStart = performance.now();
+    let firstMeasure = true;
 
     // Per tile: where scroll says it should be, where it is drawn, and the
     // last value written, so a settled tile costs no style work at all.
@@ -138,6 +147,9 @@ export default function MorphGallery({
     const measure = () => {
       const vh = window.innerHeight;
       const narrow = window.innerWidth < STACK_BREAKPOINT;
+      const remainingScroll = reveal === "viewport-fit"
+        ? Math.max(0, document.documentElement.scrollHeight - vh - window.scrollY)
+        : Infinity;
 
       // Every rect first, then every write. Interleaving them makes each
       // setProperty invalidate style and the next getBoundingClientRect force
@@ -151,6 +163,10 @@ export default function MorphGallery({
         // rect stays the tile's true position and size no matter where the
         // animation currently is.
         const rect = rects[i];
+        if (firstMeasure && intro) {
+          tiles[i].openOnMount = rect.bottom > 0 && rect.top < vh * 0.85;
+          tiles[i].introAt = introStart + order * 40;
+        }
 
         // A stacked tile is alone on its line, so it neither waits nor has to
         // share the row's window.
@@ -160,7 +176,11 @@ export default function MorphGallery({
 
         // What the row would like, against how long it is actually in view.
         const wanted = vh * TILE_SCROLL * spans;
-        const affordable = (vh + rect.height) * VISIBILITY_MARGIN;
+        // A board that ends the page has less travel left for its final
+        // rows. Fit the whole sequence into that distance so no photograph
+        // remains closed when the visitor reaches the bottom.
+        const availableTravel = Math.max(1, vh - rect.top + remainingScroll);
+        const affordable = Math.min(vh + rect.height, availableTravel) * VISIBILITY_MARGIN;
         const duration = Math.max(Math.min(wanted, affordable) / spans, 1);
 
         // Distance the tile's top has travelled since it crossed the fold.
@@ -174,10 +194,11 @@ export default function MorphGallery({
         const scrollProgress = reveal === "after-scroll"
           ? clamp01((window.scrollY - start) / duration)
           : 1;
-        target[i] = motion.matches
+        target[i] = tiles[i].openOnMount ? 1 : motion.matches
           ? (reveal === "after-scroll" && window.scrollY <= 0 ? 0 : 1)
           : Math.min(viewportProgress, scrollProgress);
       }
+      firstMeasure = false;
     };
 
     const paint = (i) => {
@@ -205,6 +226,14 @@ export default function MorphGallery({
       let moving = false;
 
       for (let i = 0; i < tiles.length; i++) {
+        if (animateIntro && !motion.matches && tiles[i].openOnMount && now < tiles[i].introAt + 420) {
+          // An explicit opening interval makes the layout switch legible.
+          // Reset per effect setup, including React's development remount.
+          shown[i] = clamp01((now - tiles[i].introAt) / 420);
+          paint(i);
+          moving = true;
+          continue;
+        }
         const gap = target[i] - shown[i];
         if (motion.matches || (reveal === "after-scroll" && window.scrollY <= 0) || Math.abs(gap) < 0.001) {
           shown[i] = target[i];
@@ -227,14 +256,15 @@ export default function MorphGallery({
       if (!raf) raf = requestAnimationFrame(frame);
     };
 
-    // First paint lands where the page already is — nothing eases in on load
-    // or when a board is swapped in.
+    // Existing boards paint at their scroll position. An opted-in layout
+    // switch opens its visible rows with the same corner reveal and easing.
     measure();
     dirty = false;
     for (let i = 0; i < tiles.length; i++) {
-      shown[i] = target[i];
+      shown[i] = animateIntro && !motion.matches ? 0 : target[i];
       paint(i);
     }
+    if (animateIntro && !motion.matches) schedule();
 
     window.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("resize", schedule);
@@ -254,7 +284,7 @@ export default function MorphGallery({
     };
     // Re-bind when the rows change — the tabs on a model page swap the whole
     // board out, and the old nodes are gone by then.
-  }, [rows, reveal]);
+  }, [rows, reveal, intro]);
 
   useEffect(() => {
     if (!parallax || !rootRef.current) return;
@@ -335,6 +365,7 @@ export default function MorphGallery({
                       <div className="morph-tile__photo">
                         <Image
                           src={item.src}
+                          unoptimized={unoptimized}
                           alt={item.alt}
                           fill
                           draggable={parallax ? false : undefined}

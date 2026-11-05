@@ -1,0 +1,30 @@
+{
+  "v": 1,
+  "route": "/logo-animation",
+  "buckets": {
+    "sm": {
+      "vw": 390, "vh": 844, "bg": "#fafafa", "fg": "#0c0c0c",
+      "colors": ["#0c0c0c"],
+      "geometry": 2, "anchors": [],
+      "blocks": [
+        [1,32,359,326,127,0]
+      ]
+    },
+    "md": {
+      "vw": 900, "vh": 900, "bg": "#fafafa", "fg": "#0c0c0c",
+      "colors": ["#0c0c0c"],
+      "geometry": 2, "anchors": [],
+      "blocks": [
+        [1,36,289,828,322,0]
+      ]
+    },
+    "lg": {
+      "vw": 1440, "vh": 900, "bg": "#fafafa", "fg": "#0c0c0c",
+      "colors": ["#0c0c0c"],
+      "geometry": 2, "anchors": [],
+      "blocks": [
+        [1,170,236,1100,427,0]
+      ]
+    }
+  }
+}

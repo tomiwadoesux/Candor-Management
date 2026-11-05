@@ -21,26 +21,26 @@
 
 /* The floating wordmark host, on the landing page: a fixed overlay mounted
    outside the intro so the sections scrolling up cannot clip or cover it.
-   It needs --at-furniture for its instant reveal, but not
+   It shares the tokens below, but not
    .candor-intro's own `position: absolute; inset:
    0`, which would stretch it over the page. Hence a second selector on the
    variable block rather than reusing the class. */
 .candor-intro,
 .candor-intro-logo-host {
-  /* The boxes finish appearing 2130ms after the intro starts. Keep TYPE_MS
+  /* The boxes finish appearing 1730ms after the intro starts. Keep TYPE_MS
      in CandorLine.jsx and Header's delay in page.js in step with these
      timings. The slower letter fall continues over the revealed page. */
-  --type-ms: 900ms;
+  --type-ms: 1100ms;
   --type-fade-ms: 100ms;
-  /* The sentence is whole at 1000ms, then holds for 540ms before draining. */
-  --hold-ms: 320ms;
-  --lead-ms: 220ms;
+  /* The sentence finishes at 1200ms; a short reading beat keeps the reveal prompt. */
+  --hold-ms: 100ms;
+  --lead-ms: 60ms;
   --fade-ms: 170ms;
   --tail-ms: 120ms;
-  --fly-ms: 420ms;
+  --fly-ms: 320ms;
   --settle-ms: 0ms;
   /* A brief beat to register the assembled name before it falls. */
-  --name-hold-ms: 190ms;
+  --name-hold-ms: 150ms;
 
   /* The fall is no longer set here. Each letter drops on its own schedule
      with its own spin and drift, all of it drawn per letter in
@@ -52,14 +52,14 @@
   --exit-ms: 220ms;
 
   /* Cumulative start times. */
-  --at-fade: 1540ms;
-  --at-fly: 1610ms;
-  /* Fully assembled at 2030ms, then held for --name-hold-ms. */
-  --at-exit: 2220ms;
-  /* Clear the blank intro as CANDOR finishes forming: reveal the page 100ms
+  --at-fade: 1360ms;
+  --at-fly: 1430ms;
+  /* Fully assembled at 1750ms, then held for --name-hold-ms. */
+  --at-exit: 1900ms;
+  /* Clear the blank intro as CANDOR finishes forming: reveal the page 220ms
      before the name is assembled, with the boxes settled before it falls. */
-  --at-furniture: 1930ms;
-  --at-cards: 1930ms;
+  --at-furniture: 1530ms;
+  --at-cards: 1530ms;
   --card-in-ms: 200ms;
   /* How far above dead centre the card block settles. Negative is up.
      Zero: the pair is centred on the screen. It used to sit -4vh high, which
@@ -273,27 +273,11 @@
 
 /* ---------- the page's furniture arrives ---------- */
 
-.candor-logo,
-.candor-chrome {
-  opacity: 0;
-}
+/* Keep the agency identity visible from the first paint, including replay. */
+.candor-logo { opacity: 1; }
+.candor-chrome { opacity: 0; }
 
-/* A delayed switch to visible: no fade, scale, or movement on the wordmark. */
-[data-mode="play"] .candor-logo {
-  animation: candor-logo-reveal 0s step-end var(--at-furniture) forwards;
-}
-
-@keyframes candor-logo-reveal {
-  to {
-    opacity: 1;
-  }
-}
-
-/* The corners arrive WITH the mark rather than a beat behind it. The 220ms
-   lag they used to carry was there when the furniture came up after an empty
-   frame and the stagger gave that arrival some shape; now everything lands
-   together as the name dissolves, and holding the corners back just makes
-   them look late. */
+/* Corner controls arrive with the cards; the wordmark is already visible. */
 [data-mode="play"] .candor-chrome {
   animation: candor-type var(--exit-ms) ease-out var(--at-furniture) forwards;
 }
@@ -301,7 +285,7 @@
 /* ---------- the cards ---------- */
 
 /* The boxes sharpen into view at their final size as the name finishes
-   forming. Only the image wrapper blurs; the labels type independently. */
+   forming. Labels appear whole with their photographs. */
 .candor-cards {
   transform: translate3d(0, var(--card-lift), 0);
 }
@@ -326,20 +310,11 @@
   }
 }
 
-/* The loading state, and deliberately NOT the sweeping sheen the hero cards
-   use (.hero-card-shimmer in globals.css). Two different loading treatments
-   on one site should not be the same gesture at different speeds: that one is
-   a diagonal highlight travelling across the frame, so this one is a slow
-   vertical breathe — the whole surface lifting and settling in tone. It reads
-   as something waiting rather than something being scanned.
-
-   The second card is offset half a cycle, so the pair pulses out of step and
-   the centre of the page never goes uniformly flat. */
+/* Neutral fallback while the eager photographs decode. */
 .candor-card {
   position: relative;
   overflow: hidden;
   background-color: #ededed;
-  animation: candor-card-breathe 2.6s ease-in-out infinite;
 }
 
 .candor-card-label {
@@ -350,45 +325,17 @@
   margin-top: 16px;
   color: #666;
   font-family: var(--font-h4);
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 1;
-  letter-spacing: normal;
+  letter-spacing: 0.08em;
   text-align: center;
-  text-transform: lowercase;
-}
-
-.candor-card-word {
-  display: inline-block;
-}
-
-/* Same per-letter fade and eased sweep as the intro sentence. */
-.candor-card-letter {
+  text-transform: uppercase;
   opacity: 0;
 }
 
-[data-mode="play"] .candor-card-letter {
-  animation: candor-type var(--type-fade-ms) var(--ease-out)
-    calc(var(--at-cards) + var(--t)) forwards;
-}
-
-/* Half a cycle, so the pair pulses out of step and the centre never goes
-   uniformly flat.
-   `> :nth-child(2)`, with no element name: the wrapper is an <a>, and the
-   `> div` this used to say never matched it — so both cards breathed in sync
-   and the offset did nothing at all. */
-.candor-cards > :nth-child(2) .candor-card {
-  animation-delay: -1.3s;
-}
-
-@keyframes candor-card-breathe {
-  0%,
-  100% {
-    background-color: #ededed;
-  }
-  50% {
-    background-color: #e0e0e2;
-  }
+[data-mode="play"] .candor-card-label {
+  animation: candor-type 160ms var(--ease-out) var(--at-cards) forwards;
 }
 
 /* ---------- the repeat visit ---------- */
@@ -396,7 +343,7 @@
 /* The state the intro LEAVES BEHIND, painted outright.
  *
  * This has to light things up rather than merely switch animations off: the
- * base rules park the cards, the wordmark and the corner chrome at opacity 0
+ * base rules park the cards and corner chrome at opacity 0
  * and rely on their animations to bring them in, so a `done` visit with no
  * animations and no overrides would render a blank white page.
  *
@@ -418,62 +365,14 @@
 }
 
 [data-mode="done"] .candor-card-reveal,
-[data-mode="done"] .candor-card-letter {
+[data-mode="done"] .candor-card-label {
   opacity: 1;
   filter: none;
 }
 
-/* The placeholders still breathe — that is a loading state, not part of the
-   intro, and it should behave the same however the page was arrived at. */
-
-/* ---------- the photograph arriving ---------- */
-
-/* The picture fades in over the breathing grey rather than replacing it, so
-   the card forms in place. Until it has decoded there is nothing to see and
-   the grey underneath is the whole card. */
-.candor-card-img {
-  opacity: 0;
-  transition: opacity 700ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.candor-card-img[data-loaded="1"] {
-  opacity: 1;
-}
-
-/* Once the photograph is in, the breathe has nothing left to say — a card
-   that pulses under a finished image reads as a fault rather than as loading.
-   :has() lets the parent stop on the child's state, no JavaScript involved. */
-.candor-card:has(.candor-card-img[data-loaded="1"]) {
-  animation: none;
-  background-color: #ededed;
-}
-
-/* ---------- the overlay ---------- */
-
-/* Sits between the photograph and the label. Two gradients in one element:
-   the flat rgba pair is an even tint across the whole frame, and the radial
-   is the darker ground the white word needs at the centre.
-
-   It fades in WITH the photograph rather than being there from the start —
-   keyed off the same [data-loaded] attribute, so while the card is still the
-   breathing grey placeholder there is nothing over it to darken. Tinting an
-   empty grey box would just make it look dirty. */
-.candor-card-overlay {
-  opacity: 0;
-  transition: opacity 700ms cubic-bezier(0.22, 1, 0.36, 1);
-  background:
-    radial-gradient(
-      ellipse 72% 30% at 50% 50%,
-      rgba(0, 0, 0, 0.4),
-      rgba(0, 0, 0, 0.14) 58%,
-      transparent 80%
-    ),
-    linear-gradient(rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.18));
-}
-
-.candor-card:has(.candor-card-img[data-loaded="1"]) .candor-card-overlay {
-  opacity: 1;
-}
+/* Images paint natively, including when cached before React hydrates.
+   The parent reveal already handles their entrance. */
+.candor-card-img { opacity: 1; }
 
 /* ---------- reduced motion ---------- */
 
@@ -496,7 +395,7 @@
 
   /* Show the boxes and complete labels without blur or stagger. */
   [data-mode="play"] .candor-card-reveal,
-  [data-mode="play"] .candor-card-letter {
+  [data-mode="play"] .candor-card-label {
     animation: none;
     opacity: 1;
     filter: none;

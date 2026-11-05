@@ -4,11 +4,17 @@ import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { models } from "../../data/models";
 import { useSearchOptional } from "./SearchContext";
-import HoverText from "./HoverText";
+import Image from "next/image";
 import SearchGlyph from "./SearchGlyph";
 import { ISLAND_EASE as EASE, ISLAND_OPEN, ISLAND_CLOSE, ISLAND_BUTTON, MENU_LABEL, getSearchPanelWidth } from "../lib/islandMotion";
 
-const BAR_H = 46; // uniform search-bar height (closed === bottom row when open)
+// Island metrics. InNav.css repeats them for the menu button and the open
+// menu's dock (40px square, 14px inset, 18px glyph, label at 40px), so a
+// change here goes there too.
+const BAR_H = 40; // uniform search-bar height (closed === bottom row when open)
+const BAR_W = 188;
+// The label slides into the magnifier's place: glyph (18) + gap (8).
+const LABEL_SHIFT = 26;
 const BOTTOM_GAP = 20; // matches the fixed bottom-5 offset
 
 // Drawer-style curve (iOS sheet): quick confident start, long gentle settle —
@@ -28,11 +34,11 @@ export default function Search() {
   const menuLabelActive = ctx?.menuLabelActive ?? false;
 
   const [search, setSearch] = useState("");
-  const [viewport, setViewport] = useState({ w: 1280, h: 800 });
+  const [viewport, setViewport] = useState({ w: 1280, h: 800, bottomGap: BOTTOM_GAP });
   const [origin, setOrigin] = useState({
     left: 0,
     top: 0,
-    width: 210,
+    width: BAR_W,
     height: BAR_H,
   });
 
@@ -41,10 +47,21 @@ export default function Search() {
 
   // Track viewport so we can position/size the morphed panel.
   useEffect(() => {
-    const measure = () => setViewport({ w: window.innerWidth, h: window.innerHeight });
+    const measure = () => {
+      const bar = closedBarRef.current?.getBoundingClientRect();
+      setViewport({
+        w: window.innerWidth,
+        h: window.visualViewport ? window.visualViewport.height + window.visualViewport.offsetTop : window.innerHeight,
+        bottomGap: bar ? Math.max(BOTTOM_GAP, window.innerHeight - bar.bottom) : BOTTOM_GAP,
+      });
+    };
     measure();
     window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
+    window.visualViewport?.addEventListener("resize", measure);
+    return () => {
+      window.removeEventListener("resize", measure);
+      window.visualViewport?.removeEventListener("resize", measure);
+    };
   }, []);
 
   // Lock body scroll + Escape to close while open.
@@ -125,7 +142,7 @@ export default function Search() {
   // Target (open) geometry — full panel, bottom aligned with the closed bar.
   const panelW = getSearchPanelWidth(viewport.w);
   const panelH = Math.min(viewport.h * 0.86, 860);
-  const bottomY = viewport.h - BOTTOM_GAP;
+  const bottomY = viewport.h - viewport.bottomGap;
   const target = {
     left: (viewport.w - panelW) / 2,
     top: bottomY - panelH,
@@ -262,13 +279,13 @@ export default function Search() {
         onClick={openSearch}
         aria-label="Open search"
         disabled={ctx?.isMenuOpen}
-        style={{ height: BAR_H, pointerEvents: isOpen ? "none" : "auto", visibility: ctx?.isMenuOpen ? "hidden" : undefined }}
-        className="flex w-[210px] items-center gap-2 overflow-hidden bg-[#141414] px-4 text-white cursor-pointer"
+        style={{ height: BAR_H, width: BAR_W, pointerEvents: isOpen ? "none" : "auto", visibility: ctx?.isMenuOpen ? "hidden" : undefined }}
+        className="flex items-center gap-2 overflow-hidden bg-[#141414] px-3.5 text-white cursor-pointer"
       >
         <motion.span
           data-search-icon
           aria-hidden="true"
-          className="flex h-5 w-5 shrink-0"
+          className="flex h-[18px] w-[18px] shrink-0"
           initial={false}
           animate={{ x: menuLabelActive ? -40 : 0, opacity: menuLabelActive ? 0 : 1 }}
           transition={{ duration: prefersReduced ? 0 : menuLabelActive ? ISLAND_BUTTON.enter : ISLAND_BUTTON.exit, ease: EASE }}
@@ -279,9 +296,9 @@ export default function Search() {
             the same x) so the open/close handoff doesn't shift the label. */}
         <motion.span
           data-search-label
-          className="relative flex shrink-0 items-center whitespace-nowrap text-sm leading-5 text-neutral-400"
+          className="relative flex shrink-0 items-center whitespace-nowrap text-[13px] leading-5 text-neutral-400"
           initial={false}
-          animate={{ x: menuLabelActive ? -28 : 0 }}
+          animate={{ x: menuLabelActive ? -LABEL_SHIFT : 0 }}
           transition={{ duration: prefersReduced ? 0 : menuLabelActive ? ISLAND_BUTTON.enter : ISLAND_BUTTON.exit, ease: EASE }}
         >
           <span
@@ -339,7 +356,7 @@ export default function Search() {
                     (start of open / end of close). All spacing lives on the
                     scroller inside instead, plus a soft top fade. */}
                 <div
-                  className="no-scrollbar h-full overflow-y-auto px-8 pb-6 pt-10 md:px-10"
+                  className="no-scrollbar h-full overflow-y-auto overscroll-contain px-4 pb-6 pt-8 md:px-10 md:pt-10"
                   style={{
                     maskImage:
                       "linear-gradient(to bottom, transparent 0, black 28px)",
@@ -352,7 +369,7 @@ export default function Search() {
                     No models found.
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 gap-x-10 gap-y-12">
+                  <div className="grid grid-cols-1 gap-x-10 gap-y-8 md:grid-cols-2 md:gap-y-12">
                     {filteredModels.map((model, idx) => {
                       const isModel =
                         (model.talent || "").toLowerCase() === "model";
@@ -360,13 +377,13 @@ export default function Search() {
                         <motion.div
                           key={model.id ?? idx}
                           variants={cardVariants}
-                          className="flex h-[220px] flex-row gap-5 text-white"
+                          className="flex h-[220px] flex-row gap-4 text-white md:gap-5"
                         >
-                          <div className="relative h-full w-[44%] shrink-0 overflow-hidden bg-[#1a1a1a] ring-1 ring-white/10">
-                            <HoverText className="absolute inset-0 h-full w-full object-cover" />
+                          <div className="relative h-full w-[32%] shrink-0 overflow-hidden bg-[#1a1a1a] ring-1 ring-white/10 md:w-[44%]">
+                            <Image src={model.coverImage} alt="" fill sizes="(max-width: 767px) 28vw, 18vw" className="object-cover" />
                           </div>
                           <div className="flex min-w-0 flex-1 flex-col gap-2 overflow-hidden text-[13px] leading-relaxed">
-                            <h6 className="truncate text-[15px] font-medium">{model.name}</h6>
+                            <h6 className="text-[15px] font-medium leading-snug md:truncate">{model.name}</h6>
                             {isModel ? (
                               <>
                                 <h6 className="truncate">
@@ -418,7 +435,7 @@ export default function Search() {
                   height match the closed bar exactly so the text never shifts. */}
               <div
                 style={{ height: BAR_H }}
-                className="relative shrink-0 flex items-center gap-2 bg-[#141414] px-4 text-white"
+                className="relative shrink-0 flex items-center gap-2 bg-[#141414] px-3.5 text-white"
               >
                 <span className="pointer-events-none flex items-center text-white">
                   {magnifier}
@@ -429,6 +446,7 @@ export default function Search() {
                   ref={inputRef}
                   autoFocus
                   type="text"
+                  aria-label="Search people"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   onKeyDown={(e) => {
@@ -436,14 +454,14 @@ export default function Search() {
                     if (e.key === "Backspace" && search === "") closeSearch();
                   }}
                   placeholder={display}
-                  className="w-full appearance-none bg-transparent p-0 pr-16 text-sm leading-5 text-white placeholder-neutral-400 focus:outline-none"
+                  className="w-full appearance-none bg-transparent p-0 pr-16 text-base md:text-[13px] leading-5 text-white placeholder-neutral-400 focus:outline-none"
                 />
                 <motion.button
                   onClick={closeSearch}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 0.85, transition: { delay: contentReveal, duration: 0.2 } }}
                   exit={{ opacity: 0, transition: { duration: 0.1 } }}
-                  className="absolute right-4 text-sm italic text-white cursor-pointer hover:opacity-60 transition-opacity"
+                  className="absolute right-3.5 min-h-11 min-w-11 text-[13px] italic text-white cursor-pointer hover:opacity-60 transition-opacity"
                 >
                   Close.
                 </motion.button>

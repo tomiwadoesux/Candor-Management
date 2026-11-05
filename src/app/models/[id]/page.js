@@ -89,6 +89,10 @@ async function pad(sources, id, size = BOARD_SIZE) {
 
 async function scrollingGallery(model, galleries) {
   const items = profileScrollItems(model, Object.values(galleries).flat(), await pool());
+  return measureItems(items);
+}
+
+async function measureItems(items) {
   return Promise.all(items.map(async (item) => {
     if (item.pxW && item.pxH) return item;
     const size = await imageSize(item.src);
@@ -100,6 +104,12 @@ export default async function ModelProfilePage({ params }) {
   const { id } = await params;
   const model = models.find((m) => m.id === id);
   if (!model) notFound();
+
+  if (model.showcasePhotos) {
+    const sections = isTalentOrCreative(model) ? getProfileSections(model) : undefined;
+    const scrollItems = await measureItems(model.showcasePhotos);
+    return <ModelProfileView key={model.id} model={model} sections={sections} scrollItems={scrollItems} />;
+  }
 
   if (isTalentOrCreative(model)) {
     // Keep authored sections and credits intact. The separate scrolling

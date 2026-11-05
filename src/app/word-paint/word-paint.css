@@ -43,6 +43,61 @@
   color: #fff;
 }
 
+/* The page on a light ground (GroundSwitch), for the looks that take it. */
+.wl[data-ground="light"] {
+  background: #fff;
+  color: #111;
+}
+
+.wl[data-ground="light"] .wl-row-head {
+  border-top-color: #e6e6e6;
+}
+
+.wl[data-ground="light"] :is(.wl-head h1, .wl-row-head h2) {
+  color: #000;
+}
+
+.wl[data-ground="light"] :is(.wl-head p, .wl-row-head p) {
+  color: #6a6a6a;
+}
+
+.wl-switch {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 50;
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid #333;
+  border-radius: 999px;
+  background: #1b1b1b;
+  font: 500 13px/1 "Inter", Arial, sans-serif;
+  cursor: pointer;
+}
+
+.wl-switch span {
+  padding: 7px 12px;
+  border-radius: 999px;
+  color: #8a8a8a;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.wl-switch span.is-on {
+  background: #f2efe9;
+  color: #111;
+}
+
+.wl[data-ground="light"] .wl-switch {
+  border-color: #ddd;
+  background: #f4f4f4;
+}
+
+.wl[data-ground="light"] .wl-switch span.is-on {
+  background: #111;
+  color: #fff;
+}
+
 /* Each item is a band the word fills. */
 .wl-item {
   padding: 60px 0 60px;
@@ -76,6 +131,15 @@
   font-family: "Inter", Arial, sans-serif;
   font-weight: 700;
   letter-spacing: -0.03em;
+}
+
+/* Two lines: the word carries a newline; the wider line sets the size. */
+.wl-two .wp-word {
+  white-space: pre-line;
+}
+
+.wl-two .wl-fit {
+  line-height: 0.9;
 }
 
 @media (max-width: 760px) {

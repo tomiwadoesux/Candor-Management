@@ -1,15 +1,13 @@
 "use client";
 
 import { useId } from "react";
-import { SURFACE, MEDIA, TEXT, RULE, OUTLINE } from "./layoutMap";
+import { SURFACE, MEDIA, TEXT, RULE, OUTLINE, projectLayout } from "./layoutMap";
 
 // One recorded first screen, drawn as a single SVG.
 //
-// The viewBox IS the recorded viewport and preserveAspectRatio is "none", so
-// the browser stretches the map onto whatever window it is shown in: every
-// block lands at the same fraction of the screen it held when recorded, and
-// nothing is left uncovered at the edges when the window is a different
-// shape. Outlines keep a 1px stroke regardless (non-scaling-stroke).
+// Project the recording into the current viewport before drawing. Flow media
+// keeps its proportions; fixed navigation and logos retain their edge anchors.
+// The SVG then maps 1:1 to CSS pixels instead of stretching the old viewport.
 //
 // How each kind reads:
 //
@@ -31,9 +29,9 @@ const TEXT_ALPHA = 0.12;
 // the way it is read instead of appearing all at once.
 const STAGGER_MS = 260;
 
-export default function SkeletonSvg({ layout, scan = true }) {
+export default function SkeletonSvg({ layout, scan = true, viewport }) {
   const id = useId().replace(/:/g, "");
-  const { vw, vh, fg, colors, blocks } = layout;
+  const { vw, vh, fg, colors, blocks } = viewport ? projectLayout(layout, ...viewport) : layout;
 
   const shapes = [];
   const mask = [];

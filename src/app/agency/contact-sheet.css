@@ -1,0 +1,99 @@
+/* (04) The agency page's contact sheet (ContactSheet.jsx), in three takes.
+   Shared: the dark sheet, the eyebrow, the desks and the switcher. */
+.cs { position: relative; z-index: 2; background: #0c0c0c; color: #faf9f6; padding: 72px var(--ca-inset) 20px; --cs-dim: #7d7d7d; --cs-rule: #2e2e2e; --cs-ease: cubic-bezier(0.22, 1, 0.36, 1); }
+.cs a { color: inherit; }
+.cs-eyebrow { display: flex; justify-content: space-between; gap: 20px; padding-bottom: 56px; font-size: 11px; }
+.cs-desk-col { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; font-size: 14px; line-height: 1.3; }
+.cs-desk-col h3 { padding-bottom: 6px; font-family: var(--font-body); font-size: 11px; font-weight: 400; color: var(--cs-dim); }
+.cs-desk-col a { overflow-wrap: anywhere; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 4px; transition: text-decoration-color 200ms ease; }
+.cs .ca-colophon { border-top-color: var(--cs-rule); }
+
+/* The switcher between the takes. Delete with the takes not chosen. */
+.cs-switch { position: absolute; z-index: 3; top: 20px; left: 50%; translate: -50% 0; display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: rgb(255 255 255 / 0.08); font-size: 11px; }
+.cs-switch button { padding: 6px 12px; border-radius: 999px; color: rgb(255 255 255 / 0.6); transition: background 200ms ease, color 200ms ease; }
+.cs-switch button[aria-pressed="true"] { background: #faf9f6; color: #0c0c0c; }
+
+/* Index: the headline across the whole width, then the destinations as
+   rows that fill with paper on hover, the label sliding in as it does. */
+.cs-index__title { padding-bottom: 6vw; font-family: var(--font-h1); font-size: 26.5vw; font-weight: 400; line-height: 0.8; letter-spacing: -0.045em; white-space: nowrap; }
+.cs-index__title em { font-style: italic; }
+.cs-index__list { border-top: 1px solid var(--cs-rule); }
+.cs-row { position: relative; isolation: isolate; display: grid; grid-template-columns: 9% minmax(0, 1fr) minmax(0, 0.8fr) 48px; align-items: center; gap: 16px; padding: 22px 0; border-bottom: 1px solid var(--cs-rule); transition: color 500ms var(--cs-ease); }
+.cs-row::before { content: ""; position: absolute; z-index: -1; inset: 0 calc(-1 * var(--ca-inset)); background: #faf9f6; transform: scaleY(0); transform-origin: 50% 100%; transition: transform 500ms var(--cs-ease); }
+.cs-row__num { font-size: 11px; font-variant-numeric: tabular-nums; color: var(--cs-dim); transition: color 500ms var(--cs-ease); }
+.cs-row__label { font-family: var(--font-h4); font-size: clamp(38px, 5.4vw, 96px); font-weight: 500; line-height: 1; letter-spacing: -0.05em; transition: transform 600ms var(--cs-ease); }
+.cs-row__note { font-size: 12px; line-height: 1.35; color: var(--cs-dim); transition: color 500ms var(--cs-ease); }
+.cs-row__arrow { justify-self: end; font-size: 28px; transition: transform 600ms var(--cs-ease); }
+.cs-index__desks { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 32px 24px; padding: 96px 0 120px; }
+
+/* Letter: the headline beside a paragraph that is the contact details; the
+   destinations as one line of large links (the others dim while one is
+   pointed at); the wordmark sunk into the foot of the sheet. */
+.cs-letter__grid { display: grid; grid-template-columns: 52% minmax(0, 1fr); gap: 32px; align-items: end; padding-bottom: 120px; }
+.cs-letter__title { font-family: var(--font-h1); font-size: clamp(96px, 15vw, 280px); font-weight: 400; line-height: 0.82; letter-spacing: -0.045em; }
+.cs-letter__title em { padding-left: 0.5em; font-style: italic; }
+.cs-letter__body p { max-width: 20em; font-family: var(--font-h4); font-size: clamp(22px, 2.3vw, 40px); font-weight: 400; line-height: 1.15; letter-spacing: -0.04em; }
+.cs-letter__body a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.15em; text-decoration-color: rgb(255 255 255 / 0.35); transition: text-decoration-color 200ms ease; }
+.cs-letter__body .cs-letter__sign { padding-top: 32px; font-family: var(--font-body); font-size: 12px; letter-spacing: 0; color: var(--cs-dim); }
+.cs-letter__nav { display: flex; flex-wrap: wrap; gap: 0 0.5em; padding: 40px 0 100px; border-top: 1px solid var(--cs-rule); font-family: var(--font-h1); font-size: clamp(44px, 6.6vw, 124px); line-height: 1.02; letter-spacing: -0.04em; }
+.cs-letter__nav a { transition: opacity 400ms var(--cs-ease), font-style 0s; }
+.cs-letter__nav a:not(:last-child)::after { content: "/"; padding-left: 0.5em; color: var(--cs-dim); font-style: normal; }
+.cs-letter__mark { overflow: hidden; height: 13vw; margin: 0 calc(-1 * var(--ca-inset)) 32px; padding: 0 var(--ca-inset); }
+.cs-letter__mark svg { display: block; width: 100%; height: auto; }
+
+/* Desk: the three offices as clocks, live, each saying whether someone is at
+   the desk to pick up. */
+.cs-desk__head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 26%); gap: 32px; align-items: end; padding-bottom: 72px; }
+.cs-desk__title { font-family: var(--font-h1); font-size: clamp(80px, 11vw, 210px); font-weight: 400; line-height: 0.85; letter-spacing: -0.045em; }
+.cs-desk__title em { font-style: italic; }
+.cs-desk__nav { display: flex; flex-direction: column; border-top: 1px solid var(--cs-rule); }
+.cs-desk__nav a { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--cs-rule); font-size: 15px; transition: padding 400ms var(--cs-ease); }
+.cs-desk__cities { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--cs-rule); border-bottom: 1px solid var(--cs-rule); }
+.cs-desk__cities li { display: flex; flex-direction: column; padding: 28px 24px 32px; }
+.cs-desk__cities li:first-child { padding-left: 0; }
+.cs-desk__cities li + li { border-left: 1px solid var(--cs-rule); }
+.cs-desk__city { font-family: var(--font-h1); font-size: clamp(30px, 3.2vw, 56px); line-height: 1; letter-spacing: -0.03em; }
+.cs-desk__country { padding-top: 6px; font-size: 11px; color: var(--cs-dim); }
+.cs-desk__time { padding-top: 48px; font-family: var(--font-h4); font-size: clamp(64px, 8.4vw, 160px); font-weight: 300; line-height: 0.9; letter-spacing: -0.06em; font-variant-numeric: tabular-nums; }
+.cs-desk__status { display: flex; align-items: center; gap: 8px; padding-top: 16px; font-size: 12px; color: var(--cs-dim); }
+.cs-desk__status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #4a4a4a; }
+.cs-desk__cities li[data-open] .cs-desk__status { color: #faf9f6; }
+.cs-desk__cities li[data-open] .cs-desk__status::before { background: #4aaad2; box-shadow: 0 0 0 4px rgb(74 170 210 / 0.18); }
+.cs-desk__lines { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; padding: 56px 0 110px; }
+
+@media (hover: hover) and (pointer: fine) {
+  .cs-desk-col a:hover { text-decoration-color: currentColor; }
+  .cs-row:hover { color: #0c0c0c; }
+  .cs-row:hover::before { transform: scaleY(1); }
+  .cs-row:hover .cs-row__num, .cs-row:hover .cs-row__note { color: #5c5c5c; }
+  .cs-row:hover .cs-row__label { transform: translateX(2vw); }
+  .cs-row:hover .cs-row__arrow { transform: rotate(45deg); }
+  .cs-letter__body a:hover { text-decoration-color: currentColor; }
+  .cs-letter__nav:hover a:not(:hover) { opacity: 0.28; }
+  .cs-letter__nav a:hover { font-style: italic; }
+  .cs-desk__nav a:hover { padding-left: 12px; }
+  .cs-switch button:not([aria-pressed="true"]):hover { color: #faf9f6; }
+}
+
+@media (max-width: 700px) {
+  .cs { padding-bottom: max(24px, env(safe-area-inset-bottom)); }
+  .cs-switch { top: 16px; }
+  .cs-eyebrow { padding-top: 32px; }
+  .cs-index__title { font-size: 26vw; padding-bottom: 40px; }
+  .cs-row { grid-template-columns: 32px minmax(0, 1fr) 28px; padding: 18px 0; }
+  .cs-row__note { display: none; }
+  .cs-row__label { font-size: 11vw; }
+  .cs-row__arrow { font-size: 20px; }
+  .cs-index__desks { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 56px 0 72px; }
+  .cs-letter__grid { grid-template-columns: 1fr; padding-bottom: 64px; }
+  .cs-letter__title { font-size: 26vw; }
+  .cs-letter__body p { font-size: 22px; }
+  .cs-letter__nav { font-size: 12vw; padding-bottom: 56px; }
+  .cs-desk__head { grid-template-columns: 1fr; padding-bottom: 48px; }
+  .cs-desk__title { font-size: 22vw; }
+  .cs-desk__cities { grid-template-columns: 1fr; }
+  .cs-desk__cities li { padding: 22px 0; }
+  .cs-desk__cities li + li { border-left: 0; border-top: 1px solid var(--cs-rule); }
+  .cs-desk__time { padding-top: 20px; font-size: 18vw; }
+  .cs-desk__lines { grid-template-columns: 1fr; padding: 40px 0 64px; }
+}

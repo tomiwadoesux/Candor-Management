@@ -185,13 +185,23 @@ export function captureLayout({ exclude } = {}) {
     return colorIndex.get(h);
   };
 
-  const push = (layer, kind, box, color, r = 0) => {
+  const push = (layer, kind, box, color, r = 0, anchor = null) => {
     const x = Math.round(box.l);
     const y = Math.round(box.t);
     const w = Math.max(1, Math.round(box.r - box.l));
     const h = Math.max(1, Math.round(box.b - box.t));
     const block = [kind, x, y, w, h, ci(color)];
     if (r >= 1) block.push(Math.round(r));
+    if (anchor) {
+      // A full-width fixed wrapper may contain a centred navigation bar and
+      // edge-aligned controls. Anchor each visible block, not the wrapper.
+      const ax = anchor[0] === 4 && w < vw * 0.8
+        ? (x + w / 2 < vw * 0.3 ? 1 : x + w / 2 > vw * 0.7 ? 3 : 2)
+        : anchor[0];
+      block.anchor = [ax, anchor[1]];
+    } else if ((kind === MEDIA || kind === SURFACE) && w >= vw - 2 && h >= vh - 2) {
+      block.anchor = [4, 4];
+    }
     (kind === TEXT ? layers[layer].text : layers[layer].shapes).push(block);
     return block;
   };
@@ -238,7 +248,7 @@ export function captureLayout({ exclude } = {}) {
       }
       const box = clipTo(bar, ctx.clip);
       if (box) {
-        push(layer, TEXT, box, ink);
+        push(layer, TEXT, box, ink, 0, ctx.anchor);
         // Every panel this text is set on now carries type. See below.
         for (let s = ctx.surface; s && !s.text; s = s.parent) s.text = true;
       }
@@ -273,6 +283,26 @@ export function captureLayout({ exclude } = {}) {
     let surface = ctx.surface;
 
     const rect = el.getBoundingClientRect();
+    let anchor = ctx.anchor;
+    const fullViewport = rect.width >= vw - 2 && rect.height >= vh - 2;
+    if (pos === "fixed" && !fullViewport || pos === "absolute" && ctx.viewportContainer) {
+      // Computed top/bottom can BOTH resolve to pixels even when one was
+      // authored as auto. Infer the edge from the visible frame instead.
+      const ax = rect.width >= vw - 2 ? 4
+        : Math.abs(rect.left + rect.width / 2 - vw / 2) < vw * 0.1 ? 2
+        : rect.left + rect.width / 2 > vw / 2 ? 3 : 1;
+      const ay = rect.height >= vh - 2 ? 4
+        : Math.abs(rect.top + rect.height / 2 - vh / 2) < vh * 0.1 ? 3
+        : rect.top + rect.height / 2 > vh / 2 ? 2 : 1;
+      anchor = [ax, ay];
+    } else if (pos === "fixed" && fullViewport) anchor = null;
+    if (anchor?.[0] === 4 && rect.width > 0 && rect.width < vw * 0.8) {
+      const center = rect.left + rect.width / 2;
+      anchor = [Math.abs(center - vw / 2) < vw * 0.1 ? 2 : center > vw / 2 ? 3 : 1, anchor[1]];
+    }
+    const viewportContainer = pos !== "static"
+      ? rect.height >= vh - 48 && rect.height <= vh + 2 && rect.top >= -2 && rect.top <= 48
+      : ctx.viewportContainer;
     const box = clipTo(rect, clip);
     const shown = cs.visibility === "visible" && box;
 
@@ -287,12 +317,25 @@ export function captureLayout({ exclude } = {}) {
       const r = radiusOf(cs, w, h);
       const isSvg = el.namespaceURI === "http://www.w3.org/2000/svg";
 
+      const regions = el.getAttribute("data-skeleton-regions");
+      if (regions) {
+        try {
+          for (const region of JSON.parse(regions)) {
+            if (!Array.isArray(region) || region.length !== 4 || !region.every(Number.isFinite)) continue;
+            const [x, y, width, height] = region;
+            const photo = clipTo({ left: rect.left + x, top: rect.top + y, right: rect.left + x + width, bottom: rect.top + y + height }, clip);
+            if (photo) push(layer, MEDIA, photo, contrastInk(backdrop));
+          }
+          return;
+        } catch { /* A scene updating between frames can use its canvas box. */ }
+      }
+
       if (hint === "block" || MEDIA_TAGS.has(el.tagName) || (isSvg && el.tagName === "svg")) {
         if (isSvg && w < ICON_MAX && h < ICON_MAX) {
-          push(layer, TEXT, box, over([...contrastInk(backdrop), 1], backdrop));
+          push(layer, TEXT, box, over([...contrastInk(backdrop), 1], backdrop), 0, anchor);
           return;
         }
-        const block = push(layer, MEDIA, box, contrastInk(backdrop), r);
+        const block = push(layer, MEDIA, box, contrastInk(backdrop), r, anchor);
         if (surface && cover(box, surface.box) >= 0.85) held.push({ surface, media: block });
         return;
       }
@@ -302,14 +345,14 @@ export function captureLayout({ exclude } = {}) {
       if (fill[3] * opacity >= 0.35 && w >= 6 && h >= 6) {
         const seen = over(fill, backdrop, opacity);
         if (distance(seen, backdrop) > 10) {
-          const block = push(layer, SURFACE, box, seen, r);
+          const block = push(layer, SURFACE, box, seen, r, anchor);
           surface = { block, box, under: backdrop, parent: surface, text: false };
         }
         if (fill[3] * opacity >= 0.6) backdrop = seen;
       }
 
       if (cs.backgroundImage && cs.backgroundImage.includes("url(")) {
-        const block = push(layer, MEDIA, box, contrastInk(backdrop), r);
+        const block = push(layer, MEDIA, box, contrastInk(backdrop), r, anchor);
         if (surface && cover(box, surface.box) >= 0.85) held.push({ surface, media: block });
       }
 
@@ -326,7 +369,7 @@ export function captureLayout({ exclude } = {}) {
           box.b === rect.bottom;
         if (whole) {
           const c = parseColor(sides[0].c);
-          if (c[3] * opacity >= 0.06) push(layer, OUTLINE, box, over(c, backdrop, opacity), r);
+          if (c[3] * opacity >= 0.06) push(layer, OUTLINE, box, over(c, backdrop, opacity), r, anchor);
         } else {
           const lines = [
             { left: rect.left, right: rect.right, top: rect.top, bottom: rect.top + sides[0].w },
@@ -340,13 +383,13 @@ export function captureLayout({ exclude } = {}) {
             if (c[3] * opacity < 0.06) return;
             // An element's own overflow never clips its own border.
             const line = clipTo(lines[i], outer);
-            if (line) push(layer, RULE, line, over(c, backdrop, opacity));
+            if (line) push(layer, RULE, line, over(c, backdrop, opacity), 0, anchor);
           });
         }
       }
     }
 
-    const next = { clip, opacity, backdrop, layer, surface };
+    const next = { clip, opacity, backdrop, layer, surface, anchor, viewportContainer };
     for (const child of el.childNodes) {
       if (child.nodeType === 1) walk(child, next);
       else if (child.nodeType === 3 && cs.visibility === "visible" && child.data.trim()) {
@@ -379,6 +422,7 @@ export function captureLayout({ exclude } = {}) {
     blocks.push(...shapes.filter((b) => !dropped.has(b)), ...mergeLines(lines));
   }
 
+  const visibleBlocks = blocks.length > MAX_BLOCKS ? trim(blocks) : blocks;
   return {
     v: MAP_VERSION,
     vw,
@@ -386,7 +430,9 @@ export function captureLayout({ exclude } = {}) {
     bg: hex(bg),
     fg: hex(fg),
     colors,
-    blocks: blocks.length > MAX_BLOCKS ? trim(blocks) : blocks,
+    geometry: 2,
+    anchors: visibleBlocks.flatMap((block, index) => block.anchor ? [[index, block.anchor]] : []),
+    blocks: visibleBlocks,
   };
 }
 
@@ -401,6 +447,7 @@ function mergeLines(lines) {
     if (
       prev &&
       prev[5] === b[5] &&
+      String(prev.anchor) === String(b.anchor) &&
       Math.abs(prev[2] - b[2]) <= 1 &&
       Math.abs(prev[4] - b[4]) <= 1 &&
       b[1] - (prev[1] + prev[3]) <= Math.max(4, b[4] * 0.9) &&
@@ -409,7 +456,9 @@ function mergeLines(lines) {
       prev[3] = Math.max(prev[3], b[1] + b[3] - prev[1]);
       continue;
     }
-    out.push([...b]);
+    const line = [...b];
+    if (b.anchor) line.anchor = b.anchor;
+    out.push(line);
   }
   return out;
 }
@@ -434,7 +483,7 @@ function trim(blocks) {
 export function layoutSignature(bucket) {
   const q = (n) => Math.round(n / 4);
   const tone = (h) => h.replace(/[0-9a-f]{2}/g, (c) => (parseInt(c, 16) >> 4).toString(16));
-  return `${bucket.vw}x${bucket.vh}|${bucket.bg}|${bucket.blocks
+  return `${bucket.vw}x${bucket.vh}|${bucket.bg}|${JSON.stringify(bucket.anchors || [])}|${bucket.blocks
     .map((b) => `${b[0]}:${q(b[1])},${q(b[2])},${q(b[3])},${q(b[4])}:${tone(bucket.colors[b[5]])}`)
     .join(";")}`;
 }

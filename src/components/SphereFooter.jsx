@@ -42,7 +42,7 @@ export default function SphereFooter() {
     <section
       ref={ref}
       data-sphere-footer
-      className="relative h-screen w-full overflow-hidden bg-white text-black"
+      className="relative h-[100svh] w-full overflow-hidden bg-white text-black"
     >
       {/* The canvas touch-action rule lives in styles/globals.css — see the
           [data-sphere-footer] canvas block there for why. */}

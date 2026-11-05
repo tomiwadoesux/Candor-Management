@@ -1,9 +1,10 @@
-.island-nav { position: relative; flex: 0 0 46px; width: 46px; height: 46px; }
+/* Sizes match the closed search bar (Search.js BAR_H and friends). */
+.island-nav { position: relative; flex: 0 0 40px; width: 40px; height: 40px; }
 .island-nav-trigger, .island-nav-seed {
   display: grid;
   place-items: center;
-  width: 46px;
-  height: 46px;
+  width: 40px;
+  height: 40px;
   border: 0;
   border-radius: 0;
   padding: 0;
@@ -33,10 +34,23 @@
   overscroll-behavior: contain;
 }
 .island-nav-dialog::backdrop { background: transparent; }
+/* Behind the dock and panel: Search's backdrop (bg-black/40 backdrop-blur-sm),
+   faded in by the open timeline. Clicks pass through to the dialog, which
+   closes the menu when it is the target. */
+.island-nav-scrim { position: fixed; inset: 0; z-index: 0; background: rgb(0 0 0 / 40%); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); opacity: 0; pointer-events: none; }
 .island-nav-dialog:focus { outline: none; }
-.island-nav-dock { position: fixed; z-index: 3; height: 46px; overflow: hidden; background: #141414; color: #fff; will-change: left, width; }
-.island-nav-dock-icon { position: absolute; left: 16px; top: 13px; width: 20px; height: 20px; }
-.island-nav-dock-label { position: absolute; left: 44px; top: 13px; color: #a3a3a3; font-size: 14px; line-height: 20px; white-space: nowrap; }
+.island-nav-dock { position: fixed; z-index: 3; height: 40px; overflow: hidden; background: #141414; color: #fff; will-change: left, width; }
+.island-nav-dock-icon { position: absolute; left: 14px; top: 11px; width: 18px; height: 18px; }
+.island-nav-dock-row { position: absolute; left: 40px; top: 10px; display: flex; gap: 16px; font-size: 13px; line-height: 20px; white-space: nowrap; }
+.island-nav-dock-label { color: #a3a3a3; }
+/* Privacy · FAQs, set like the open "Go home" and well spaced from it and
+   each other. They fade in once the bar has opened out to make room, and
+   leave at once when it closes, before the label turns back to search. */
+.island-nav-dock-more { display: flex; gap: 16px; color: #fff; font-style: italic; opacity: 0; visibility: hidden; pointer-events: none; }
+.island-nav-dock-more[data-shown] { opacity: 1; visibility: visible; pointer-events: auto; transition: opacity 400ms ease 280ms; }
+.island-nav-dock-more > span { opacity: .4; }
+.island-nav-dock-more > a { color: inherit; text-decoration: none; opacity: .85; transition: opacity 200ms ease; }
+.island-nav-dock-more > a:hover, .island-nav-dock-more > a:focus-visible { opacity: 1; }
 .island-nav-dock-label { text-decoration: none; transition: opacity 200ms ease; }
 .island-nav-dock-label[data-menu-active="true"] { color: #fff; font-style: italic; opacity: .85; }
 .island-nav-dock-label[data-menu-active="true"]:hover { opacity: 1; }
@@ -56,7 +70,7 @@
   position: relative;
   /* Never scrolls: the menu sizes itself to this height (see .cm in
      CastingMenu.css) rather than running past it. */
-  --nav-room: calc(100dvh - var(--nav-bottom, 20px) - var(--nav-bar-height, 46px) - 20px);
+  --nav-room: calc(100dvh - var(--nav-bottom, 20px) - var(--nav-bar-height, 40px) - 20px);
   max-height: var(--nav-room);
   overflow: hidden;
   overscroll-behavior: contain;

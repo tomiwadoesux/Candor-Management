@@ -43,6 +43,8 @@ export const BUCKETS = [
   { name: "lg", max: Infinity },
 ];
 
+export const REFERENCE_VIEWPORTS = { sm: [390, 844], md: [900, 900], lg: [1440, 900] };
+
 export function bucketFor(width) {
   return BUCKETS.find((b) => width <= b.max).name;
 }
@@ -55,12 +57,60 @@ const FALLBACK = {
   lg: ["lg", "md", "sm"],
 };
 
-export function pickBucket(map, width) {
+export function pickBucket(map, width, height) {
   if (!map?.buckets) return null;
   for (const name of FALLBACK[bucketFor(width)]) {
-    if (map.buckets[name]) return map.buckets[name];
+    if (!map.buckets[name]) continue;
+    const candidates = [map.buckets[name], ...(map.samples?.[name] || [])];
+    const distance = (b) => Math.abs(Math.log(width / b.vw)) * 4 + (height ? Math.abs(Math.log(height / b.vh)) * 0.25 : 0);
+    return candidates.reduce((best, b) => distance(b) < distance(best) ? b : best);
   }
   return null;
+}
+
+// Keep different window measurements instead of letting the last visitor
+// overwrite the phone/desktop baseline. This also preserves page-specific
+// layout changes inside a Tailwind breakpoint (e.g. Archive at 700px).
+export function mergeRecording(map, bucket, incoming, keepExisting = false) {
+  const prior = [map.buckets[bucket], ...(map.samples?.[bucket] || [])].filter(b => b && b.geometry === incoming.geometry);
+  const same = prior.find(b => b.vw === incoming.vw && b.vh === incoming.vh && b.geometry === incoming.geometry);
+  if (keepExisting && same) return false;
+  const variants = prior.filter(b => b.vw !== incoming.vw || b.vh !== incoming.vh);
+  variants.push(incoming);
+  const [vw, vh] = REFERENCE_VIEWPORTS[bucket];
+  const distance = b => Math.abs(Math.log(vw / b.vw)) * 4 + Math.abs(Math.log(vh / b.vh)) * 0.25;
+  variants.sort((a, b) => distance(a) - distance(b));
+  const [base, ...samples] = variants.slice(0, 6);
+  const changed = JSON.stringify(map.buckets[bucket]) !== JSON.stringify(base) ||
+    JSON.stringify(map.samples?.[bucket] || []) !== JSON.stringify(samples);
+  map.buckets[bucket] = base;
+  map.samples ||= {};
+  if (samples.length) map.samples[bucket] = samples;
+  else delete map.samples[bucket];
+  return changed;
+}
+
+// Flow content follows the viewport's width, not its height. A taller window
+// reveals more content; it must not stretch every photograph and line of type.
+// Anchors keep fixed chrome at its real edge when the viewport height changes.
+export function projectLayout(layout, width, height) {
+  if (!layout.geometry) return layout;
+  const sx = width / layout.vw;
+  const dx = width - layout.vw;
+  const dy = height - layout.vh;
+  const anchors = new Map(layout.anchors || []);
+  const blocks = layout.blocks.map((block, index) => {
+    const [kind, x, y, w, h, color, radius = 0] = block;
+    const anchor = anchors.get(index);
+    if (anchor) {
+      const [ax, ay] = anchor;
+      const left = ax === 2 ? x + dx / 2 : ax === 3 ? x + dx : ax === 4 ? x * sx : x;
+      const top = ay === 2 ? y + dy : ay === 3 ? y + dy / 2 : ay === 4 ? y * height / layout.vh : y;
+      return [kind, left, top, ax === 4 ? w * sx : w, ay === 4 ? h * height / layout.vh : h, color, radius];
+    }
+    return [kind, x * sx, y * sx, w * sx, kind === TEXT ? h : h * sx, color, radius * sx];
+  });
+  return { ...layout, vw: width, vh: height, blocks };
 }
 
 export function normalizePath(pathname) {
@@ -178,7 +228,9 @@ export function loadIndex() {
 }
 
 function fileFor(pathname, index) {
-  const route = matchRoute(pathname, Object.keys(index.routes));
+  const aliases = { "/about": "/agency", "/about-new": "/agency" };
+  const path = normalizePath(pathname);
+  const route = matchRoute(aliases[path] || path, Object.keys(index.routes));
   return route ? index.routes[route] : null;
 }
 
@@ -197,6 +249,22 @@ export async function loadMapFor(pathname) {
     );
   }
   return files.get(file);
+}
+
+// Warm the site's actual links once per arrival. Touch navigation should not
+// start with an empty sheet while its first layout request is in flight.
+export async function warmMapsFor(pathnames) {
+  const index = await loadIndex();
+  const needed = new Set(pathnames.map(path => fileFor(path, index)).filter(Boolean));
+  await Promise.all([...needed].map(async file => {
+    if (ready.has(file)) return;
+    const request = getJSON(`${MAP_DIR}/${encodeURIComponent(file)}`).then(map => {
+      if (map?.v === MAP_VERSION) ready.set(file, map);
+      return ready.get(file) ?? null;
+    });
+    files.set(file, request);
+    await request;
+  }));
 }
 
 // Whatever is already in memory, without waiting. Lets the click handler

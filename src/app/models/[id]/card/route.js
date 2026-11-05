@@ -29,7 +29,9 @@ export async function GET(_request, { params }) {
   const photos = (await Promise.all(sources.map(localPhoto))).filter(Boolean);
   const name = model.stageName || model.name;
   const fullName = model.fullName || model.name;
-  const measurements = [
+  const details = model.showcasePhotos && model.division !== "models" ? [
+    ["Discipline", model.talent], ["Based", model.based], ["Since", model.since],
+  ] : [
     ["Height", model.height], ["Chest", model.chest], ["Waist", model.waist],
     ["Hips", model.hips], ["Shoe", model.shoe],
   ].filter(([, value]) => value);
@@ -51,13 +53,13 @@ export async function GET(_request, { params }) {
         </div>}
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 20, marginTop: 32, paddingTop: 24, borderTop: "1px solid #b6b6b6" }}>
-        {measurements.map(([label, value]) => <div key={label} style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 23 }}>
+        {details.map(([label, value]) => <div key={label} style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 23 }}>
           <span style={{ color: "#666", fontSize: 19 }}>{label}</span>
           <span>{String(value).split("/")[0].trim()}</span>
         </div>)}
       </div>
       <div style={{ display: "flex", marginTop: "auto", justifyContent: "space-between", fontSize: 20, color: "#555" }}>
-        <span>{agency.legalName}</span>
+        <span>{agency.legalName}{model.showcasePhotos ? " · Fictional showcase profile" : ""}</span>
         <span>{agency.contact.email}</span>
       </div>
     </div>,

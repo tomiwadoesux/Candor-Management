@@ -54,6 +54,20 @@
   height: 100%;
 }
 
+.route-skeleton {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ps-breakpoint { position: absolute; inset: 0; display: none; }
+@media (max-width: 767px) { .ps-breakpoint--sm { display: block; } }
+@media (min-width: 768px) and (max-width: 1023px) { .ps-breakpoint--md { display: block; } }
+@media (min-width: 1024px) { .ps-breakpoint--lg { display: block; } }
+.route-skeleton .ps-ink { animation: none; }
+
 .ps-ink {
   animation: ps-ink-in 340ms cubic-bezier(0.33, 1, 0.68, 1) both;
 }

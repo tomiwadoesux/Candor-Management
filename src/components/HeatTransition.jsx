@@ -4,9 +4,9 @@ import { useEffect, useRef } from "react";
 import { heatTransition } from "../lib/heatTransition";
 
 /** The wrapper fades the departing group. The shared backdrop is independent
- * of that group's contents: anything behind the raised band refracts.
+ * of that group's contents: the departing page refracts while the fixed logo and controls stay crisp.
  */
-export default function HeatTransition({ children, enabled = true, targetSelector, zIndex = 45 }) {
+export default function HeatTransition({ children, enabled = true, effects = true, targetSelector, zIndex = 20 }) {
   const sourceRef = useRef(null);
 
   useEffect(() => {
@@ -19,10 +19,10 @@ export default function HeatTransition({ children, enabled = true, targetSelecto
     let disposed = false, near = false, dirty = true, unavailable = false;
     let frame = 0, lastPaint = -Infinity, clock = 0, lastTime = 0;
     let heatModule = null, loading = null, renderer = null, layout = null;
-    let lastOpacity = "", lastEdge = NaN;
+    let lastOpacity = "", lastGrayscale = "", lastEdge = NaN;
 
     const measure = () => {
-      layout = { height: window.innerHeight, targetTop: target.getBoundingClientRect().top + window.scrollY };
+      layout = { width: window.innerWidth, height: window.innerHeight, targetTop: target.getBoundingClientRect().top + window.scrollY };
       dirty = false;
     };
     const release = () => {
@@ -51,6 +51,18 @@ export default function HeatTransition({ children, enabled = true, targetSelecto
         source.inert = state.opacity < 0.08;
         lastOpacity = opacity;
       }
+      // A plain departure keeps the established fade without loading the
+      // refraction renderer, desaturating the cards, or running an idle loop.
+      if (!effects) {
+        source.style.filter = "";
+        release();
+        return;
+      }
+      const grayscale = state.grayscale.toFixed(4);
+      if (grayscale !== lastGrayscale) {
+        source.style.filter = state.grayscale === 0 ? "" : `grayscale(${grayscale})`;
+        lastGrayscale = grayscale;
+      }
       if (near) prepare();
       if (!state.active || !near || unavailable) { release(); return; }
       if (!heatModule) return;
@@ -64,7 +76,7 @@ export default function HeatTransition({ children, enabled = true, targetSelecto
       lastTime = time;
       // Follow scroll each frame; the quiet stationary shimmer runs at 30fps.
       if (edge !== lastEdge || time - lastPaint >= 1000 / 30 - 0.5) {
-        renderer.draw({ ...state, time: clock });
+        renderer.draw({ ...state, width: layout.width, time: clock });
         lastPaint = time; lastEdge = edge;
       }
       frame = requestAnimationFrame(tick);
@@ -96,9 +108,9 @@ export default function HeatTransition({ children, enabled = true, targetSelecto
       window.removeEventListener("resize", remeasure);
       document.removeEventListener("visibilitychange", onVisibility);
       motion.removeEventListener("change", remeasure);
-      source.style.opacity = ""; source.inert = false;
+      source.style.opacity = ""; source.style.filter = ""; source.inert = false;
     };
-  }, [enabled, targetSelector, zIndex]);
+  }, [enabled, effects, targetSelector, zIndex]);
 
   return <div ref={sourceRef} data-heat-source className="pointer-events-none absolute inset-0">{children}</div>;
 }

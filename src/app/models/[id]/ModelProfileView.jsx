@@ -24,7 +24,11 @@ export default function ModelProfileView({ model, sections, scrollItems }) {
     alt: "Hand-drawn globe with an orbit and small stars",
   };
 
-  const facts = [
+  const workProfile = model.showcasePhotos && model.division !== "models";
+  const facts = workProfile ? [
+    ["Focus", model.focus],
+    ["Since", model.since],
+  ] : [
     ["Height", metric(model.height)],
     ["Chest", metric(model.chest)],
     ["Waist", metric(model.waist)],
@@ -102,7 +106,7 @@ export default function ModelProfileView({ model, sections, scrollItems }) {
           <div className="profile-hero__lower">
             <div className="profile-hero__details-column">
               <div className="profile-hero__measurements">
-                <dl className="profile-facts" aria-label={`${model.name}'s measurements`}>
+                <dl className="profile-facts" aria-label={workProfile ? "Practice details" : `${model.name}'s measurements`}>
                   {facts.map(([label, value]) => (
                     <div key={label} className="profile-facts__item">
                       <dt>{label}</dt><dd>{value}</dd>
@@ -110,13 +114,14 @@ export default function ModelProfileView({ model, sections, scrollItems }) {
                   ))}
                 </dl>
               </div>
-              <div className="profile-actions">
+              {(!model.showcasePhotos || model.socials) && <div className="profile-actions">
                 <ProfileSocialLinks socials={model.socials} name={fullName} />
-              </div>
+              </div>}
             </div>
             <div className="profile-hero__copy-column">
               <div className="profile-hero__bio-cell">
                 <div className="profile-bio">
+                  {model.showcasePhotos && <p>Fictional showcase profile · {model.talent}</p>}
                   {sections
                     ? biography?.split(/\n+/).map((paragraph, index) => <p key={index}>{paragraph}</p>)
                     : <p><strong>{fullName}</strong>{biography ? ` — ${biography}` : ""}</p>}

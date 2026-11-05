@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AdaptiveText from "./AdaptiveText";
 
 /**
  * The site's one link style: "↳ label", set in the display serif, lowercase.
@@ -78,7 +79,7 @@ export default function ChromeLink({
         className={`group pointer-events-auto inline-flex items-center gap-[0.4em] whitespace-nowrap rounded-[1px] bg-black/[0.07] px-[0.6em] py-[0.3em] leading-none transition-colors duration-200 hover:bg-black/[0.12] ${className}`}
         {...rest}
       >
-        <span>{children}</span>
+        {typeof children === "string" ? <AdaptiveText>{children}</AdaptiveText> : <span>{children}</span>}
         <StraightArrow className="transition-transform duration-200 ease-out group-hover:translate-x-[0.15em]" />
       </Link>
     );
@@ -108,7 +109,7 @@ export default function ChromeLink({
             }`}
           />
         </span>
-        <span>{children}</span>
+        {typeof children === "string" ? <AdaptiveText>{children}</AdaptiveText> : <span>{children}</span>}
       </span>
     </Link>
   );

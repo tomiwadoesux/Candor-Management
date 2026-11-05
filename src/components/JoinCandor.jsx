@@ -56,7 +56,7 @@ export default function JoinCandor() {
     // and the footer below are both light, so an invitation set in the same
     // white would read as more of the same page rather than as the one place
     // it asks the reader for something.
-    <section className="relative overflow-hidden bg-[#0c0c0c] text-white">
+    <section className="landing-join relative overflow-hidden bg-[#0c0c0c] text-white">
       {/* ---- the statement ---- */}
       {/* Full-bleed and enormous, in the WORDMARK face rather than the body
           serif. Gwyner Condensed is what the logo and the docked MODELS
@@ -81,18 +81,18 @@ export default function JoinCandor() {
           and a strip that runs off the edge reads as a contact sheet, which
           is what it is. */}
       <div className="mt-16 md:mt-20">
-        <ol className="flex gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none] md:gap-3 [&::-webkit-scrollbar]:hidden">
+        <ol className="flex snap-x snap-mandatory gap-2 overflow-x-auto overscroll-x-contain px-4 pb-2 [scrollbar-width:none] md:gap-3 [&::-webkit-scrollbar]:hidden">
           {SHOTS.map(({ shot, src }, i) => (
             <li
               key={shot}
-              className="w-[38vw] shrink-0 sm:w-[26vw] lg:w-auto lg:flex-1"
+              className="w-[44vw] shrink-0 snap-start sm:w-[26vw] lg:w-auto lg:flex-1"
             >
               <div className="relative aspect-[2/3] overflow-hidden bg-white/[0.06]">
                 <Image
                   src={src}
                   alt=""
                   fill
-                  sizes="(max-width: 640px) 38vw, (max-width: 1024px) 26vw, 16vw"
+                  sizes="(max-width: 640px) 44vw, (max-width: 1024px) 26vw, 16vw"
                   className="object-cover opacity-90"
                 />
               </div>

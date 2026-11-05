@@ -1,10 +1,21 @@
 /* The island's open menu (CastingMenu.jsx). Sits on InNav's cream paper. */
 
+/* Coral Pixels, served by Bunny Fonts, for the Archives flicker only. */
+@font-face {
+  font-family: "Coral Pixels";
+  src: url("https://fonts.bunny.net/coral-pixels/files/coral-pixels-latin-400-normal.woff2") format("woff2"),
+    url("https://fonts.bunny.net/coral-pixels/files/coral-pixels-latin-400-normal.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 .cm {
   --cm-ink: #24231f;
   --cm-mute: #77736b;
   --cm-accent: #00749e;
   --cm-ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --cm-roll-gap: .15em; /* how far past its box a rolled-out letter waits */
   display: grid;
   /* The paper kept slim so the portrait gets the larger share. */
   grid-template-columns: .78fr 1fr;
@@ -20,15 +31,42 @@
    (cqi) so "Creatives" always fits the slimmer paper. */
 .cm-index { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; padding: 26px 30px; container-type: inline-size; }
 /* Centred in the room between the panel's top and the foot. */
-.cm-links { position: relative; display: flex; flex-direction: column; margin-block: auto; }
-.cm-links > a { position: relative; display: flex; align-items: flex-start; gap: .1em; color: var(--cm-ink); font-family: var(--font-h1); font-size: clamp(32px, min(23cqi, 8.4dvh), 70px); font-weight: 400; line-height: 1.1; letter-spacing: -.05em; transition: opacity 380ms var(--cm-ease); touch-action: manipulation; }
+.cm-links { position: relative; display: flex; flex-direction: column; gap: clamp(6px, 1.8dvh, 20px); margin-block: auto; }
+.cm-links > a { position: relative; display: flex; align-items: flex-start; gap: .1em; color: var(--cm-ink); font-family: var(--font-h1); font-size: clamp(28px, min(20cqi, 7.4dvh), 60px); font-weight: 400; line-height: 1.1; letter-spacing: -.05em; transition: opacity 380ms var(--cm-ease); touch-action: manipulation; }
 .cm-mask { display: block; overflow: hidden; padding: 0 .06em; margin: 0 -.06em; }
 .cm-line { display: block; white-space: nowrap; }
-.cm-char { position: relative; display: inline-block; transition: transform 620ms var(--cm-ease); transition-delay: calc(var(--i) * 16ms); }
-.cm-char::after { content: attr(data-char); position: absolute; left: 0; top: 100%; color: var(--cm-accent); }
-.cm-links > a[data-active] .cm-char { transform: translateY(-100%); }
-.cm-arrow { align-self: center; margin-left: auto; font-family: var(--font-body); font-size: 22px; letter-spacing: 0; color: var(--cm-accent); opacity: 0; transform: translate(-10px, 10px); transition: opacity 300ms ease, transform 500ms var(--cm-ease); }
-.cm-links > a[data-active] .cm-arrow { opacity: 1; transform: none; }
+/* Each letter's box clips at its sides (out to the full advance the tight
+   tracking takes back, so no ink is shaved at rest); inside it the roll
+   carries the letter and, one box (plus a cushion) to its left, its accent
+   copy. Hover slides the roll a box to the right, letter out, copy in,
+   left to right along the word; leaving slides it home. */
+.cm-char { display: inline-block; clip-path: inset(-1em -.06em -1em 0); transition: width 300ms var(--cm-ease); }
+.cm-roll { position: relative; display: block; transition: transform 620ms var(--cm-ease); transition-delay: calc(var(--i) * 22ms); }
+.cm-roll::after { content: attr(data-char); position: absolute; top: 0; left: calc(-100% - var(--cm-roll-gap)); color: var(--cm-accent); }
+.cm-links > a[data-active] .cm-roll { transform: translateX(calc(100% + var(--cm-roll-gap))); }
+/* The Archives letters' pixel twins. Each sits over its letter from the
+   same start, on the same baseline (the box's own serif strut sets it, and
+   the pixel letter's zero line-height never raises it), with its copy one
+   box to the left. A letter in [data-px] hides its serif self and copy,
+   shows the twins, and clips tight at its own edge, so the twin wipes in as
+   CastingMenu eases the slot out to the pixel width. */
+.cm-px { position: absolute; left: 0; top: 0; white-space: nowrap; letter-spacing: 0; color: var(--cm-ink); pointer-events: none; visibility: hidden; }
+.cm-px-copy { left: calc(-100% - var(--cm-roll-gap)); }
+.cm-px > span { font-family: "Coral Pixels", var(--font-body); font-size: .9em; line-height: 0; }
+.cm-char[data-px] { clip-path: inset(-1em 0); }
+.cm-char[data-px] .cm-roll { color: transparent; }
+.cm-char[data-px] .cm-roll::after { visibility: hidden; }
+.cm-char[data-px] .cm-px { visibility: visible; }
+/* The arrow sits right after the word, following Archives out and back as
+   it changes. On hover it draws itself on, shaft first, then the head
+   opening out from the tip; leaving, it folds back the way it came, head
+   first. */
+.cm-arrow { flex: none; align-self: center; width: .44em; height: .44em; margin-left: .1em; overflow: visible; color: var(--cm-accent); stroke: currentColor; stroke-width: 1.25; opacity: 0; transition: opacity 0s linear 420ms; }
+.cm-arrow path { stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 260ms var(--cm-ease); }
+.cm-arrow path:first-child { transition-delay: 150ms; }
+.cm-links > a[data-active] .cm-arrow { opacity: 1; transition-delay: 0s; }
+.cm-links > a[data-active] .cm-arrow path { stroke-dashoffset: 0; transition-duration: 420ms; transition-delay: 170ms; }
+.cm-links > a[data-active] .cm-arrow path:first-child { transition-delay: 0s; }
 .cm-links[data-hovering] > a:not([data-active]) { opacity: .22; }
 /* The marker says which board you are on; the name stays in ink. */
 .island-nav-content .cm-links > a[aria-current="page"] { color: var(--cm-ink); }
@@ -54,25 +92,22 @@
 .cm-links > a:focus-visible { outline: 1px solid var(--cm-accent); outline-offset: 4px; }
 .cm-window:focus-visible { outline: 2px solid var(--cm-accent); outline-offset: -5px; }
 
-/* The foot: contact above, then a ruled row of small links. The rule, the
-   row and the 26px inset all match the window's CTA, so the two ruled lines
-   run level across the gutter. */
-.cm-foot { display: flex; flex-direction: column; gap: 16px; padding-top: 24px; font-family: var(--font-body); }
+/* The foot: the contact email. */
+.cm-foot { display: flex; flex-direction: column; padding-top: 24px; font-family: var(--font-body); }
 .cm-fine { display: flex; flex-direction: column; gap: 2px; font-size: 11px; font-weight: 400; line-height: 1.4; color: var(--cm-mute); }
 .cm-fine a { width: fit-content; color: inherit; transition: color 200ms ease; }
 .cm-fine a:hover { color: var(--cm-ink); }
-.cm-sub { display: flex; gap: 20px; padding-top: 13px; border-top: 1px solid rgb(0 0 0 / 12%); font-size: 12px; line-height: 16px; }
-.cm-sub > a { color: var(--cm-ink); transition: opacity 200ms ease; }
-.cm-sub:hover > a:not(:hover) { opacity: .35; }
 
 
 @media (max-width: 620px) {
   /* Stacked: the boards take what they need, the window gets the rest. */
   .cm { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); height: var(--nav-room, 640px); }
-  .cm-links > a { font-size: clamp(30px, 6dvh, 46px); }
+  .cm-links { gap: clamp(4px, 1.2dvh, 12px); }
+  .cm-links > a { font-size: clamp(26px, 5.2dvh, 40px); }
   .cm-index { padding: 28px 24px; }
   .cm-marker { left: -14px; }
-  .cm-arrow { opacity: .5; transform: none; }
+  .cm-arrow { opacity: .5; transition: none; }
+  .cm-arrow path { stroke-dashoffset: 0; transition: none; }
   .cm-window { min-height: 0; }
   .cm-top { padding: 18px 22px; }
   .cm-copy { gap: 14px; padding: 20px 22px 22px; }
@@ -80,5 +115,5 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .cm-title { animation: none; }
-  .cm-char, .cm-arrow { transition: none; }
+  .cm-char, .cm-roll, .cm-arrow, .cm-arrow path { transition: none; }
 }

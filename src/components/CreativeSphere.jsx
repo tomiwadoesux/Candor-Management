@@ -343,6 +343,7 @@ export default function CreativeSphere({
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setSize(W, H, false);
     const canvas = renderer.domElement;
+    if (process.env.NODE_ENV === "development") canvas.setAttribute("data-skeleton-pending", "");
     Object.assign(canvas.style, {
       width: "100%",
       height: "100%",
@@ -1364,6 +1365,9 @@ export default function CreativeSphere({
     const screenV = new THREE.Vector3();
     const twinPos = new THREE.Vector3();
     const twinEdge = new THREE.Vector3();
+    const skeletonCorner = new THREE.Vector3();
+    const skeletonStarted = performance.now();
+    let skeletonAt = 0;
     let raf = 0;
 
     const tick = () => {
@@ -1624,6 +1628,33 @@ export default function CreativeSphere({
           map.repeat.set(cropX, cropY);
           map.offset.set((1 - cropX) / 2, (1 - cropY) / 2);
         }
+      }
+
+      // A canvas has one DOM rectangle, but this scene is a field of photos.
+      // Expose their projected frames for the development-only layout recorder.
+      // Production keeps the recorded geometry and runs none of this work.
+      if (process.env.NODE_ENV === "development" && now - skeletonAt > 300) {
+        skeletonAt = now;
+        group.updateMatrixWorld(true);
+        const regions = [];
+        for (const c of cards) {
+          if (!c.loaded || !c.mesh.visible || c.material.opacity < 0.08) continue;
+          let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
+          let inFront = false;
+          for (const [x, y] of [[-0.5, -0.5], [-0.5, 0.5], [0.5, 0.5], [0.5, -0.5]]) {
+            skeletonCorner.set(x, y, 0).applyMatrix4(c.mesh.matrixWorld).project(camera);
+            inFront ||= skeletonCorner.z > -1 && skeletonCorner.z < 1;
+            const px = (skeletonCorner.x + 1) * W / 2;
+            const py = (1 - skeletonCorner.y) * H / 2;
+            left = Math.min(left, px); right = Math.max(right, px);
+            top = Math.min(top, py); bottom = Math.max(bottom, py);
+          }
+          if (inFront && right > 0 && bottom > 0 && left < W && top < H) {
+            regions.push([Math.round(left), Math.round(top), Math.round(right - left), Math.round(bottom - top)]);
+          }
+        }
+        canvas.setAttribute("data-skeleton-regions", JSON.stringify(regions));
+        if (cards.every(c => c.loaded) || now - skeletonStarted > 5000) canvas.removeAttribute("data-skeleton-pending");
       }
 
       // the sheet follows the focus tween; the twin tracks its mesh exactly,

@@ -2,18 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import ChromeLink from "./ChromeLink";
-import LogoAnimation from "./LogoAnimation";
 import { useHoveredModel } from "./HoveredModelContext";
 import FitText, { initialCaps } from "./FitText";
-import { agency, joinMailto } from "../../data/agency";
 
 // Left rail on /models: the hovered model's name sits at the rail's top — its
 // cap line level with the WOMEN/MEN/ALL filter labels across the column —
 // directly above the two portrait polaroids, with a caption and the stats
-// right-aligned under it beneath the pair, and the contact address at the
-// panel's bottom-left. Every vertical gap in the block matches the gutter
+// right-aligned under it beneath the pair. Contact details live in SiteFooter.
+// Every vertical gap in the block matches the gutter
 // between the two images. It holds the last model you hovered rather than
 // emptying out between tiles, so the panel never flashes blank; before the
 // first hover it shows a loading-style skeleton.
@@ -66,26 +62,6 @@ export default function ModelRail({
 
   return (
     <div className={`relative flex h-full items-start ${className}`}>
-      {/* CANDOR wordmark at the rail's bottom-left, with the contact
-          addresses stacked beneath it. Absolute so none of it pushes the
-          polaroids off centre. */}
-      <div className="absolute bottom-0 left-0 z-10 flex flex-col items-start">
-        <Link href="/" aria-label="CANDOR home" className="block text-black">
-          <LogoAnimation animate={false} className="w-[130px]" />
-        </Link>
-
-        {/* the links stack down the wrapper's left edge; ChromeLink sets
-            its own face and case */}
-        <div className="mt-3 flex flex-col items-start text-xs text-[#1d1d1d]">
-          <ChromeLink left href={joinMailto}>
-            {agency.join.email}
-          </ChromeLink>
-          <ChromeLink left href="/get-scouted">
-            Submit Polaroids
-          </ChromeLink>
-        </div>
-      </div>
-
       {/* The whole block — name, images, caption and stats — starts at the
           rail's top, so the name's cap line sits level with the WOMEN/MEN/ALL
           filter labels across the column. The stats still hang below the images
@@ -98,7 +74,7 @@ export default function ModelRail({
         <div className="absolute inset-x-0 top-full mt-3 md:mt-4">
           {model ? (
             <div className="flex items-start justify-between gap-3 text-xs leading-none text-[#1d1d1d]/60">
-              <span className="italic">{captionFor(model)}</span>
+              <span className="italic">{model.showcasePhotos ? "Showcase selection" : captionFor(model)}</span>
               <dl className="flex flex-col gap-1.5 text-right">
                 {rowsFor(model).map(([label, value]) => (
                   <div key={label} className="flex justify-end gap-1">
@@ -143,7 +119,7 @@ export default function ModelRail({
                   <Image
                     key={src}
                     src={src}
-                    alt={model?.name ? `${model.name} polaroid ${i + 1}` : ""}
+                    alt={model?.showcasePhotos?.[i]?.alt ?? `${model.name} polaroid ${i + 1}`}
                     fill
                     sizes="(min-width: 1024px) 13vw, 45vw"
                     className="object-cover"

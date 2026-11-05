@@ -13,7 +13,7 @@ import "./CastingMenu.css";
 // window on the right, and the two answer each other. Hover a board and its
 // lead face rises into the window through a liquid front while the cursor
 // develops colour in an otherwise monochrome print (castingGL.js). Each
-// board's name rolls over letter by letter and a marker glides to it. At
+// board's name rolls over letter by letter and an arrow draws on after it. At
 // rest the window is the scouting card.
 const SCOUT_FACE = "/photos/img19.jpeg";
 
@@ -32,16 +32,23 @@ const randomPicks = () => BOARDS.map(({ people }) => people[Math.floor(Math.rand
 // the scouting card.
 const ENTRIES = [
   ...BOARDS,
-  { label: "Archives", href: "/archives" },
-  { label: "About", href: "/about" },
-];
-// The small links at the foot of the index, on the same line as the
-// window's own "Get scouted".
-const SUBLINKS = [
-  { label: "Contact", href: "/contact" },
-  { label: "Privacy", href: "/privacy" },
+  { label: "Archives", href: "/archive" },
+  { label: "About", href: "/agency" },
 ];
 const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+// Archives turns into Coral Pixels and back, a letter at a time from A to s,
+// on a steady loop. Each letter carries its pixel twin; as it turns, its
+// slot eases out to the pixel letter's width (the twin wiping in with it)
+// and the rest of the word slides along, so the change runs through the word
+// like a wave. Turning back, the slot eases in again.
+const GLITCH_HREF = "/archive";
+const GLITCH = {
+  firstDelay: 2000, // after the menu opens
+  stagger: 110, // between one letter and the next, both ways
+  hold: 3200, // the word all in pixels
+  rest: 6000, // the word all in Arno, before the next pass
+  gap: 0.05, // em after each pixel letter
+};
 
 export default function CastingMenu({ pathname, onNavigate, open }) {
   const linksRef = useRef(null);
@@ -69,10 +76,73 @@ export default function CastingMenu({ pathname, onNavigate, open }) {
     return () => tween.kill();
   }, [open]);
 
-  // The marker sits beside whichever board is live: the hovered one, else
-  // the page you are on, else nowhere.
-  const routeIndex = ENTRIES.findIndex((entry) => pathname?.startsWith(entry.href));
-  const markIndex = hovered !== -1 ? hovered : routeIndex;
+  useEffect(() => {
+    const link = linksRef.current && [...linksRef.current.children].find((child) => child.getAttribute("href") === GLITCH_HREF);
+    if (!open || !link || reducedMotion()) return;
+    const chars = [...link.querySelectorAll(".cm-char")];
+    let serifWidths = null, pixelWidths = null;
+    // Both widths of every letter, in em so they ride the menu's fluid type
+    // size. Taken on the first turn, once the island has finished opening,
+    // with any scale left on it divided out (the computed width is the
+    // exact, untransformed one).
+    const measure = () => {
+      const style = getComputedStyle(link);
+      const size = parseFloat(style.fontSize);
+      const scale = link.getBoundingClientRect().width / parseFloat(style.width) || 1;
+      const em = (rect) => rect.width / scale / size;
+      serifWidths = chars.map((char) => em(char.getBoundingClientRect()));
+      pixelWidths = chars.map((char) => em(char.querySelector(".cm-px > span").getBoundingClientRect()) + GLITCH.gap);
+      // Pinned to their own widths (no change to look at) so the first
+      // turn has a width to ease from.
+      chars.forEach((char, index) => { char.style.width = `${serifWidths[index]}em`; });
+      void link.offsetWidth;
+    };
+    const turn = (index, pixel) => {
+      chars[index].style.width = `${(pixel ? pixelWidths : serifWidths)[index]}em`;
+      if (pixel) chars[index].dataset.px = "";
+      else delete chars[index].dataset.px;
+    };
+
+    // The loop as a list of steps, each with the wait before the next: every
+    // letter into pixels, the hold, every letter back, the rest.
+    const steps = [
+      ...chars.map((_, index) => [() => turn(index, true), index === chars.length - 1 ? GLITCH.hold : GLITCH.stagger]),
+      ...chars.map((_, index) => [() => turn(index, false), index === chars.length - 1 ? GLITCH.rest : GLITCH.stagger]),
+    ];
+    let step = 0, timer = 0, wait = GLITCH.firstDelay;
+    const schedule = (ms) => { clearTimeout(timer); wait = ms; timer = setTimeout(run, ms); };
+    function run() {
+      // Not while it has keyboard focus, or the tab is in the background.
+      if (link.matches("[data-active]") || document.hidden) { schedule(1000); return; }
+      if (!serifWidths) measure();
+      const [act, next] = steps[step];
+      act();
+      step = (step + 1) % steps.length;
+      schedule(next);
+    }
+    // Pointing at Archives holds it exactly as it is, mid-wave or not, so
+    // hovering never changes its face; leaving restarts the wait it was on.
+    const enter = () => clearTimeout(timer);
+    const leave = () => schedule(wait);
+
+    link.addEventListener("pointerenter", enter);
+    link.addEventListener("pointerleave", leave);
+    // Both faces in before the first turn, so neither is measured on a fallback.
+    Promise.all([document.fonts.load('1em "Coral Pixels"'), document.fonts.ready]).catch(() => {}).then(() => {
+      if (link.isConnected && !timer) schedule(GLITCH.firstDelay);
+    });
+    return () => {
+      clearTimeout(timer);
+      timer = -1;
+      link.removeEventListener("pointerenter", enter);
+      link.removeEventListener("pointerleave", leave);
+      chars.forEach((char) => { char.style.width = ""; delete char.dataset.px; });
+    };
+  }, [open]);
+
+  // The marker sits beside the page you are on (it doesn't follow the
+  // hover), else nowhere.
+  const markIndex = ENTRIES.findIndex((entry) => pathname?.startsWith(entry.href));
   useEffect(() => {
     const marker = markerRef.current;
     const link = linksRef.current?.children[markIndex];
@@ -168,16 +238,35 @@ export default function CastingMenu({ pathname, onNavigate, open }) {
               data-active={hovered === index || undefined} aria-current={pathname === entry.href ? "page" : undefined}
               onPointerEnter={() => setHovered(index)} onFocus={focusBoard(index)} onClick={onNavigate}>
               <span className="cm-visually-hidden">{entry.label}</span>
-              {/* Every letter carries a copy of itself below (::after) and
-                  rolls up to it, a few ms behind its neighbour. */}
+              {/* Every letter sits in its own box with a copy of itself
+                  waiting just left of it (::after); on hover the letter slides
+                  out to the right as the copy slides in, a few ms behind its
+                  neighbour. */}
               <span className="cm-mask" aria-hidden="true">
                 <span className="cm-line">
                   {[...entry.label].map((char, i) => (
-                    <span key={i} className="cm-char" data-char={char} style={{ "--i": i }}>{char}</span>
+                    <span key={i} className="cm-char" style={{ "--i": i }}>
+                      <span className="cm-roll" data-char={char}>
+                        {char}
+                        {/* Archives' letters carry their pixel twin, laid
+                            over from the same start and baseline, and a
+                            copy of it to roll in with. */}
+                        {entry.href === GLITCH_HREF && <>
+                          <span className="cm-px"><span>{char}</span></span>
+                          <span className="cm-px cm-px-copy"><span>{char}</span></span>
+                        </>}
+                      </span>
+                    </span>
                   ))}
                 </span>
               </span>
-              <span className="cm-arrow" aria-hidden="true">↗</span>
+              {/* Drawn rather than typed (Arno has no arrows): the shaft, then
+                  each side of the head from the tip, so it can draw itself on. */}
+              <svg className="cm-arrow" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                <path pathLength="1" d="M1 6H10.5" />
+                <path pathLength="1" d="M10.5 6L6.5 2" />
+                <path pathLength="1" d="M10.5 6L6.5 10" />
+              </svg>
             </Link>
           ))}
           <span ref={markerRef} className="cm-marker" aria-hidden="true" />
@@ -188,13 +277,7 @@ export default function CastingMenu({ pathname, onNavigate, open }) {
         <div className="cm-foot" onPointerEnter={() => setHovered(-1)}>
           <p className="cm-fine">
             <a href={contactMailto}>{agency.contact.email}</a>
-            <span>Lagos · Manchester · Dallas</span>
           </p>
-          <nav className="cm-sub" aria-label="More">
-            {SUBLINKS.map((item) => (
-              <Link key={item.href} href={item.href} onClick={onNavigate}>{item.label}</Link>
-            ))}
-          </nav>
         </div>
       </div>
 

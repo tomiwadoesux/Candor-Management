@@ -1,12 +1,26 @@
+/* Registered as colours so the page can ease between its two papers:
+   AgencyPage turns it dark as CREATIVES comes up, and light again above it. */
+@property --ca-paper { syntax: "<color>"; inherits: true; initial-value: #faf9f6; }
+@property --ca-ink { syntax: "<color>"; inherits: true; initial-value: #141414; }
+
 .candor-agency {
   --ca-paper: #faf9f6;
   --ca-ink: #141414;
   --ca-inset: clamp(12px, 1.25vw, 24px);
+  /* How far the intro portrait's foot sits above the end of its section —
+     which is where the manifesto starts. "We" is masked from 20px below that
+     foot (just under the caption), so it appears from under the card. */
+  --ca-portrait-gap: 80px;
+  --ca-we-mask: calc(var(--ca-portrait-gap) - 20px);
   background: var(--ca-paper);
   color: var(--ca-ink);
+  transition: --ca-paper 900ms ease, --ca-ink 900ms ease;
+  -webkit-text-size-adjust: 100%;
 }
+/* The contact sheet's own colours, so the dark page runs into it. */
+.candor-agency[data-theme="dark"] { --ca-paper: #0c0c0c; --ca-ink: #d5d2cd; }
 
-.candor-agency a { text-decoration: none; }
+.candor-agency a { text-decoration: none; touch-action:manipulation; }
 .candor-agency a:focus-visible { outline: 2px solid currentColor; outline-offset: 5px; }
 .ca-skip { position: fixed; left: 16px; top: -100px; z-index: 100; padding: 12px; background: var(--ca-paper); color: var(--ca-ink); }
 .ca-skip:focus { top: 16px; }
@@ -23,6 +37,7 @@
   line-height: 1.2;
 }
 .ca-header a { pointer-events: auto; }
+.candor-agency[data-services-view="true"] .ca-header { visibility:hidden; }
 .ca-wordmark { display: block; width: 92px; }
 .ca-wordmark svg, .ca-colophon svg { display: block; width: 100%; height: auto; }
 .ca-introduction { position: relative; display: grid; padding: 0 var(--ca-inset); }
@@ -33,7 +48,7 @@
 .ca-introduction__copy h1, .ca-introduction__copy p { font-family: var(--font-h4); font-size: inherit; font-weight: 400; line-height: inherit; }
 .ca-introduction__copy h1 span { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
 /* Set like the portrait's caption, not the statement above it. */
-.ca-introduction__copy .ca-introduction__label { padding-top: 40px; font-family: var(--font-body); font-size: 10px; font-weight: 400; line-height: 1.3; letter-spacing: normal; }
+.ca-introduction__copy .ca-introduction__label { padding-top: 14px; font-family: var(--font-body); font-size: 10px; font-weight: 400; line-height: 1.3; letter-spacing: normal; }
 /* The note rides up beside the portrait and sticks on its top edge (32svh -
    80px is the portrait's top once developed). It is as tall as the portrait,
    and the notes column stops 80px short of the section, so the note lets go
@@ -45,77 +60,181 @@
 .ca-introduction__aside div { margin-top: 22px; }
 .ca-introduction__aside span, .ca-introduction__aside a { display: block; }
 .ca-introduction__aside a { width: fit-content; overflow-wrap: anywhere; text-decoration: underline; text-underline-offset: 4px; margin-top: 3px; }
-.ca-introduction__portrait { position: absolute; left: 25%; bottom: 80px; margin: 0; width: 48%; height: 68svh; }
+.ca-introduction__portrait { position: absolute; left: 25%; bottom: var(--ca-portrait-gap); margin: 0; width: 48%; height: 68svh; }
 .ca-reveal-frame, .ca-reveal-photo { position: absolute; inset: 0; overflow: hidden; transform-origin: bottom left; }
 .ca-reveal-frame { opacity: 0.18; transform: scale(0.72); will-change: transform, opacity; }
 .ca-reveal-photo { transform: scale(1.5833); transform-origin: 50% 40%; will-change: transform; }
 .ca-reveal-photo img { object-fit: cover; object-position: 50% 40%; filter: grayscale(1); }
 .ca-introduction__portrait figcaption { position: absolute; top: calc(100% + 8px); left: 0; right: 0; display: flex; justify-content: space-between; gap: 16px; font-size: 10px; }
-.ca-introduction__handoff { position: relative; z-index: 2; display: grid; grid-template-columns: 26% 1fr; align-items: end; height: 64px; margin-top: calc(100svh - 64px + var(--ca-intro-hold, 0px)); padding-bottom: 20px; }
+/* "To build" slides down out from under the portrait through this row, so it is
+   white and differenced like the header: ink on the paper, paper on the type. */
+.ca-introduction__handoff { position: relative; z-index: 2; color: #fff; mix-blend-mode: difference; display: grid; grid-template-columns: 26% 1fr; align-items: end; height: 64px; margin-top: calc(100svh - 64px + var(--ca-intro-hold, 0px)); padding-bottom: 20px; }
 .ca-introduction__footnote { position: absolute; left: 0; top: calc(100svh - 32px); transform: translateY(-100%); font-size: 11px; font-weight: 400; line-height: 1.3; }
 
-.ca-approach { position: relative; padding: 0 var(--ca-inset) 15svh; overflow: clip; }
-.ca-approach__pin { position: sticky; top: 0; height: 100svh; margin-bottom: -100svh; z-index: 3; display: flex; align-items: flex-end; padding-bottom: 28px; pointer-events: none; }
-.ca-approach__portrait { width: 19.5vw; margin: 0; }
-.ca-approach__portrait > div { position: relative; aspect-ratio: 3 / 4; overflow: hidden; background: #e9e7e2; }
-/* The card is a stack of portraits; hovering a letter of PEOPLE brings that
-   person forward. */
-.ca-approach__portrait img { object-fit: cover; opacity: 0; transform: scale(1.06); transition: opacity 450ms ease, transform 900ms cubic-bezier(0.22, 1, 0.36, 1); }
-.ca-approach__portrait img[data-on] { opacity: 1; transform: none; }
-.ca-approach__portrait figcaption { margin-top: 8px; font-size: 9px; }
-.ca-approach__heading { grid-column: 2; display: flex; justify-content: space-between; font-size: 12px; }
-.ca-manifesto { position: relative; z-index: 1; font-family: "Gwyner Condensed", var(--font-h1); font-weight: 400; font-size: 24vw; line-height: 0.83; letter-spacing: -0.025em; text-transform: uppercase; }
+/* Clipped at the sides only: "Building" starts above the section's top edge,
+   tucked under the portrait. */
+.ca-approach { position: relative; padding: 0 var(--ca-inset) 3svh; overflow-x: clip; }
+.ca-motion-defs { position:absolute; pointer-events:none; }
+.ca-manifesto { position: relative; z-index: 1; display:flex; flex-direction:column; gap:clamp(40px,8vw,128px); font-family: "Gwyner Condensed", var(--font-h1); font-weight: 400; font-size: 24vw; line-height: 0.83; letter-spacing: -0.025em; text-transform: uppercase; }
 .ca-manifesto > span { display: block; width: fit-content; white-space: nowrap; }
 /* Each line is its own mask: clipped only along its bottom edge, so the
    word can rise out of it without the glyph tops or sides being cut. */
 .ca-manifesto > [data-line] { clip-path: inset(-0.2em -0.3em 0 -0.3em); }
+/* "Building" comes from above, not below: its mask reaches up to the portrait's
+   foot, and nothing above that edge shows, so it seems to come from under
+   the card. */
+.ca-manifesto > [data-from-card] { clip-path: inset(calc(-1 * var(--ca-we-mask)) -0.3em 0 -0.3em); }
 .ca-manifesto > [data-line] > span { display: block; will-change: transform; }
-/* PEOPLE is made of people: each letter is a window onto a face, under a
-   layer of ink the scroll drains away (--ink, set by AgencyPage). Hover a
-   letter and its face comes up in colour. */
-.ca-people__letter {
-  display: inline-block;
+/* CREATIVES is /word-paint's first study: WordPaint's canvas draws it as
+   outlined letters the pointer paints in colour, a face faint in each. Over
+   the canvas lie the page's own letters in solid ink, which the scroll drains
+   away letter by letter (--ink, set by AgencyPage), so nobody shows until
+   CREATIVES moves up. The ink stays until the canvas is drawing, and for good
+   without WebGL. */
+.ca-word-paint__letter { color: color-mix(in srgb, var(--ca-ink) calc(var(--ink, 1) * 100%), transparent); }
+.ca-word-paint:not([data-wp-live]) .ca-word-paint__letter { color: var(--ca-ink); }
+/* The canvas fills the section's padding box: room for the cap tops (the
+   line box is tighter than the face's ascent) and the slant past the last
+   letter. The margins give the room back, so nothing moves. */
+.ca-word-paint { padding: 0.16em 0.2em 0.04em 0.04em; margin: -0.16em -0.2em -0.04em -0.04em; }
+/* Merging SVG blobs mask the solid copy over the quieter outline. */
+.ca-fluid-type {
+  position:relative;
+  display:inline-block;
   color: transparent;
-  background-image: linear-gradient(rgb(20 20 20 / var(--ink, 1)), rgb(20 20 20 / var(--ink, 1))), var(--face);
-  background-size: 100% 100%, cover;
-  background-position: 0 0, 50% 30%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  filter: grayscale(1) contrast(1.3) brightness(0.7);
-  transition: filter 700ms ease;
-  pointer-events: auto;
+  -webkit-text-stroke: max(1px, 0.005em) color-mix(in srgb, var(--ca-ink) 78%, var(--ca-paper));
 }
-.ca-people__letter[data-on] { filter: contrast(1.1) brightness(0.85); }
-/* POTENTIAL starts as an outline and fills with ink, left to right. */
-.ca-manifesto__potential > span {
-  color: transparent;
-  -webkit-text-stroke: max(1px, 0.006em) var(--ca-ink);
-  background: linear-gradient(90deg, var(--ca-ink) 50%, transparent 50%) calc((1 - var(--fill, 1)) * 100%) 0 / 200% 100% no-repeat;
-  -webkit-background-clip: text;
-  background-clip: text;
+.ca-fluid-type::after { content:attr(data-copy); position:absolute; inset:0; color:var(--ca-ink); -webkit-text-stroke:0; mask:url(#agency-fluid-fill); mask-mode:alpha; pointer-events:none; }
+.ca-fluid-type[data-filled="true"]::after { mask:none; }
+.ca-manifesto__period { color:var(--ca-ink); }
+.ca-manifesto__finish { position:relative; }
+.ca-edge-focus { position:absolute; z-index:1; left:0; top:-.2em; width:clamp(96px,26vw,420px); height:calc(100% + .4em); pointer-events:none; opacity:0; background:linear-gradient(90deg,transparent, color-mix(in srgb,var(--ca-paper) 35%,transparent) 25%, var(--ca-paper) 90%); }
+@media (prefers-reduced-motion:reduce) { .ca-edge-focus { display:none; } }
+/* The run (AgencyPage): the track carries the manifesto and its notes. Held
+   by its foot, 24px off the bottom of the screen (or by its middle, on a
+   screen taller than it is), it slides left while final line's row runs out
+   past "through" to the end of the final phrase. */
+.ca-approach__track { position: relative; }
+@media (prefers-reduced-motion: no-preference) {
+  .ca-approach__track { position: sticky; top: min(calc(100svh - var(--ca-track-h, 100svh) - 24px), calc((100svh - var(--ca-track-h, 100svh)) / 2)); will-change: transform; }
+  /* A screen of paper under the type, held still while the track slides
+     (--ca-run): the notes' difference blend stops at the track, so the
+     page they invert has to be inside it. */
+  .ca-approach__track::before { content: ""; position: absolute; z-index: -1; inset: 0 calc(-1 * var(--ca-inset)); translate: var(--ca-run, 0px) 0; background: var(--ca-paper); }
 }
-.ca-manifesto__we { margin-left: 27%; }
-.ca-manifesto__see { margin-left: 44%; }
-.ca-manifesto__people { margin-left: 2%; }
-.ca-manifesto__before { margin-left: 23%; }
-.ca-manifesto__we-see { margin-left: 37%; font-size: 19vw; }
-.ca-manifesto__potential { margin-top: 0.04em; font-size: 20.5vw; }
-.ca-approach__closing { margin: 60px 5% 0 52%; max-width: 450px; }
-.ca-approach__closing p { font-weight: 400; font-size: clamp(17px, 1.6vw, 26px); line-height: 1.2; letter-spacing: -0.035em; }
-.ca-approach__closing a { display: flex; justify-content: space-between; padding: 18px 0 6px; margin-top: 20px; border-bottom: 1px solid currentColor; font-size: 12px; }
+/* Arno's shorter caps need a larger font size to match the condensed row. */
+.ca-perspectives.wp.wp-clear { display:inline-block; vertical-align:baseline; font-family:var(--font-h1); font-style:italic; font-size:24vw; line-height:1; letter-spacing:-.01em; color:var(--ca-ink); -webkit-text-stroke:0; }
+.ca-perspectives .ca-word-paint__letter { -webkit-text-stroke:0; }
+/* The small print: set like the notes beside the opening portrait, on the
+   page's columns — 0, 26% (the handoff's second column), 76% (the aside's)
+   and the right margin. Each hangs from the cap line of the big word beside
+   it (tops are that line's cap height, in the same vw), and rises in once,
+   on arrival. Numbered by a counter, so a note hidden on a phone leaves no
+   gap in the count. On the run every note travels right, against the words
+   (--ca-drift, set by AgencyPage), so they cross the big type: white and
+   differenced like the header, ink on the paper and paper on the ink, in
+   either theme. While one is over the letters AgencyPage blurs it (an
+   inline filter), and it comes into focus as it clears them. */
+.ca-manifesto__notes { counter-reset: note; }
+.ca-note { position: absolute; z-index: 2; width: 13vw; counter-increment: note; font-size: 11px; font-weight: 400; line-height: 1.3; color: #fff; mix-blend-mode: difference; translate: var(--ca-drift, 0px) 0; opacity: 0; transform: translateY(14px); transition: opacity 800ms ease, transform 1100ms cubic-bezier(0.22, 1, 0.36, 1); }
+.ca-note[data-in] { opacity: 1; transform: none; }
+.ca-note__label { display: flex; gap: 10px; padding-bottom: 6px; }
+.ca-note__label::before { content: counter(note, decimal-leading-zero); color: rgb(255 255 255 / 0.5); font-variant-numeric: tabular-nums; }
+.ca-note--candor { left:auto; right:0; top:70%; width:min(18vw,260px); translate:none; }
+/* The first note is a dictionary entry: the headword in the serif, broken
+   into its syllables, then the pronunciation and the part of speech in its
+   italic, then the sense. */
+.ca-entry .ca-note__label { flex-wrap: wrap; align-items: baseline; column-gap: 8px; row-gap: 2px; padding-bottom: 8px; }
+.ca-entry__word { font-family: var(--font-h1); font-size: 19px; line-height: 1; letter-spacing: -0.01em; }
+.ca-entry__say, .ca-entry__kind { font-family: var(--font-h1); font-size: 13px; font-style: italic; line-height: 1; }
+.ca-entry__say { color: rgb(255 255 255 / 0.7); }
+.ca-entry__sense { display: block; }
+/* On the run the notes enter from the right and grow into their card lanes. */
+.ca-note[data-note-word] { scale: var(--ca-scale, 1); transform-origin: 0 50%; }
+.ca-note[data-note-word] .ca-note__label, .ca-note--pinned .ca-note__label { font-size: 15px; line-height: 1.15; letter-spacing: -0.01em; padding-bottom: 8px; text-transform:uppercase; }
+.ca-note[data-note-word] .ca-note__label::before, .ca-note--pinned .ca-note__label::before { content:none; }
+.ca-note__text { display: block; }
+.ca-note__full { display:none; }
+.ca-note[data-note-word], .ca-note--pinned { font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-size:clamp(14px, 1.15vw, 17px); line-height:1.45; letter-spacing:-.01em; }
+/* Once the horizontal line ends, only the notes remain in the viewport. */
+.ca-pinned-notes { position:fixed; inset:0; z-index:50; pointer-events:none; visibility:hidden; counter-reset:note 1; mix-blend-mode:difference; }
+.ca-note--pinned { top:0; left:0; margin:0; opacity:1; translate:none; transform-origin:0 50%; transition:opacity 300ms ease; mix-blend-mode:normal; }
+.ca-note--pinned .ca-note__label { opacity:1; transition:opacity 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+.ca-note--pinned[data-title-revealed="true"] .ca-note__label { opacity:0; }
+.ca-note--pinned[data-docked="true"], .ca-note--pinned[data-covered="true"] { opacity:0; }
+.candor-agency[data-notes-pinned="true"] .ca-pinned-notes { visibility:visible; }
+.candor-agency[data-notes-pinned="true"] [data-note-word] { opacity:0; }
+.candor-agency[data-notes-pinned] [data-note-word] { transition:none; }
+.candor-agency:has(#agency-services[data-keyboard="true"]) .ca-note--pinned { transition:none; }
+/* Over the final phrase: AgencyPage sets `left`, off the right edge, where each waits for
+   the run (the fallback is roughly the first). Four tiers split the band
+   between the lower rows and the top of the screen. */
+.ca-note[data-note-word] { --tier: 0; --ca-tier-gap: calc((100svh - 234px - 26vw) / 3); left: -16vw; bottom: calc(26vw + 44px + var(--tier) * var(--ca-tier-gap)); width:var(--ca-card-inner-width, 20vw); }
+.ca-note[data-note-tier="1"] { --tier: 1; }
+.ca-note[data-note-tier="2"] { --tier: 2; }
+.ca-note[data-note-tier="3"] { --tier: 3; }
+/* CREATIVES is set as /word-paint's first study sets "Join Candor": Arno Pro,
+   slanted, at 400, tracked in a touch. Its caps are shorter and wider than
+   the condensed lines', so it is set larger, inside the same line box (so
+   nothing below moves) and dropped to sit midway between the surrounding condensed lines. */
+.ca-manifesto__creatives { margin-left: 2%; font-family: var(--font-h1); font-style: italic; font-size: 17vw; line-height: calc(24vw * 0.83); letter-spacing: -0.01em; }
+.ca-manifesto__creatives > span { position: relative; top: 0.135em; }
+.ca-manifesto__build { margin-left:25%; font-size:18vw; }
+.ca-manifesto__shape { margin-left:8%; font-size:16.5vw; }
+.ca-manifesto__culture { font-size:20.5vw; }
+.ca-manifesto > .ca-manifesto__through { display:none; }
+.ca-manifesto__finish { margin-top: 0.04em; font-size: 20.5vw; padding-right: 12vw; }
+
+/* Three portraits before the mission: a model page's board (ProfileGallery,
+   styled by model-profile.css), on the page's own paper. */
+/* The founder, the gallery's last row, set as on /about-new: a 12-column
+   grid, light Inter, the label at the left edge, the photo from column 3 and
+   the quote from column 9. The photo is a one-tile ProfileGallery, so it opens
+   the way the pictures above it do. */
+.ca-founder { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 20px; align-items: start; padding: var(--profile-row-gap) 0 40px; font-family: "Inter", Arial, sans-serif; font-weight: 300; font-size: 16px; line-height: 1.12; letter-spacing: -0.01em; }
+.ca-founder :where(p) { font: inherit; letter-spacing: inherit; }
+.ca-founder a { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.18em; }
+/* The label sits at the foot of a column as tall as the row and sticks to the
+   bottom of the screen, so it rides up with the photo and settles at its base. */
+.ca-founder__label { grid-column: 1 / span 2; align-self: stretch; display: flex; flex-direction: column; justify-content: flex-end; }
+.ca-founder__label p { position: sticky; bottom: 40px; }
+.ca-founder__photo { grid-column: 3 / span 5; }
+.ca-gallery .ca-founder .profile-scattered .morph-row > :only-child { width: 100%; }
+.ca-founder__text { grid-column: 9 / span 3; display: flex; flex-direction: column; gap: 22px; font-size: 14px; line-height: 1.18; }
+.ca-founder__text span { color: #8c8c8c; }
+@media (prefers-reduced-motion: no-preference) {
+  .ca-founder__text { opacity: 0; translate: 0 32px; transition: opacity 900ms ease, translate 1100ms cubic-bezier(0.16, 1, 0.3, 1); }
+  .ca-founder__text[data-in] { opacity: 1; translate: none; }
+}
+@media (max-width: 1024px) {
+  .ca-founder { column-gap: 14px; font-size: 15px; }
+  .ca-founder__text { grid-column: 9 / -1; font-size: 13px; }
+}
+@media (max-width: 700px) {
+  .ca-founder__label, .ca-founder__photo, .ca-founder__text { grid-column: 1 / -1; }
+  .ca-founder__label p { position: static; padding-bottom: 14px; }
+  .ca-founder__text { gap: 16px; padding-top: 24px; }
+}
+
+.ca-gallery { position: relative; z-index: 2; background: var(--ca-paper); padding: 12svh var(--ca-inset) 0; --profile-row-gap: clamp(72px, 12vw, 180px); }
+.ca-gallery .profile-scattered { --gap: clamp(16px, 2.5vw, 40px); }
+.ca-gallery .profile-scattered .morph-tile { width: min(calc(var(--share) * (100% - var(--gap))), calc(var(--cap, 1) * 78svh)); }
+.ca-gallery .profile-scattered .morph-row > :only-child { width: min(88%, calc(var(--cap, 1) * 84svh)); }
 
 /* (03) Our mission — vision, mission, beliefs. A sticky index on the left
    (the 26% column the handoff labels already use), the chapters on the
    right. The brand blue appears only here, as the slides set it: the bar
    beside the chapter being read and the chapter labels. */
 .ca-beliefs { position: relative; z-index: 2; background: var(--ca-paper); padding: 140px var(--ca-inset) 120px; --ca-blue: #00749e; --ca-ease: cubic-bezier(0.22, 1, 0.36, 1); }
+/* The brand blue, lifted enough to read on the dark page. */
+.candor-agency[data-theme="dark"] .ca-beliefs { --ca-blue: #4aaad2; }
 .ca-beliefs__head { display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 16px; border-bottom: 1px solid var(--ca-ink); font-size: 12px; }
 .ca-beliefs__head h2 { font-family: var(--font-body); font-size: inherit; font-weight: 400; line-height: 1.2; }
 .ca-beliefs__grid { display: grid; grid-template-columns: 26% minmax(0, 1fr); }
 .ca-beliefs__rail { position: sticky; top: 0; align-self: start; display: flex; flex-direction: column; justify-content: space-between; height: 100svh; padding: 96px 24px 32px 0; }
 .ca-beliefs__rail ol { position: relative; margin: 0; padding: 0 0 0 16px; list-style: none; }
 .ca-beliefs__rail ol::before { content: ""; position: absolute; left: 0; top: 4px; width: 2px; height: 18px; background: var(--ca-blue); transform: translateY(calc(var(--active, 0) * 26px)); transition: transform 600ms var(--ca-ease); }
-.ca-beliefs__rail a { display: flex; align-items: center; gap: 12px; height: 26px; font-size: 12px; color: rgb(20 20 20 / 0.4); transition: color 300ms ease; }
+.ca-beliefs__rail a { display: flex; align-items: center; gap: 12px; height: 26px; font-size: 12px; color: color-mix(in srgb, var(--ca-ink) 40%, transparent); transition: color 300ms ease; }
 .ca-beliefs__rail a[aria-current] { color: var(--ca-ink); }
 .ca-beliefs__rail a > span { font-size: 10px; font-variant-numeric: tabular-nums; }
 .ca-beliefs__motto { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
@@ -127,11 +246,18 @@
 .ca-beliefs__chapter:last-child { padding-bottom: 22svh; }
 .ca-beliefs__label { display: flex; gap: 14px; padding-bottom: 28px; font-family: var(--font-body); font-size: 11px; font-weight: 400; line-height: 1.2; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ca-blue); }
 .ca-beliefs__statement { max-width: 21em; font-family: var(--font-h4); font-size: clamp(26px, 2.9vw, 52px); font-weight: 400; line-height: 1.1; letter-spacing: -0.04em; }
+/* The beliefs sit under their own header, set as large as a chapter
+   statement, with its line beneath. */
+.ca-beliefs__header { padding-bottom: 56px; }
+.ca-beliefs__header .ca-beliefs__statement { max-width: 12em; font-size: clamp(44px, 5.6vw, 104px); line-height: 0.98; letter-spacing: -0.05em; }
+.ca-beliefs__sub { padding-top: 20px; font-family: var(--font-h4); font-size: clamp(17px, 1.5vw, 26px); font-weight: 400; line-height: 1.25; letter-spacing: -0.03em; color: color-mix(in srgb, var(--ca-ink) 60%, transparent); }
+/* Each belief: its number, a rule, then the name over the sentence. */
 .ca-beliefs__list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--ca-ink); }
-.ca-beliefs__list li { display: grid; grid-template-columns: minmax(64px, 12%) minmax(0, 0.9fr) minmax(0, 1fr); gap: 24px; align-items: baseline; padding: 30px 0 34px; border-bottom: 1px solid rgb(20 20 20 / 0.16); }
-.ca-beliefs__num { font-family: var(--font-h4); font-size: clamp(26px, 2.6vw, 46px); font-weight: 400; line-height: 1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; color: rgb(20 20 20 / 0.32); transition: color 300ms ease; }
-.ca-beliefs__list h4 { font-family: var(--font-h1); font-size: clamp(40px, 4.4vw, 78px); font-weight: 400; line-height: 0.95; letter-spacing: -0.035em; transition: transform 600ms var(--ca-ease); }
-.ca-beliefs__list p { max-width: 30em; font-family: var(--font-h4); font-size: clamp(15px, 1.15vw, 19px); font-weight: 400; line-height: 1.4; letter-spacing: -0.01em; color: rgb(20 20 20 / 0.78); }
+.ca-beliefs__list li { display: grid; grid-template-columns: minmax(80px, 12%) minmax(0, 1fr); align-items: center; padding: 30px 0; border-bottom: 1px solid color-mix(in srgb, var(--ca-ink) 22%, transparent); }
+.ca-beliefs__list li > div { padding: 4px 0 4px clamp(24px, 3vw, 56px); border-left: 1px solid color-mix(in srgb, var(--ca-ink) 40%, transparent); }
+.ca-beliefs__num { font-family: var(--font-h4); font-size: clamp(40px, 4vw, 72px); font-weight: 300; line-height: 1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; color: var(--ca-blue); transition: color 300ms ease; }
+.ca-beliefs__list h4 { font-family: var(--font-h4); font-size: clamp(28px, 2.6vw, 46px); font-weight: 600; line-height: 1; letter-spacing: -0.04em; color: var(--ca-blue); transition: transform 600ms var(--ca-ease); }
+.ca-beliefs__list p { max-width: 30em; padding-top: 10px; font-family: var(--font-h4); font-size: clamp(15px, 1.15vw, 19px); font-weight: 400; line-height: 1.4; letter-spacing: -0.01em; color: color-mix(in srgb, var(--ca-ink) 78%, transparent); }
 .ca-beliefs [data-reveal] { opacity: 0; transform: translateY(28px); transition: opacity 800ms ease var(--delay, 0ms), transform 1100ms var(--ca-ease) var(--delay, 0ms); }
 .ca-beliefs [data-reveal][data-in] { opacity: 1; transform: none; }
 /* The row runs the page's full width (the copy is 65% of it), so the
@@ -152,31 +278,13 @@
 .ca-scene__corner { position: absolute; right: var(--ca-inset); bottom: 20px; color: white; mix-blend-mode: difference; font-size: 10px; }
 .ca-scene-travel { position: relative; height: 115svh; pointer-events: none; }
 
-.ca-contact { position: relative; z-index: 2; background: #0c0c0c; color: #faf9f6; padding: 72px var(--ca-inset) 20px; }
-.ca-contact__eyebrow { display: flex; justify-content: space-between; gap: 20px; font-size: 11px; padding-bottom: 80px; }
-.ca-contact__grid { display: grid; grid-template-columns: 58% 42%; align-items: start; }
-.ca-links { display: flex; flex-direction: column; align-items: start; padding-bottom: 110px; }
-.ca-directory-link { display: flex; align-items: center; justify-content: space-between; width: 83%; color: #858585; transition: color 200ms ease; }
-.ca-directory-link__short { font-size: clamp(90px, 13.2vw, 230px); font-weight: 400; letter-spacing: -0.065em; line-height: 1.03; }
-.ca-directory-link__label { font-size: 11px; line-height: 1.3; display: flex; gap: 24px; color: #b4b4b4; }
-.ca-directory-link:focus-visible { color: #faf9f6; }
-.ca-directory-link:active { color: #faf9f6; }
-.ca-contact__details { position: sticky; top: 100px; }
-.ca-contact__details h2 { font-family: var(--font-body); font-weight: 400; font-size: clamp(70px, 8.5vw, 150px); letter-spacing: -0.07em; line-height: 0.9; margin-bottom: 60px; }
-.ca-contact__details h2 span { font-family: "Arno Pro", serif; font-size: 1.15em; letter-spacing: -0.065em; }
-.ca-contact__desk { display: flex; flex-direction: column; align-items: flex-start; margin-top: 32px; gap: 5px; font-size: 14px; }
-.ca-contact__desk h3 { color: #999; font-size: 11px; font-weight: 400; margin-bottom: 6px; }
-.ca-contact__desk a { overflow-wrap: anywhere; max-width: 100%; }
-.ca-contact__cities { display: flex; flex-direction: column; margin-top: 50px; font-size: 12px; line-height: 1.3; font-weight: 400; }
 .ca-colophon { display: flex; align-items: end; justify-content: space-between; gap: 24px; font-size: 10px; padding-top: 35px; border-top: 1px solid #363636; }
 .ca-colophon > a:first-child { width: 130px; }
 
 @media (hover: hover) and (pointer: fine) {
-  .ca-beliefs__list li:hover .ca-beliefs__num { color: var(--ca-blue); }
+  .ca-beliefs__list li:hover .ca-beliefs__num { color: var(--ca-ink); }
   .ca-beliefs__list li:hover h4 { transform: translateX(10px); }
   .ca-beliefs__rail a:hover, .ca-introduction__label a:hover { color: var(--ca-ink); text-decoration: underline; }
-  .ca-directory-link:hover { color: #faf9f6; }
-  .ca-contact__desk a:hover, .ca-header a:hover { text-decoration: underline; text-underline-offset: 4px; }
 }
 
 @media (max-width: 700px) {
@@ -189,7 +297,8 @@
   .ca-introduction__aside { position: absolute; top: auto; left: 35%; right: 0; bottom: 24px; height: auto; margin: 0; }
   .ca-introduction__footnote { top: calc(100svh - 24px); max-width: 30%; }
   .ca-introduction__aside, .ca-introduction__footnote { background: var(--ca-paper); padding: 8px; }
-  .ca-introduction__portrait { left: 16%; bottom: 192px; width: 72%; height: min(52svh, 92vw); }
+  .candor-agency { --ca-portrait-gap: 192px; }
+  .ca-introduction__portrait { left: 16%; width: 72%; height: min(52svh, 92vw); }
   .ca-introduction__portrait figcaption { font-size: 9px; gap: 8px; }
   .ca-introduction__handoff { grid-template-columns: 48% 1fr; }
   .ca-approach { padding-bottom: 90px; }
@@ -200,48 +309,66 @@
   .ca-beliefs__chapter { padding-bottom: 96px; }
   .ca-beliefs__chapter:last-child { padding-bottom: 0; }
   .ca-beliefs__statement { font-size: clamp(24px, 6.4vw, 34px); }
-  .ca-beliefs__list li { grid-template-columns: 44px minmax(0, 1fr); gap: 8px 14px; padding: 24px 0 26px; }
-  .ca-beliefs__list p { grid-column: 2; }
-  .ca-beliefs__list h4 { font-size: 40px; }
-  .ca-approach__heading { font-size: 11px; }
-  .ca-approach__pin { padding-bottom: 24px; }
-  .ca-approach__portrait { width: 28vw; }
-  .ca-approach__portrait figcaption { max-width: 90px; font-size: 9px; line-height: 1.3; }
-  .ca-manifesto { font-size: 28vw; line-height: 0.88; }
-  .ca-manifesto__we { margin-left: 26%; }
-  .ca-manifesto__see { margin-left: 43%; }
-  .ca-manifesto__before { margin-left: 18%; font-size: 25vw; }
-  .ca-manifesto__we-see { font-size: 20vw; margin-left: 29%; }
-  .ca-manifesto__potential { font-size: 20vw; }
-  .ca-approach__closing { margin: 40px 0 0 42%; }
-  .ca-approach__closing p { font-size: 17px; }
-  .ca-approach__closing a { font-size: 11px; }
+  .ca-beliefs__list li { grid-template-columns: 52px minmax(0, 1fr); padding: 22px 0; }
+  .ca-beliefs__list li > div { padding-left: 16px; }
+  .ca-beliefs__num { font-size: 34px; }
+  .ca-beliefs__list h4 { font-size: 26px; }
+  .ca-beliefs__header .ca-beliefs__statement { font-size: clamp(36px, 10vw, 52px); }
+  .ca-manifesto { font-size:29vw; line-height:.88; gap:clamp(64px,16vw,100px); }
+  .ca-manifesto__build { margin-left:6%; font-size:27vw; }
+  .ca-manifesto__creatives { margin-left:0; font-size:26vw; line-height:calc(31vw * .88); }
+  .ca-manifesto__shape { margin-left:3%; font-size:25vw; }
+  .ca-manifesto__culture { font-size:29vw; }
+  .ca-manifesto > .ca-manifesto__through { display:block; font-size:29vw; }
+  .ca-fluid-type__through { display:none; }
+  .ca-fluid-type::after { content:"diverse"; }
+  .ca-manifesto__finish { font-size:29vw; }
+  .ca-perspectives.wp.wp-clear { font-size:34vw; }
+  /* The phone story is just the large type. Belief copy resolves in place
+     on its own card, without the desktop's travelling annotation layer. */
+  .ca-note[data-note-word], .ca-pinned-notes { display:none; }
+  /* Room for one note beside the lines on a phone; the run carries the rest. */
+  .ca-note { width: 36vw; font-size: 10px; }
+  .ca-note--candor { left:auto; right:var(--ca-inset); width:36vw; }
+  .ca-manifesto__culture { margin-top:100px; }
+  .ca-note[data-note-word] { --ca-tier-gap: 24vw; left: -44vw; bottom: calc(20vw * 0.88 + 14px + var(--tier) * var(--ca-tier-gap)); width:var(--ca-card-inner-width, 42vw); }
+  .ca-note[data-note-word], .ca-note--pinned { font-size:14px; line-height:1.45; }
   .ca-scene__photo img { object-position: 48% 42%; }
-  .ca-contact { padding-top: 72px; padding-bottom: max(24px, env(safe-area-inset-bottom)); }
-  .ca-contact__eyebrow { padding-bottom: 56px; }
-  .ca-contact__grid { grid-template-columns: 1fr; }
-  .ca-contact__details { position: static; grid-row: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 16px; margin-bottom: 60px; }
-  .ca-contact__details h2 { grid-column: 1 / -1; font-size: 22vw; margin-bottom: 0; }
-  .ca-contact__details h2 br { display: none; }
-  .ca-contact__details h2 span { margin-left: 0.15em; }
-  .ca-contact__desk { margin-top: 0; font-size: 12px; }
-  .ca-contact__cities { margin-top: 0; grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; gap: 16px; }
-  .ca-links { padding-bottom: 64px; }
-  .ca-directory-link { width: 100%; }
-  .ca-directory-link__short { font-size: 25vw; }
-  .ca-directory-link__label { font-size: 12px; }
   .ca-colophon { flex-wrap: wrap; gap: 24px 16px; align-items: center; }
   .ca-colophon > a:first-child { width: 95px; }
   .ca-colophon > span { margin-left: auto; }
   .ca-colophon > a:last-child { margin-left: auto; }
 }
 
-@media (max-width: 420px) {
-  .ca-contact__details { grid-template-columns: minmax(0, 1fr); }
-  .ca-contact__desk { font-size: 14px; }
+/* Keep the opening portrait below the copy even on a short phone screen. */
+@media (max-width:700px) and (prefers-reduced-motion:no-preference) {
+  .ca-introduction__stage { height:max(100svh,800px); }
+  .ca-introduction__notes { height:max(100svh,800px); }
+  .ca-introduction__handoff { margin-top:calc(max(100svh,800px) - 64px); }
+  .ca-introduction__footnote { top:calc(max(100svh,800px) - 24px); }
+  .ca-introduction__aside a { min-height:32px; display:inline-flex; align-items:center; }
+  .ca-introduction__copy .ca-introduction__label a { min-height:36px; display:inline-flex; align-items:center; }
+}
+/* Shallow landscape screens need a composed spread instead of overlapping
+   the opening statement and photograph inside one short viewport. */
+@media (max-height:500px) and (min-width:701px) {
+  .ca-introduction { grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); column-gap:40px; padding-top:88px; }
+  .ca-introduction__flow { display:contents; }
+  .ca-introduction__copy { grid-column:1; grid-row:1; width:100%; padding-top:0; font-size:20px; }
+  .ca-introduction__copy .ca-introduction__label { width:100%; }
+  .ca-introduction__stage { grid-column:2; grid-row:1; position:relative; height:auto; min-height:270px; align-self:stretch; }
+  .ca-introduction__portrait { inset:0 0 28px; width:100%; height:auto; }
+  .ca-reveal-frame, .ca-reveal-photo { transform:none !important; opacity:1 !important; }
+  .ca-introduction__notes { position:relative; inset:auto; grid-column:1 / -1; display:flex; justify-content:space-between; gap:32px; padding-top:32px; }
+  .ca-introduction__aside, .ca-introduction__footnote { position:static; height:auto; margin:0; transform:none; }
+  .ca-introduction__aside { max-width:50%; }
+  .ca-introduction__handoff { grid-column:1 / -1; margin-top:0; height:80px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .ca-note__preview { display:none; }
+  .ca-note__full { display:inline; }
+  .ca-pinned-notes { display:none; }
   .ca-introduction { display: flex; flex-direction: column; }
   .ca-introduction__flow { display: contents; }
   .ca-introduction__copy { order: -1; }
@@ -252,12 +379,27 @@
   .ca-introduction__handoff { margin-top: 24px; }
   .ca-reveal-frame, .ca-reveal-photo, .ca-scene__frame, .ca-scene__photo { transform: none !important; will-change: auto; }
   .ca-manifesto > [data-line] > span { transform: none !important; will-change: auto; }
-  .ca-approach__portrait img, .ca-people__letter { transition: none; }
+  /* No run: the final phrase drops under "through" and the notes it carried line up
+     below the manifesto. */
+  .ca-manifesto > .ca-manifesto__finish { width: auto; white-space: normal; padding-right: 0; }
+  .ca-fluid-type { white-space:normal; }
+  .ca-fluid-type::after { mask:none; }
+  .ca-perspectives.wp.wp-clear { display:block; width:fit-content; margin-top:.15em; font-size:14vw; }
+  .ca-manifesto__notes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; padding-top: 48px; }
+  .ca-note { opacity: 1; transform: none; transition: none; }
+  .ca-note[data-note-word] { position: static; width: auto; }
   .ca-beliefs [data-reveal] { opacity: 1; transform: none; transition: none; }
   .ca-beliefs__rail ol::before, .ca-beliefs__list h4 { transition: none; }
   .ca-reveal-frame, .ca-scene__caption { opacity: 1 !important; }
-  .ca-approach__pin { position: relative; height: auto; margin-bottom: 35px; padding-bottom: 0; }
   .ca-scene { position: relative; height: 90svh; }
   .ca-scene-travel { display: none; }
-  .ca-contact__details { position: static; }
+}
+
+@media (prefers-reduced-motion: reduce) and (max-width: 700px) {
+  .ca-manifesto__build { font-size:18vw; }
+  .ca-manifesto__creatives { font-size:17vw; }
+  .ca-manifesto__shape { font-size:16.5vw; }
+  .ca-manifesto__culture, .ca-manifesto__finish { font-size:20.5vw; }
+  .ca-manifesto > .ca-manifesto__through { font-size:20.5vw; }
+  .ca-manifesto__notes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

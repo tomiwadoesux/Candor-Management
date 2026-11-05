@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import gsap from "gsap";
@@ -15,6 +15,12 @@ gsap.registerPlugin(CustomEase);
 CustomEase.create("candor-island", ISLAND_EASE.join(","));
 const ISLAND_CSS_EASE = `cubic-bezier(${ISLAND_EASE.join(",")})`;
 
+// Beside "Go home" in the open bar, after a dot each.
+const DOCK_LINKS = [
+  { label: "Privacy", href: "/privacy" },
+  { label: "Get scouted", href: "/get-scouted" },
+];
+
 const GLYPH_CLOSED = ["M3 8 L29 8", "M7 14 L25 14", "M11 20 L21 20"];
 // The close X is drawn a size down from the menu lines (11 units, not 16) so
 // it sits lighter in the dock.
@@ -25,6 +31,9 @@ export default function InNav({ searchOpen = false }) {
   const setMenuOpen = search?.setMenuOpen;
   const setMenuLabelActive = search?.setMenuLabelActive;
   const [active, setActive] = useState(false);
+  // Privacy and scouting links: shown with the menu, but gone the moment it
+  // starts to close rather than riding out the close.
+  const [dockLinks, setDockLinks] = useState(false);
   const id = useId();
   const pathname = usePathname();
   const triggerRef = useRef(null);
@@ -36,6 +45,7 @@ export default function InNav({ searchOpen = false }) {
   const dockRef = useRef(null);
   const dockIconRef = useRef(null);
   const dockLabelRef = useRef(null);
+  const scrimRef = useRef(null);
   const timelineRef = useRef(null);
   const geometryRef = useRef(null);
   const wantsOpen = useRef(false);
@@ -50,6 +60,7 @@ export default function InNav({ searchOpen = false }) {
       previousOverflow.current = null;
     }
     setActive(false);
+    setDockLinks(false);
     setMenuOpen?.(false);
     setMenuLabelActive?.(false);
     if (triggerRef.current) {
@@ -61,6 +72,7 @@ export default function InNav({ searchOpen = false }) {
   const closeMenu = useCallback((instant = false) => {
     if (!dialogRef.current?.open) return;
     wantsOpen.current = false;
+    setDockLinks(false);
     contentRef.current.inert = true;
     seedRef.current.inert = false;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -86,6 +98,7 @@ export default function InNav({ searchOpen = false }) {
           .set(panelRef.current, { visibility: "hidden" }, collapseEnd);
       }
       timeline
+        .to(scrimRef.current, { opacity: 0, duration: 0.3, ease: "power1.out" }, 0)
         .to(topLine, { attr: { d: GLYPH_CLOSED[0] }, duration: 0.25, ease: "candor-island" }, 0)
         .to(bottomLine, { attr: { d: GLYPH_CLOSED[2] }, duration: 0.25, ease: "candor-island" }, 0)
         .to(middleLine, { opacity: 1, duration: 0.2, ease: "none" }, 0.08)
@@ -123,6 +136,7 @@ export default function InNav({ searchOpen = false }) {
       gsap.set(topLine, { attr: { d: GLYPH_CLOSED[0] } });
       gsap.set(bottomLine, { attr: { d: GLYPH_CLOSED[2] } });
       gsap.set(middleLine, { opacity: 1 });
+      gsap.set(scrimRef.current, { opacity: 0 });
       gsap.set(dockRef.current, { ...collapsed, height: rect.height });
       gsap.set(dockIconRef.current, { x: 0, opacity: 1 });
       gsap.set(dockLabelRef.current, { x: 0 });
@@ -139,13 +153,19 @@ export default function InNav({ searchOpen = false }) {
         contentRef.current.querySelector("[data-nav-first]")?.focus({ preventScroll: true });
       },
     });
+    const index = contentRef.current.querySelector(".cm-index");
+    const labelX = (index ? parseFloat(getComputedStyle(index).paddingLeft) : 14) - dockLabelRef.current.offsetLeft;
     timeline
+      // The same dim-and-blur the search lays behind itself, on the same 0.3s.
+      .to(scrimRef.current, { opacity: 1, duration: 0.3, ease: "power1.out" }, 0)
       .to(topLine, { attr: { d: GLYPH_OPEN[0] }, duration: 0.28, ease: "candor-island" }, 0.08)
       .to(bottomLine, { attr: { d: GLYPH_OPEN[2] }, duration: 0.28, ease: "candor-island" }, 0.08)
       .to(middleLine, { opacity: 0, duration: 0.14, ease: "none" }, 0.08)
       .to(dockRef.current, { left: target.left, width: target.width, duration: ISLAND_OPEN.horizontal, ease: "candor-island" }, 0)
       .to(dockIconRef.current, { x: -40, opacity: 0, duration: ISLAND_BUTTON.enter, ease: "candor-island" }, 0)
-      .to(dockLabelRef.current, { x: -28, duration: ISLAND_BUTTON.enter, ease: "candor-island" }, 0)
+      // "Go home" moves over to start on the menu's own left edge (its
+      // index padding), level with everything above it.
+      .to(dockLabelRef.current, { x: labelX, duration: ISLAND_BUTTON.enter, ease: "candor-island" }, 0)
       // Match Search's real bounds animation: horizontal movement and growth
       // begin together, with vertical growth overlapping after 100ms.
       .set(panel, { visibility: "visible" }, 0)
@@ -178,6 +198,7 @@ export default function InNav({ searchOpen = false }) {
     const timeline = buildTimeline();
     triggerRef.current.style.visibility = "hidden";
     setActive(true);
+    setDockLinks(true);
     setMenuOpen?.(true);
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (instant || reduced) timeline.progress(1);
@@ -248,12 +269,23 @@ export default function InNav({ searchOpen = false }) {
           }
         }}
         onPointerDown={(event) => { if (event.target === event.currentTarget) closeMenu(); }}>
+        <div ref={scrimRef} className="island-nav-scrim" aria-hidden="true" />
         <div ref={dockRef} className="island-nav-dock">
           <span ref={dockIconRef} className="island-nav-dock-icon" aria-hidden="true"><SearchGlyph /></span>
           {/* Open, the bar's label is the way home — the one page the
-              menu's index doesn't list. */}
-          <Link ref={dockLabelRef} href="/" className="island-nav-dock-label" data-menu-active={search?.menuLabelActive ?? active}
-            onClick={() => closeMenu(true)}>{search?.searchLabel ?? MENU_LABEL}</Link>
+              menu's index doesn't list — with Privacy and FAQs after it. */}
+          <span ref={dockLabelRef} className="island-nav-dock-row">
+            <Link href="/" className="island-nav-dock-label" data-menu-active={search?.menuLabelActive ?? active}
+              onClick={() => closeMenu(true)}>{search?.searchLabel ?? MENU_LABEL}</Link>
+            <span className="island-nav-dock-more" data-shown={dockLinks || undefined}>
+              {DOCK_LINKS.map((item) => (
+                <Fragment key={item.href}>
+                  <span aria-hidden="true">·</span>
+                  <Link href={item.href} tabIndex={dockLinks ? undefined : -1} onClick={() => closeMenu(true)}>{item.label}</Link>
+                </Fragment>
+              ))}
+            </span>
+          </span>
           <button ref={seedRef} type="button" className="island-nav-seed" aria-label="Close navigation"
             aria-expanded={active}
             onClick={(event) => wantsOpen.current ? closeMenu(event.detail === 0) : openMenu(event.detail === 0)}><MenuGlyph /></button>
@@ -270,7 +302,7 @@ export default function InNav({ searchOpen = false }) {
 }
 
 function MenuGlyph() {
-  return <svg width="32" height="28" viewBox="0 0 32 28" fill="none" aria-hidden="true">
+  return <svg width="27" height="24" viewBox="0 0 32 28" fill="none" aria-hidden="true">
     {GLYPH_CLOSED.map((d, index) => <path key={index} data-menu-line d={d} stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" />)}
   </svg>;
 }

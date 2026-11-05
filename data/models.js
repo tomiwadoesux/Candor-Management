@@ -1,4 +1,4 @@
-// data/models.js
+import { showcaseProfiles } from "./showcaseProfiles.js";
 //
 // One roster, three divisions. `division` is the field the boards filter on —
 // "models" | "talents" | "creatives" — matching the three headings the nav
@@ -879,4 +879,5 @@ export const models = [
     focus: "Set · Art Direction",
     since: "2015",
   },
+  ...showcaseProfiles,
 ];

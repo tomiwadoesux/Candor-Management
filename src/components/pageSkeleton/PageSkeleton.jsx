@@ -3,13 +3,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import SkeletonSvg from "./SkeletonSvg";
+import useViewport from "./useViewport";
 import {
-  loadIndex,
   loadMapFor,
   normalizePath,
   peekMapFor,
   pickBucket,
   routePattern,
+  warmMapsFor,
 } from "./layoutMap";
 import "../../styles/page-skeleton.css";
 
@@ -171,6 +172,7 @@ async function waitForPage(overlay) {
 // ---------------------------------------------------------------------------
 
 export default function PageSkeleton() {
+  const viewport = useViewport();
   const pathname = usePathname();
   const params = useParams();
   const router = useRouter();
@@ -308,9 +310,6 @@ export default function PageSkeleton() {
     window.addEventListener("touchstart", onIntent, { passive: true });
     window.addEventListener("focusin", onIntent);
 
-    const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 1200));
-    idle(() => loadIndex());
-
     return () => {
       if (startFromCode === start) startFromCode = null;
       window.removeEventListener("click", onClick);
@@ -319,6 +318,20 @@ export default function PageSkeleton() {
       window.removeEventListener("focusin", onIntent);
     };
   }, [router, start]);
+
+  useEffect(() => {
+    const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 1200));
+    const token = idle(() => {
+      const destinations = [...document.querySelectorAll("a[href]")].flatMap(a => {
+        try {
+          const url = new URL(a.getAttribute("href"), window.location.href);
+          return isPageNav(url) ? [url.pathname] : [];
+        } catch { return []; }
+      });
+      warmMapsFor(destinations);
+    });
+    return () => (window.cancelIdleCallback || clearTimeout)(token);
+  }, [pathname]);
 
   // While the overlay is up the page under it is not the page being shown.
   // Wheel and touch scrolling are swallowed here — stopped before they reach
@@ -359,7 +372,7 @@ export default function PageSkeleton() {
         recorder.current = startRecorder({
           getRoute: () => routeRef.current,
           isBusy: () =>
-            run.current !== null || document.querySelector(".return-reveal") !== null,
+            run.current !== null || document.querySelector(".return-reveal, [data-page-loading], [data-skeleton-pending], dialog[open]") !== null,
           isOwnNode: (el) => !!el.closest?.(`[${OVERLAY_ATTR}]`),
         });
       });
@@ -379,7 +392,7 @@ export default function PageSkeleton() {
 
   if (!show) return null;
 
-  const layout = show.map ? pickBucket(show.map, window.innerWidth) : null;
+  const layout = show.map ? pickBucket(show.map, viewport?.[0] || window.innerWidth, viewport?.[1] || window.innerHeight) : null;
 
   return (
     <div
@@ -390,7 +403,7 @@ export default function PageSkeleton() {
       style={{ backgroundColor: layout?.bg ?? show.fallbackBg }}
       aria-hidden="true"
     >
-      {layout && <SkeletonSvg layout={layout} scan={!show.reduced} />}
+      {layout && <SkeletonSvg layout={layout} viewport={viewport} scan={!show.reduced} />}
     </div>
   );
 }

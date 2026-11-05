@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { models } from "../../../data/models";
 import { agency, joinMailto, contactMailto } from "../../../data/agency";
 import ChromeLink from "@/components/ChromeLink";
+import AdaptiveText from "@/components/AdaptiveText";
 import CreativeSphere from "@/components/CreativeSphere";
 import LogoAnimation from "@/components/LogoAnimation";
 
@@ -66,11 +67,12 @@ const heroBoard = ({ W, H }) => {
 // the data yet, so the looks are dealt round-robin over it — swap this one
 // line for the real relation once the works carry their own credit.
 // Exported for app/hero3's dome, which shows the same 53 looks from inside.
+const lookRoster = models.filter((person) => !person.showcasePhotos);
 export const items = Array.from({ length: 53 }, (_, i) => ({
   src: `/thumbs/sphere/${i + 1}.jpg`,
   label: `Look ${String(i + 1).padStart(2, "0")}`,
   meta: "CANDOR",
-  person: models[i % models.length],
+  person: lookRoster[i % lookRoster.length],
 }));
 
 // first look credited to each person — where the globe turns to on a click
@@ -153,8 +155,8 @@ const fade = (hidden) => ({ opacity: hidden ? 0 : 1 });
 
 function PageChrome({ hidden, embedded }) {
   return (
-    <div className="pointer-events-none absolute inset-0 z-10 flex flex-col justify-between px-3 py-5 text-black md:px-5">
-      <div className="flex items-start justify-between">
+    <div className="sphere-chrome pointer-events-none absolute inset-0 z-10 flex flex-col justify-between px-3 py-5 text-black md:px-5">
+      <div className="sphere-chrome__top flex items-start justify-between">
         {/* the wordmark holds through every state — it is the page's anchor,
             not part of the furniture that clears away for an open card.
             Embedded in the landing page there is already a docked CANDOR
@@ -202,11 +204,11 @@ function PageChrome({ hidden, embedded }) {
           below it, so it holds the middle of the right edge */}
       <div
         aria-hidden={hidden}
-        className={`absolute inset-y-0 right-3 flex items-center md:right-5 ${FADE}`}
+        className={`sphere-chrome__contact absolute inset-y-0 right-3 flex items-center md:right-5 ${FADE}`}
         style={fade(hidden)}
       >
         <div className="flex flex-col items-end text-[14px] leading-[1.45]">
-          <span className={TOPIC}>MODELS &amp; TALENT</span>
+          <AdaptiveText className={TOPIC}>MODELS &amp; TALENT</AdaptiveText>
           <div className="mt-3 flex flex-col items-end gap-1">
             <ChromeLink pill href={joinMailto}>{agency.join.email}</ChromeLink>
             <ChromeLink pill href={agency.join.phoneHref}>
@@ -224,11 +226,11 @@ function PageChrome({ hidden, embedded }) {
       {/* items-end sits the locations on the copyright's own line */}
       <div
         aria-hidden={hidden}
-        className={`flex items-end justify-between text-[14px] leading-[1.45] ${FADE}`}
+        className={`sphere-chrome__info flex items-end justify-between text-[14px] leading-[1.45] ${FADE}`}
         style={fade(hidden)}
       >
         <div>
-          <span className={TOPIC}>INFO</span>
+          <AdaptiveText className={TOPIC}>INFO</AdaptiveText>
           <div className="mt-3 flex flex-col items-start gap-1">
             <ChromeLink pill>Instagram</ChromeLink>
             <ChromeLink pill>Linkedin</ChromeLink>
@@ -244,11 +246,11 @@ function PageChrome({ hidden, embedded }) {
             <ChromeLink pill href="/privacy">Privacy policy</ChromeLink>
             <ChromeLink pill>Terms and conditions</ChromeLink>
           </div>
-          <span className="mt-6 block text-[12px] text-black/45">
-            © {new Date().getFullYear()} Candor Management Agency
-          </span>
+          <AdaptiveText className="mt-6 block text-[12px] text-black/45">
+            {`© ${new Date().getFullYear()} Candor Management Agency`}
+          </AdaptiveText>
         </div>
-        <span className="text-[12px] text-black/45">Lagos</span>
+        <AdaptiveText className="text-[12px] text-black/45">Lagos</AdaptiveText>
       </div>
     </div>
   );
@@ -267,7 +269,7 @@ function PageChrome({ hidden, embedded }) {
 // dealing the names alternately to the two ends gets there in one pass, so
 // the shape holds itself however the roster changes.
 const TALENT_ORDER = (() => {
-  const byLength = [...models].sort((a, b) => b.name.length - a.name.length);
+  const byLength = [...lookRoster].sort((a, b) => b.name.length - a.name.length);
   const top = [];
   const bottom = [];
   byLength.forEach((m, i) => (i % 2 === 0 ? top : bottom).push(m));
@@ -321,7 +323,7 @@ function WorkDetails({ item }) {
   return (
     <div
       aria-hidden={!item}
-      className="pointer-events-none absolute inset-y-0 left-3 z-20 flex max-w-[260px] flex-col justify-center py-5 text-[14px] leading-[1.45] text-black transition-opacity duration-500 md:left-5"
+      className="sphere-work-details pointer-events-none absolute inset-y-0 left-3 z-20 flex max-w-[260px] flex-col justify-center py-5 text-[14px] leading-[1.45] text-black transition-opacity duration-500 md:left-5"
       style={{ opacity: item ? 1 : 0 }}
     >
       {p && (
@@ -380,8 +382,9 @@ export default function Sphere2({
   const base = embedded ? config : hollowConfig;
 
   return (
-    <div className="relative h-full w-full">
+    <div className="sphere-page relative h-full w-full">
       <CreativeSphere
+        className="sphere-page__scene"
         items={items}
         title=""
         config={configOverride ? { ...base, ...configOverride } : base}
@@ -399,7 +402,7 @@ export default function Sphere2({
         <>
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 z-[15] flex items-center justify-center text-black transition-opacity duration-500"
+            className="sphere-page__wordmark pointer-events-none absolute inset-0 z-[15] flex items-center justify-center text-black transition-opacity duration-500"
             style={{ opacity: stage === "board" ? 1 : 0 }}
           >
             <LogoAnimation

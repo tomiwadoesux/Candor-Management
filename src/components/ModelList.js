@@ -11,6 +11,13 @@ const HoverImage = dynamic(() => import("../components/HoverImage"), {
   ssr: false,
 });
 
+// Introduce the showcase portraits first on the division boards while the
+// homepage's editorial selections keep their original roster order.
+const boardRoster = [
+  ...models.filter((person) => person.showcasePhotos),
+  ...models.filter((person) => !person.showcasePhotos),
+];
+
 // The data stores both systems ("180 cm / 5'11\""); show only the metric half.
 const metric = (v) => (v ? String(v).split("/")[0].trim() : "");
 
@@ -63,7 +70,7 @@ export default function ModelList({
     newfaces: "RISING STARS",
   };
 
-  const filteredModels = models.filter((m) => {
+  const filteredModels = boardRoster.filter((m) => {
     if (division && m.division !== division) return false;
     if (selectedGender !== "all" && m.gender !== selectedGender) return false;
     if (board && board !== "all" && m.board !== BOARD_SLUGS[board]) return false;

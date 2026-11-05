@@ -12,6 +12,13 @@
   color: #f2efe9;
 }
 
+/* Spectrum takes the page's own ground (the canvas reads it and paints it),
+   light word on dark, dark word on light. */
+.wp.wp-clear {
+  background: none;
+  color: inherit;
+}
+
 .wp-canvas {
   position: absolute;
   inset: 0;

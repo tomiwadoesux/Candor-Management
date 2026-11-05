@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import "../../styles/candor-intro.css";
 import { introMemoryAllowed, INTRO_SEEN_KEY } from "../../lib/introMemory";
 import HeatTransition from "../../components/HeatTransition";
+import AdaptiveText from "../../components/AdaptiveText";
 
 // The intro: the mission line types itself in, the rest of it drains away and
 // the six letters hiding CANDOR inside it fly out to spell the name, the name
@@ -129,12 +130,11 @@ const EASE = (t) => {
 // left to CSS), while every cumulative mark in the timeline is still expressed
 // against the stylesheet's copy. Change one and you must change the other.
 // The sweep matches the CSS timeline: the page appears as the name finishes
-// forming, and the boxes settle at 2130ms before the letters start falling.
-const TYPE_MS = 900;
-const LABEL_TYPE_MS = 360;
+// forming, and the boxes settle at 1730ms before the letters start falling.
+const TYPE_MS = 1100;
 
 // A character's delay: its position along the write, eased, scaled to the
-// write's length. The shorter card labels use the same sweep curve.
+// write's length. Card labels appear as complete words.
 const charDelay = (i, n, duration = TYPE_MS) =>
   EASE(n > 1 ? i / (n - 1) : 0) * duration;
 
@@ -146,8 +146,8 @@ const charDelay = (i, n, duration = TYPE_MS) =>
 // holds the public-domain painted portraits (see public/images/CREDITS.md).
 // The landing page fronts the agency, so it shows the roster, not the art.
 const CARDS = [
-  { label: "Models", href: "/models", src: "/photos/img1.jpeg" },
-  { label: "Talents", href: "/talents", src: "/photos/img24.jpeg" },
+  { label: "MODELS", href: "/models", src: "/photos/img1.jpeg" },
+  { label: "TALENTS", href: "/talents", src: "/photos/img24.jpeg" },
 ];
 
 // The fall, per letter. The six do not drop as one word — each goes on its
@@ -203,35 +203,10 @@ export const SEEN_KEY = INTRO_SEEN_KEY;
 // the data-mode the animation is keyed off.
 // The wordmark, mounted OUTSIDE the intro so nothing can clip or cover it.
 //
-// It carries `candor-intro` and `data-mode` itself because the entry
-// animation is written as `[data-mode="play"] .candor-logo` — the class is
-// what holds the timing, and repeating it here means the floating mark and
-// the in-intro one can never drift apart.
-//
-// `delayMs` is not needed: the animation's own --at-furniture delay does the
-// waiting, exactly as it does inside the intro.
+// Always visible, independently of the intro's session or replay state.
 export function CandorFloatingLogo({ children }) {
-  const [mode, setMode] = useState(null);
-
-  // The same resolution CandorLine does, and deliberately a separate copy:
-  // this mounts before CandorLine in the page's JSX, and by the time
-  // CandorLine's effect writes SEEN_KEY this one has already read it. Sharing
-  // one read would mean sharing state across two trees for no gain.
-  useEffect(() => {
-    let seen = false;
-    try {
-      seen = sessionStorage.getItem(SEEN_KEY) === "1";
-    } catch {
-      // Private mode, or storage disabled. Play it.
-    }
-    setMode(seen ? "done" : "play");
-  }, []);
-
   return (
-    <div
-      className="candor-intro-logo-host pointer-events-none fixed left-1/2 top-5 z-40 w-max -translate-x-1/2"
-      data-mode={mode ?? undefined}
-    >
+    <div className="candor-intro-logo-host pointer-events-none fixed left-1/2 top-5 z-40 w-max -translate-x-1/2">
       <div className="candor-logo">{children}</div>
     </div>
   );
@@ -442,7 +417,7 @@ export default function CandorLine({
       <button
         type="button"
         onClick={replay}
-        className="pointer-events-auto absolute right-3 top-5 z-50 rounded-full border border-black/15 bg-white/80 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-black/60 backdrop-blur transition-colors hover:border-black/30 hover:text-black/90"
+        className="candor-replay pointer-events-auto absolute right-3 top-5 z-50 rounded-full border border-black/15 bg-white/80 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-black/60 backdrop-blur transition-colors hover:border-black/30 hover:text-black/90"
       >
         Replay
       </button>
@@ -505,7 +480,7 @@ export default function CandorLine({
           rather than as generic blocks. Sized by HEIGHT with the ratio doing
           the width, so the proportion holds at every viewport instead of
           drifting as two independent dimensions would. */}
-        <HeatTransition enabled={floatingLogo} targetSelector="[data-look]">
+        <HeatTransition enabled={floatingLogo} effects={false} targetSelector="[data-look]">
         <div className="candor-cards pointer-events-none absolute inset-0 z-0 flex items-center justify-center gap-3 md:gap-6">
           {CARDS.map(({ label, href, src }) => (
             // h-full, and not decorative: the card inside is sized at a
@@ -528,31 +503,14 @@ export default function CandorLine({
                     <img
                       src={src}
                       alt=""
-                      loading="lazy"
+                      loading="eager"
+                      fetchPriority="high"
                       decoding="async"
                       className="candor-card-img absolute inset-0 h-full w-full object-cover"
-                      onLoad={(e) => {
-                        e.currentTarget.dataset.loaded = "1";
-                      }}
                     />
                   </div>
                 </div>
-                <h2 className="candor-card-label">
-                  <span aria-hidden="true" className="candor-card-word">
-                    {label.split("").map((letter, i) => (
-                      <span
-                        key={i}
-                        className="candor-card-letter"
-                        style={{
-                          "--t": `${charDelay(i, label.length, LABEL_TYPE_MS).toFixed(2)}ms`,
-                        }}
-                      >
-                        {letter}
-                      </span>
-                    ))}
-                  </span>
-                  <span className="sr-only">{label}</span>
-                </h2>
+                <AdaptiveText as="h2" className="candor-card-label">{label}</AdaptiveText>
               </div>
             </a>
           ))}

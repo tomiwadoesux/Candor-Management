@@ -20,7 +20,7 @@ export default function GetScouted() {
       <Header />
       <div className="scout-masthead">
         <Link href="/" aria-label="Candor home"><LogoAnimation animate={false} tight className="w-[124px]" /></Link>
-        <nav aria-label="Agency"><ChromeLink href="/about">the agency</ChromeLink><ChromeLink href="/models">our models</ChromeLink></nav>
+        <nav aria-label="Agency"><ChromeLink href="/agency">the agency</ChromeLink><ChromeLink href="/models">our models</ChromeLink></nav>
       </div>
       <main>
         <header className="scout-hero">
@@ -84,7 +84,6 @@ export default function GetScouted() {
         </section>
         {scouting.openCalls.length > 0 && <section className="scout-section"><h2>Open calls</h2><ul>{scouting.openCalls.map((call) => <li key={`${call.city}-${call.date}`}>{call.city} — {call.date}, {call.venue}</li>)}</ul></section>}
       </main>
-      <footer className="scout-footer"><Link href="/" aria-label="Candor home"><LogoAnimation animate={false} tight className="w-[124px]" /></Link><p>Lagos. Manchester. Dallas.</p><ChromeLink href="/privacy">privacy</ChromeLink></footer>
     </div>
   );
 }

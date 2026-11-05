@@ -10,6 +10,16 @@ import ReturnReveal from "../components/ReturnReveal";
 // SVG, for at least a second while the page loads under it. In dev it also
 // records each page's layout into public/skeletons/ as you browse.
 import PageSkeleton from "../components/pageSkeleton/PageSkeleton";
+import AdaptiveInk from "../components/AdaptiveInk";
+import SiteFooter from "../components/SiteFooter";
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  interactiveWidget: "resizes-content",
+  themeColor: "#fafafa",
+};
 
 export const metadata = {
   title: "Create Next App",
@@ -20,11 +30,13 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className="antialiased">
+        <AdaptiveInk />
         <SmoothScroll />
         <ReturnReveal />
         <PageSkeleton />
         <HoveredModelProvider>
           {children}
+          <SiteFooter />
           <ModelImageCursor />
         </HoveredModelProvider>
       </body>

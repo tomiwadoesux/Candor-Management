@@ -7,6 +7,7 @@ import Header from "../../components/header";
 import HeaderTest from "../../components/headerTest";
 import ModelList from "../../components/ModelList";
 import ModelRail from "../../components/ModelRail";
+import MobileBoardLogo from "../../components/MobileBoardLogo";
 
 import { SearchProvider } from "../../components/SearchContext";
 
@@ -53,6 +54,7 @@ function Models() {
     <SearchProvider>
       <div className="bg-white min-h-screen w-full">
         <Header />
+        <MobileBoardLogo />
         <main className="w-full px-3 md:px-5 lg:flex lg:items-start lg:gap-5">
           {/* Left rail: 25% of the screen on desktop — the hovered model's
               name / height / shoe and four polaroids. Sticky so it stays put

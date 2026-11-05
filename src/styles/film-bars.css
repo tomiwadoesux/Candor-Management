@@ -1,9 +1,9 @@
-/* The inline showreel's control bar — see components/FilmBars.jsx. */
-
+/* Inline showreel: centred credits, a name index, and central transport. */
 .fb {
   color: #fff;
+  font-family: var(--font-h4);
   font-size: 0.6875rem;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.01em;
   line-height: 1.35;
 }
@@ -15,197 +15,371 @@
   border: 0;
   color: inherit;
   font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0;
+  min-height: 44px;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 160ms ease, transform 100ms var(--ease);
 }
 
-.fb [role="slider"] {
-  pointer-events: auto;
-  cursor: pointer;
-  touch-action: none;
-  outline: none;
-}
-
-.fb button:focus-visible,
-.fb [role="slider"]:focus-visible {
+.fb button:focus-visible {
   outline: 1px solid currentColor;
   outline-offset: 4px;
+}
+
+.fb button:active {
+  transform: scale(0.97);
 }
 
 .fb p {
   margin: 0;
 }
 
-/* Inline the chrome's 1.25rem gutter was sized for a hairline row; a title
-   this large needs more air around it. */
 .film__chrome:has(.fb-c) {
+  --fb-gutter: 1.25rem;
   padding: 1.25rem;
 }
 
 @media (min-width: 768px) {
   .film__chrome:has(.fb-c) {
+    --fb-gutter: 2.25rem;
     padding: 2rem 2.25rem 1.75rem;
   }
 }
 
+.film__chrome:has(.fb-c) > .film__foot {
+  position: absolute;
+  inset: 0;
+  padding: inherit;
+  display: flex;
+  flex-direction: column;
+}
+
 .fb-c {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   mix-blend-mode: difference;
 }
 
-.fb-c__top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 2.5rem;
-  padding-bottom: 1.75rem;
+.film__chrome:has(.fb-c)::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 12rem;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.45), transparent);
 }
 
-.fb-c__lede {
-  min-width: 0;
-  animation: fb-c-in 700ms var(--ease) both;
-}
-
-@keyframes fb-c-in {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-}
-
-/* Small type shares one voice: caps, open tracking, mono figures. */
-.fb-c__kicker,
-.fb-c__time,
-.fb-c__label {
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  font-variant-numeric: tabular-nums;
-  font-size: 0.625rem;
+.fb-c__title,
+.fb-c__dir,
+.fb-c__ch-name {
+  margin: 0;
+  font-family: var(--font-h4);
+  font-size: 0.875rem;
   font-weight: 500;
+  line-height: 1.25rem;
   letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.fb-c__kicker {
-  opacity: 0.65;
-  padding-bottom: 0.85rem;
 }
 
 .fb-c__title {
-  margin: 0;
-  font-size: clamp(2rem, 5.2vw, 5.25rem);
-  font-weight: 700;
-  line-height: 0.88;
-  letter-spacing: -0.05em;
   text-transform: uppercase;
+  text-wrap: balance;
 }
 
-.fb-c__title span {
-  display: inline-block;
-  font-weight: 300;
-  font-size: 0.55em;
-  vertical-align: 0.35em;
-  opacity: 0.5;
-  padding: 0 0.3em;
+.fb-c__top {
+  position: relative;
 }
 
 .fb-c__dir {
-  font-size: 0.8125rem;
+  padding-top: 0.5rem;
+}
+
+.fb-c__bottom {
+  --fb-seek-height: 24px;
+  position: absolute;
+  inset-inline: var(--fb-gutter);
+  /* Keep the line centred while bringing its labels and controls together. */
+  top: calc(50% - var(--fb-seek-height) / 2);
+}
+
+.fb-c__ctrls,
+.fb-c__chapters {
+  font-family: var(--font-h4);
+  font-size: 0.75rem;
   font-weight: 500;
-  letter-spacing: 0;
-  opacity: 0.7;
-  padding-top: 0.9rem;
-}
-
-.fb-c__ctrls {
-  display: grid;
-  justify-items: end;
-  gap: 0.6rem;
-  flex: none;
-  text-align: right;
-  font-size: 0.8125rem;
-  font-weight: 600;
-}
-
-.fb-c__ctrls button {
-  gap: 0.6rem;
-  opacity: 0.75;
-  transition: opacity 160ms, transform 200ms var(--ease);
-}
-
-.fb-c__ctrls button:hover {
-  opacity: 1;
-  transform: translateX(-3px);
-}
-
-.fb-c__time {
-  opacity: 0.65;
-  padding-bottom: 0.4rem;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
 }
 
 .fb-c__chapters {
+  position: absolute;
+  bottom: 100%;
+  inset-inline: 0;
   display: flex;
-  gap: 6px;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: clamp(0.25rem, 1vw, 1rem);
+  pointer-events: auto;
 }
 
-.fb-c__ch {
-  flex: 1;
+.fb .fb-c__ch {
+  position: relative;
   min-width: 0;
-  display: grid !important;
-  gap: 0.7rem;
+  min-height: 44px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  text-align: center;
+  opacity: 0.4;
+}
+
+.fb .fb-c__ch:first-child {
+  align-items: flex-start;
   text-align: left;
-  opacity: 0.5;
-  transition: opacity 200ms, flex-grow 500ms var(--ease);
 }
 
-.fb-c__ch:hover {
-  opacity: 0.85;
+.fb .fb-c__ch:last-child {
+  align-items: flex-end;
+  text-align: right;
 }
 
-.fb-c__ch--on {
-  flex-grow: 2.5;
+.fb-c__ch-name {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  text-wrap: balance;
+}
+
+.fb-c__ch-credit,
+.fb-c__ch-duration {
+  max-width: 100%;
+  font-family: var(--font-h4);
+  font-size: 0.625rem;
+  font-weight: 500;
+  line-height: 0.875rem;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  text-wrap: balance;
+}
+
+.fb-c__ch-duration {
+  align-self: stretch;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+
+.fb-c__ch:last-child .fb-c__ch-duration {
+  text-align: right;
+}
+
+.fb .fb-c__ch--on {
   opacity: 1;
 }
 
-.fb-c__bar {
-  display: block;
-  height: 2px;
-  background: rgba(255, 255, 255, 0.28);
-  overflow: hidden;
+.fb .fb-c__ch:not(.fb-c__ch--on):focus-visible {
+  opacity: 0.55;
 }
 
-.fb-c__bar span {
+.fb-c__ctrls {
+  width: 100%;
+}
+
+/* A dim track with a brighter progress line and a full-height seek target. */
+.fb-c__seek {
+  position: relative;
+  height: var(--fb-seek-height);
+  pointer-events: auto;
+}
+
+.fb-c__track {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.fb-c__track > span {
   display: block;
   height: 100%;
   background: #fff;
   transform-origin: left;
-  transform: scaleX(var(--p));
+  transition: transform 150ms linear;
 }
 
-.fb-c__label {
+.fb-c__seek input {
+  appearance: none;
+  -webkit-appearance: none;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: ew-resize;
+  touch-action: pan-y;
+}
+
+.fb-c__seek input:disabled {
+  cursor: default;
+}
+
+.fb-c__seek input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 1px;
+  height: var(--fb-seek-height);
+}
+
+.fb-c__seek input::-moz-range-thumb {
+  width: 1px;
+  height: var(--fb-seek-height);
+  border: 0;
+}
+
+.fb-c__seek:focus-within {
+  outline: 1px solid currentColor;
+  outline-offset: 2px;
+}
+
+.fb-c__actions {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+}
+
+.fb-c__actions button {
+  min-width: 32px;
+  min-height: 28px;
+  justify-content: center;
+  opacity: 0.8;
   white-space: nowrap;
+}
+
+.fb-c__actions svg {
+  height: 12px;
+  width: auto;
+}
+
+@media (pointer: coarse) {
+  .fb-c__bottom {
+    --fb-seek-height: 44px;
+  }
+
+  .fb .fb-c__ch {
+    min-height: 44px;
+  }
+
+  .fb-c__actions button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .fb .fb-c__ch:not(.fb-c__ch--on):hover {
+    opacity: 0.55;
+  }
+
+  .fb-c__actions button:hover {
+    opacity: 1;
+  }
+}
+
+/* Portalled out of the blended player chrome so the poster keeps its colour.
+   No pointer events: the card never interrupts the name being hovered. */
+.fb-c-preview {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 192px;
+  z-index: 45;
+  pointer-events: none;
   overflow: hidden;
-  text-overflow: ellipsis;
+  background: transparent;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.fb-c-preview[data-open="true"] {
+  opacity: 1;
+}
+
+.fb-c-preview[data-keyboard="true"] {
+  transition: none;
+}
+
+.fb-c-preview__image {
+  position: relative;
+  height: 120px;
+  background: #252525;
+}
+
+.fb-c-preview__image img {
+  object-fit: cover;
+  object-position: 50% 22%;
+}
+
+.fb-c-preview__duration {
+  padding-top: 6px;
+  font: 500 10px/1.4 var(--font-h4);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 4px rgb(0 0 0 / 30%);
 }
 
 @media (max-width: 767px) {
-  .fb-c__top {
-    gap: 1.25rem;
-    padding-bottom: 1.25rem;
+  .fb-c__title,
+  .fb-c__dir {
+    font-size: 0.75rem;
+    line-height: 1rem;
   }
 
-  .fb-c__kicker {
-    padding-bottom: 0.6rem;
+  .fb-c__ch-name {
+    font-size: 0.625rem;
+    line-height: 0.875rem;
+    min-height: 1.75rem;
+  }
+
+  .fb-c__ch-credit,
+  .fb-c__ch-duration {
+    font-size: 0.5625rem;
+    line-height: 0.8125rem;
+  }
+
+  .fb-c__ctrls,
+  .fb-c__chapters {
+    font-size: 0.6875rem;
   }
 
   .fb-c__ctrls {
-    font-size: 0.75rem;
-    gap: 0.5rem;
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fb button,
+  .fb-c__track > span {
+    transition: opacity 150ms ease;
   }
 
-  .fb-c__ctrls button[aria-controls],
-  .fb-c__dir,
-  .fb-c__ch:not(.fb-c__ch--on) .fb-c__label {
-    display: none;
+  .fb button:active {
+    transform: none;
   }
 }

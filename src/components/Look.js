@@ -37,7 +37,9 @@ const SPREAD_EDGE = 16; // an arrow never opens closer than this to the screen e
 // travel instead: it is already gone by the moment it is released.
 const FADE_RUNWAY = 160; // px of pinned travel left when the fade begins
 
-export default function Look() {
+// `scene` is set when LookReel pins this section and turns it into the
+// showreel in place; on its own (/hero3) the section is unchanged.
+export default function Look({ scene = false }) {
   const rootRef = useRef(null);
 
   // One ref per panel of the diptych, so the credits can tell which photograph
@@ -201,6 +203,7 @@ export default function Look() {
           <div
             key={frame.src}
             ref={panelRefs.current[i]}
+            data-look-panel
             className={`${frame.tint} relative w-full h-full overflow-hidden`}
           >
             <Image
@@ -216,6 +219,28 @@ export default function Look() {
             />
           </div>
         ))}
+
+        {/* In the scene the first frame is also the film's opening frame, so it
+            gets a stand-in that LookReel can open out to the full screen. It
+            starts exactly over its panel and under the text and arrows, so it
+            changes nothing until the scene moves it. Sized for the full screen
+            it ends at; the film's poster is the same request, so it is already
+            loaded by the time this grows. */}
+        {scene && (
+          <div
+            data-look-traveller
+            aria-hidden="true"
+            className="absolute left-0 top-0 h-1/2 w-full overflow-hidden md:h-full md:w-1/2"
+          >
+            <Image
+              src={FRAMES[0].src}
+              alt=""
+              fill
+              sizes="100vw"
+              className="object-cover"
+            />
+          </div>
+        )}
 
         {/* Centered controls — sit at the seam, vertically centered on the section */}
         <div
@@ -252,6 +277,7 @@ export default function Look() {
                 as="h1"
                 sources={sources}
                 data-look-line
+                data-handoff-line="title"
                 className="uppercase text-2xl md:text-3xl tracking-wide whitespace-nowrap"
               >
                 {TITLE}
@@ -259,6 +285,7 @@ export default function Look() {
               <ContrastText
                 as="h4"
                 sources={sources}
+                data-handoff-line="kicker"
                 className="w-0 min-w-full uppercase text-xs tracking-[0.08em] md:text-sm"
               >
                 {PROJECT}
@@ -268,6 +295,7 @@ export default function Look() {
               as="p"
               sources={sources}
               data-look-line
+              data-handoff-line="credits"
               className="whitespace-nowrap text-xs leading-[1.45] md:text-sm"
             >
               {CREDITS}

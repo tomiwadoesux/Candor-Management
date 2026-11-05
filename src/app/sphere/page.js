@@ -17,7 +17,7 @@ const items = [
 
 export default function SpherePage() {
   return (
-    <main className="fixed inset-0 bg-white text-black">
+    <main className="relative h-[100svh] bg-white text-black">
       <CreativeSphere items={items} title="Creative Space" />
     </main>
   );

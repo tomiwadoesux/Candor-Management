@@ -1,0 +1,95 @@
+.photography-page {
+  --photography-text-size: 12px;
+  --photography-caption-height: 17px;
+  --photography-preview-height: 104px;
+  min-height: 100svh;
+  background: #fff;
+  color: #292929;
+  font: var(--photography-text-size)/1.4 "Courier New", monospace;
+  overflow-anchor: none;
+}
+.photography-page *, .photography-page *::before, .photography-page *::after { box-sizing: border-box; }
+.photography-page button, .photography-page a { color: inherit; font: inherit; }
+.photography-page button { cursor: pointer; }
+.photography-page button:focus-visible, .photography-page a:focus-visible { outline: 1px solid currentColor; outline-offset: 6px; }
+.photography-page img { display: block; width: 100%; max-width: 100%; }
+.photography-page p { font: inherit; }
+.photography-folders { padding: 70px 14px 80px; }
+.photography-folder { position: relative; margin-bottom: 92px; }
+.photography-folder[data-moving="true"] { z-index: 2; }
+.photography-folder[data-moving="true"][data-open="true"] { z-index: 3; }
+.photography-folder[data-returning="true"] .photography-images { visibility: hidden; }
+/* Floating copies own this transition. Ignore Motion's temporary projection
+   when measuring the hidden cards so the flight lands at the final position. */
+.photography-folder[data-returning="true"] .photography-card,
+.photography-folder[data-returning="true"] .photography-card > .photography-image { transform: none!important; }
+.photography-return-layer { position: fixed; inset: 0; z-index: 100; pointer-events: none; overflow: hidden; }
+.photography-return-card { margin: 0; will-change: transform; }
+.photography-folder:last-child { margin-bottom: 0; }
+.photography-folder-heading { display: flex; justify-content: center; margin-bottom: 14px; }
+.photography-folder-heading > button { min-width: 44px; min-height: 30px; font: var(--photography-text-size)/1.4 Georgia, serif; font-variant-numeric: tabular-nums; }
+.photography-folder-layout { position: relative; display: flex; flex-direction: column; align-items: center; }
+.photography-images { position: relative; display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 3px; max-width: 100%; }
+.photography-card { position: relative; min-width: 0; min-height: 0; margin: 0; }
+.photography-image { position: relative; display: block; width: calc(var(--photography-preview-height) * var(--preview-aspect, 1)); height: var(--photography-preview-height); padding: 0; overflow: hidden; background: #f1f1ef; transform-origin: top left; user-select: none; -webkit-user-select: none; }
+.photography-image-canvas { display: block; width: 100%; height: 100%; position: relative; container-type: size; isolation: isolate; }
+.photography-image-monochrome, .photography-image-shade { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity 160ms ease; }
+.photography-image-monochrome { mix-blend-mode: color; }
+.photography-image img { position: absolute; left: 50%; top: 50%; width: 100%; height: 100%; max-width: none; object-fit: cover; }
+.photography-image img[data-sideways="true"] { width: 100cqh; height: 100cqw; }
+.photography-card figcaption { position: absolute; opacity: 0; pointer-events: none; font: var(--photography-text-size)/1.4 "Courier New", monospace; font-variant-numeric: tabular-nums; transition: opacity 160ms ease; }
+.photography-folder[data-open="false"] .photography-images { flex-wrap: nowrap; justify-content: center; overflow: visible; }
+.photography-folder[data-open="false"] .photography-card { flex: 0 0 auto; }
+.photography-folder[data-open="false"] .photography-project-copy { order: 2; position: relative; top: auto; padding: 0; margin-top: 16px; text-align: center; font: var(--photography-text-size)/1.4 Georgia, serif; }
+.photography-folder[data-open="false"] .photography-project-copy h2,
+.photography-folder[data-open="false"] .photography-project-count,
+.photography-folder[data-open="false"] .photography-project-copy > button { display: none; }
+.photography-folder[data-open="false"] .photography-project-meta { display: flex; justify-content: center; gap: 15px; }
+.photography-folder[data-open="false"] .photography-project-meta span:last-child { color: #777; }
+.photography-folder[data-open="false"] .photography-project-note { margin-top: 8px; max-width: 39ch; color: #5b5b5b; }
+.photography-folder[data-open="true"] { margin-bottom: 180px; }
+.photography-folder[data-open="true"] .photography-folder-heading { justify-content: flex-start; margin-bottom: 18px; }
+.photography-folder[data-open="true"] .photography-folder-heading > button { text-align: left; font: var(--photography-text-size)/1.4 "Courier New", monospace; }
+.photography-folder[data-open="true"] .photography-folder-layout { display: block; }
+.photography-folder[data-open="true"] .photography-images { display: grid; width: 100%; grid-template-columns: repeat(12, minmax(0, 1fr)); grid-auto-rows: var(--bento-unit); gap: 14px; align-items: stretch; }
+.photography-folder[data-open="true"] .photography-card { display: grid; grid-template-rows: minmax(0, 1fr) var(--photography-caption-height); gap: 10px; }
+.photography-folder[data-open="true"] .photography-image { width: 100%; height: 100%; min-height: 0; }
+.photography-folder[data-open="true"] .photography-card figcaption { position: static; opacity: 1; transition-delay: 160ms; }
+.photography-project-copy { font: var(--photography-text-size)/1.4 "Courier New", monospace; }
+.photography-project-copy h2 { font: inherit; text-transform: uppercase; margin: 0 0 8px; }
+.photography-project-meta span { display: block; }
+.photography-project-copy .photography-project-note { margin-top: 24px; max-width: 24ch; }
+.photography-project-copy .photography-project-count { margin-top: 18px; color: #777; }
+.photography-project-copy > button { margin-top: 24px; min-height: 32px; text-align: left; }
+.photography-info-tile { position: relative; min-width: 0; padding: 20px; visibility: visible; overflow-wrap: anywhere; }
+.photography-info-tile h2 { max-width: 24ch; }
+.photography-info-dismiss::after { content: ""; position: absolute; inset: 0; cursor: pointer; }
+.photography-info-dismiss:focus-visible { outline: none!important; }
+.photography-info-dismiss:focus-visible::after { outline: 1px solid currentColor; outline-offset: -4px; }
+.photography-page .study-viewer header, .photography-page .study-viewer footer { font-size: var(--photography-text-size); }
+
+@media (hover: hover) and (pointer: fine) {
+  .photography-folder-heading > button, .photography-project-copy > button { transition: opacity 160ms ease; }
+  .photography-folder-heading > button:hover, .photography-project-copy > button:hover { opacity: .5; }
+  .photography-page[data-reflowing="false"][data-hover-enabled="true"] .photography-folders:has(.photography-image:hover) .photography-image:not(:hover) .photography-image-monochrome { opacity: 1; }
+  .photography-page[data-reflowing="false"][data-hover-enabled="true"] .photography-folders:has(.photography-image:hover) .photography-image:not(:hover) .photography-image-shade { opacity: .58; }
+}
+@media (max-width: 900px) {
+  .photography-folder[data-open="true"] .photography-images { gap: 10px; }
+}
+@media (max-width: 600px) {
+  .photography-page { --photography-preview-height: 88px; }
+  .photography-folders { padding: 56px 12px 72px; }
+  .photography-folder { margin-bottom: 72px; }
+  .photography-folder-heading { margin-bottom: 12px; }
+  .photography-images { gap: 3px; }
+  .photography-folder[data-open="false"] .photography-project-copy { margin-top: 16px; }
+  .photography-folder[data-open="true"] .photography-images { gap: 8px; }
+  .photography-folder[data-open="true"] .photography-card { gap: 7px; }
+  .photography-info-tile { padding: 12px; }
+  .photography-info-tile .photography-project-note { margin-top: 18px; }
+  .photography-info-tile > button { margin-top: 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .photography-page *, .photography-page *::before, .photography-page *::after { transition: none!important; animation: none!important; }
+}

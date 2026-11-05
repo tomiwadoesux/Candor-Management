@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Header from "../../components/header";
 import ModelList from "../../components/ModelList";
 import ModelRail from "../../components/ModelRail";
+import MobileBoardLogo from "../../components/MobileBoardLogo";
 import { SearchProvider } from "../../components/SearchContext";
 import { models } from "../../../data/models";
 import { divisions } from "../../../data/agency";
@@ -56,6 +57,7 @@ function Talents() {
     <SearchProvider>
       <div className="bg-white min-h-screen w-full">
         <Header />
+        <MobileBoardLogo />
         <main className="w-full px-3 md:px-5 lg:flex lg:items-start lg:gap-5">
           {/* Left rail — the hovered person's name, two pictures and their
               discipline/focus/base. Same component as /models; it branches on

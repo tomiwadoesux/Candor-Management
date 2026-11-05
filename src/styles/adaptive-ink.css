@@ -1,0 +1,8 @@
+/* The sampler chooses pure ink; blend modes must not tint the result. */
+[data-adaptive-blend] { mix-blend-mode: normal !important; }
+[data-adaptive-ink] {
+  color: var(--adaptive-ink) !important;
+  -webkit-text-fill-color: currentColor !important;
+  text-shadow: none !important;
+}
+[data-adaptive-logo] [fill="currentColor"] { fill: var(--adaptive-logo-fill) !important; }

@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Header from "../../components/header";
 import ModelList from "../../components/ModelList";
 import ModelRail from "../../components/ModelRail";
+import MobileBoardLogo from "../../components/MobileBoardLogo";
 import { SearchProvider } from "../../components/SearchContext";
 import { models } from "../../../data/models";
 import { divisions } from "../../../data/agency";
@@ -48,6 +49,7 @@ function Creatives() {
     <SearchProvider>
       <div className="bg-white min-h-screen w-full">
         <Header />
+        <MobileBoardLogo />
         <main className="w-full px-3 md:px-5 lg:flex lg:items-start lg:gap-5">
           <aside
             data-slot="models-rail"

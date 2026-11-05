@@ -18,7 +18,7 @@
 
 import { promises as fs } from "fs";
 import path from "path";
-import { BUCKETS, INDEX_FILE, MAP_VERSION, routeFile } from "../../../components/pageSkeleton/layoutMap";
+import { BUCKETS, INDEX_FILE, MAP_VERSION, mergeRecording, routeFile } from "../../../components/pageSkeleton/layoutMap";
 
 const DIR = path.join(process.cwd(), "public", "skeletons");
 const BUCKET_NAMES = new Set(BUCKETS.map((b) => b.name));
@@ -66,6 +66,11 @@ function valid({ route, bucket, layout }) {
   if (!layout || layout.v !== MAP_VERSION) return false;
   if (!Array.isArray(layout.blocks) || layout.blocks.length > MAX_BLOCKS) return false;
   if (!Array.isArray(layout.colors)) return false;
+  if (!Number.isFinite(layout.vw) || layout.vw <= 0 || !Number.isFinite(layout.vh) || layout.vh <= 0) return false;
+  if (layout.anchors && (!Array.isArray(layout.anchors) || !layout.anchors.every(
+    (a) => Array.isArray(a) && a.length === 2 && Number.isInteger(a[0]) && a[0] >= 0 && a[0] < layout.blocks.length &&
+      Array.isArray(a[1]) && a[1].length === 2 && a[1].every((n) => Number.isInteger(n) && n >= 1 && n <= 4)
+  ))) return false;
   return layout.blocks.every(
     (b) => Array.isArray(b) && b.length >= 6 && b.length <= 7 && b.every(Number.isFinite)
   );
@@ -77,11 +82,12 @@ function serialize(doc) {
   const buckets = BUCKETS.map((b) => b.name)
     .filter((name) => doc.buckets[name])
     .map((name) => {
-      const { vw, vh, bg, fg, colors, blocks } = doc.buckets[name];
+      const { vw, vh, bg, fg, colors, blocks, geometry, anchors } = doc.buckets[name];
       return [
         `    ${JSON.stringify(name)}: {`,
         `      "vw": ${vw}, "vh": ${vh}, "bg": ${JSON.stringify(bg)}, "fg": ${JSON.stringify(fg)},`,
         `      "colors": ${JSON.stringify(colors)},`,
+        ...(geometry ? [`      "geometry": ${geometry}, "anchors": ${JSON.stringify(anchors || [])},`] : []),
         `      "blocks": [`,
         blocks.map((b) => `        ${JSON.stringify(b)}`).join(",\n"),
         `      ]`,
@@ -94,7 +100,12 @@ function serialize(doc) {
     `  "route": ${JSON.stringify(doc.route)},`,
     `  "buckets": {`,
     buckets.join(",\n"),
-    "  }",
+    `  }${Object.keys(doc.samples || {}).length ? "," : ""}`,
+    ...(Object.keys(doc.samples || {}).length ? [
+      "  \"samples\": {",
+      Object.entries(doc.samples).map(([name, samples]) => `    ${JSON.stringify(name)}: ${JSON.stringify(samples)}`).join(",\n"),
+      "  }",
+    ] : []),
     "}",
     "",
   ].join("\n");
@@ -116,8 +127,8 @@ async function write({ route, bucket, layout, keepExisting }) {
 
   const file = routeFile(route);
   const target = path.join(DIR, file);
-  const { vw, vh, bg, fg, colors, blocks } = layout;
-  const incoming = { vw, vh, bg, fg, colors, blocks };
+  const { vw, vh, bg, fg, colors, blocks, geometry, anchors } = layout;
+  const incoming = { vw, vh, bg, fg, colors, blocks, ...(geometry ? { geometry, anchors: anchors || [] } : {}) };
 
   const existing = await readJSON(target);
   const doc =
@@ -125,12 +136,9 @@ async function write({ route, bucket, layout, keepExisting }) {
 
   // keepExisting: the page was still moving when measured. Good enough to
   // seed a breakpoint that has nothing, not to replace one recorded at rest.
-  let written = false;
-  const replace = !(keepExisting && doc.buckets[bucket]);
-  if (replace && JSON.stringify(doc.buckets[bucket]) !== JSON.stringify(incoming)) {
-    doc.buckets[bucket] = incoming;
+  const written = mergeRecording(doc, bucket, incoming, keepExisting);
+  if (written) {
     await fs.writeFile(target, serialize(doc));
-    written = true;
   }
 
   // The index lists this route, and drops any whose page has since been

@@ -153,6 +153,15 @@ export default function FilmPlayer({
     setStarted(true);
   }, []);
 
+  const seekProgress = useCallback((ratio) => {
+    const v = videoRef.current;
+    if (!v || !Number.isFinite(v.duration) || !v.duration) return;
+    const next = Math.min(1, Math.max(0, ratio));
+    v.currentTime = next * v.duration;
+    setProgress(next);
+    setStarted(true);
+  }, []);
+
   const goToFilm = useCallback(
     (delta) => setFilmIndex((i) => (i + delta + films.length) % films.length),
     [films.length]
@@ -165,6 +174,10 @@ export default function FilmPlayer({
   useEffect(() => {
     const v = videoRef.current;
     setProgress(0);
+    setPlaying(false);
+    // A cached clip can finish loading before React attaches its metadata
+    // listener. Read that duration too, without retaining the previous cut's.
+    setDuration(v?.readyState >= 1 && v.currentSrc === v.src && Number.isFinite(v.duration) ? v.duration : 0);
     setStarted(false);
     setCreditsOpen(false);
     if (v) {
@@ -242,6 +255,7 @@ export default function FilmPlayer({
           src={film.src}
           playsInline
           preload="metadata"
+          onLoadStart={() => setDuration(0)}
           onPlay={() => {
             setPlaying(true);
             setStarted(true);
@@ -277,35 +291,10 @@ export default function FilmPlayer({
               muted={muted}
               progress={progress}
               duration={duration}
-              creditsOpen={creditsOpen}
               onPlay={togglePlay}
               onMute={() => setMuted((m) => !m)}
-              onCredits={() => setCreditsOpen((c) => !c)}
               onJump={setFilmIndex}
-              scrubProps={{
-                ref: trackRef,
-                role: "slider",
-                tabIndex: 0,
-                "aria-label": "Seek",
-                "aria-valuemin": 0,
-                "aria-valuemax": 100,
-                "aria-valuenow": percent,
-                onPointerDown: (e) => {
-                  e.currentTarget.setPointerCapture(e.pointerId);
-                  seekTo(e.clientX);
-                },
-                onPointerMove: (e) => {
-                  if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-                    seekTo(e.clientX);
-                  }
-                },
-                onKeyDown: (e) => {
-                  if (e.key === "ArrowLeft") nudge(-5);
-                  else if (e.key === "ArrowRight") nudge(5);
-                  else return;
-                  e.preventDefault();
-                },
-              }}
+              onSeek={seekProgress}
             />
           ) : (
           <header className="film-bar">
@@ -421,23 +410,26 @@ export default function FilmPlayer({
           </header>
           )}
 
-          <aside
-            id="film-credits"
-            className="film-credits"
-            data-open={creditsOpen}
-            aria-hidden={!creditsOpen}
-          >
-            {film.credits.map((credit) => (
-              <div className="film-credits__row" key={credit.role}>
-                <span className="film-credits__role">{credit.role}</span>
-                <span>{credit.name}</span>
+          {/* The inline bar has no Credits control, so nothing could open it. */}
+          {!bar && (
+            <aside
+              id="film-credits"
+              className="film-credits"
+              data-open={creditsOpen}
+              aria-hidden={!creditsOpen}
+            >
+              {film.credits.map((credit) => (
+                <div className="film-credits__row" key={credit.role}>
+                  <span className="film-credits__role">{credit.role}</span>
+                  <span>{credit.name}</span>
+                </div>
+              ))}
+              <div className="film-credits__row">
+                <span className="film-credits__role">Keys</span>
+                <span>{KEY_HINTS}</span>
               </div>
-            ))}
-            <div className="film-credits__row">
-              <span className="film-credits__role">Keys</span>
-              <span>{KEY_HINTS}</span>
-            </div>
-          </aside>
+            </aside>
+          )}
         </div>
       </div>
     </div>

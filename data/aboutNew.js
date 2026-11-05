@@ -20,7 +20,7 @@ export const aboutNew = {
   nav: [
     { label: "Home", href: "/" },
     { label: "Models", href: "/models" },
-    { label: "About", href: "/about-new", current: true },
+    { label: "About", href: "/agency", current: true },
     { label: "Talents", href: "/talents" },
     { label: "Contact", href: "/contact" },
   ],
@@ -232,7 +232,7 @@ export const aboutNew = {
       { label: "Models", href: "/models" },
       { label: "Talents", href: "/talents" },
       { label: "Creatives", href: "/creatives" },
-      { label: "About", href: "/about-new" },
+      { label: "About", href: "/agency" },
       { label: "Contact", href: "/contact" },
     ],
     socials: agency.socials,

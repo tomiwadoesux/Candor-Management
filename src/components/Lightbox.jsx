@@ -91,7 +91,7 @@ export default function Lightbox({ item, onClose }) {
           <div className="profile-project-details">
             {shown.label && <h2>{shown.label}</h2>}
             {shown.description && <p>{shown.description}</p>}
-            {shown.href && <a className="profile-content-link" href={shown.href} target="_blank" rel="noopener noreferrer">View project ↗</a>}
+            {shown.href && <a className="profile-content-link" href={shown.href} target="_blank" rel="noopener noreferrer">{shown.linkLabel || "View project"} ↗</a>}
           </div>
         )}
       </div>

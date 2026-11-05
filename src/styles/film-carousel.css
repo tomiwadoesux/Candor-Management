@@ -1,0 +1,290 @@
+.film-carousel {
+  /* Smaller previews recede to the right of the lead frame. */
+  --reel-card-width: min(24.8vw, calc((100svh - 220px) * 16 / 9));
+  --reel-center: 61%;
+  --reel-gap: max(6px, 0.5vw);
+  --reel-caption-height: 44px;
+  --reel-accent: #000;
+  --reel-ease: cubic-bezier(0.23, 1, 0.32, 1);
+  position: absolute;
+  inset: 0;
+  isolation: isolate;
+  overflow: hidden;
+  background: rgb(250 250 250 / var(--reel-background, 1));
+  color: #171914;
+}
+
+.film-carousel__backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: calc(0.58 * var(--reel-background, 1));
+}
+
+.film-carousel__backdrop img,
+.film-carousel__backdrop video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 200ms ease;
+}
+
+.film-carousel__shade {
+  position: absolute;
+  inset: 0;
+  background: rgb(255 255 250 / 10%);
+  opacity: var(--reel-background, 1);
+  pointer-events: none;
+}
+
+.film-carousel__stage {
+  position: absolute;
+  inset: 0;
+  opacity: var(--reel-cards, 1);
+  touch-action: pan-y pinch-zoom;
+}
+
+.film-carousel__content {
+  position: absolute;
+  inset: 0;
+}
+
+.film-carousel button {
+  appearance: none;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  color: inherit;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.film-carousel button:focus-visible {
+  outline: 1px solid #9b9e94;
+  outline-offset: 6px;
+}
+
+.film-carousel__item {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--reel-card-width);
+  opacity: 0.36;
+  transform-origin: left calc(var(--reel-caption-height) + var(--reel-card-width) * 9 / 32);
+  transition: transform 300ms var(--reel-ease), opacity 200ms ease;
+}
+
+.film-carousel__item[data-active="true"] {
+  opacity: 1;
+  z-index: 2;
+}
+
+.film-carousel__item[data-position="-1"],
+.film-carousel__item[data-position="3"] {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.film-carousel__caption {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: var(--reel-caption-height);
+  padding-bottom: 8px;
+  font-family: var(--font-h4);
+  color: var(--reel-accent);
+  text-align: left;
+  pointer-events: none;
+  transition: transform 250ms var(--reel-ease);
+}
+
+.film-carousel__caption { opacity: var(--reel-copy, 1); }
+.film-carousel__arrows,
+.film-carousel__count,
+.film-carousel__progress { opacity: var(--reel-copy, 1); }
+
+.film-carousel__caption h4 {
+  margin: 0;
+  font: 500 clamp(11px, 0.94vw, 20px)/1.2 var(--font-h4);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.film-carousel__caption p {
+  margin: 3px 0 0;
+  font: 400 clamp(10px, 0.78vw, 16px)/1.25 var(--font-h4);
+  letter-spacing: 0.035em;
+}
+
+.film-carousel__rail {
+  position: absolute;
+  left: calc(var(--reel-center) - var(--reel-card-width) / 2);
+  top: calc(50% - var(--reel-card-width) * 9 / 32 - var(--reel-caption-height));
+  right: 0;
+  height: calc(var(--reel-caption-height) + var(--reel-card-width) * 9 / 16);
+  overflow: visible;
+}
+
+.film-carousel__frame {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #10110f;
+  transform-origin: right center;
+  transition: transform 250ms var(--reel-ease);
+}
+
+.film-carousel__frame:focus-visible { outline-offset: -2px; }
+
+.film-carousel__frame img,
+.film-carousel__frame video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  transition: opacity 150ms ease, transform 250ms var(--reel-ease);
+}
+
+.film-carousel__frame img {
+  object-position: 50% 22%;
+}
+
+.film-carousel__item[data-position="1"] .film-carousel__frame img { filter: blur(1px); }
+.film-carousel__item[data-position="2"] .film-carousel__frame img { filter: blur(1.5px); }
+
+.film-carousel__arrows {
+  position: absolute;
+  bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  left: max(16px, env(safe-area-inset-left, 0px));
+  display: flex;
+  gap: 0;
+}
+
+.film-carousel__arrows button {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  color: #fff;
+  background: transparent;
+  transition: transform 100ms var(--reel-ease);
+}
+
+/* A small 28px square, with a 44px target for touch and keyboard use. */
+.film-carousel__arrows button::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  background: #000;
+  transition: background-color 150ms ease;
+}
+
+.film-carousel__arrows svg { position: relative; width: 16px; height: 16px; }
+.film-carousel__arrows button:active { transform: scale(0.94); }
+
+@media (hover: hover) and (pointer: fine) {
+  .film-carousel__arrows button:hover::before { background: #1f2937; }
+  .film-carousel__item[data-active="false"]:has(.film-carousel__frame:hover) { opacity: 0.6; }
+}
+
+@media (min-width: 768px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .film-carousel__item[data-active="true"] .film-carousel__frame :is(img, video) {
+    transform: scale(1.28);
+  }
+  .film-carousel__item[data-active="true"]:has(.film-carousel__frame:hover) .film-carousel__frame {
+    transform: scale(1.18);
+  }
+  .film-carousel__item[data-active="true"]:has(.film-carousel__frame:hover) .film-carousel__frame :is(img, video) {
+    transform: scale(1);
+  }
+  .film-carousel__item[data-active="true"]:has(.film-carousel__frame:hover) .film-carousel__caption {
+    transform: translate(calc(var(--reel-card-width) * -0.18), calc(var(--reel-card-width) * -0.050625));
+  }
+  .film-carousel__item[data-active="true"]:has(.film-carousel__frame:hover) .film-carousel__progress {
+    transform: translate(calc(var(--reel-card-width) * -0.18), calc(var(--reel-card-width) * 0.050625)) scaleX(1.18);
+  }
+}
+
+.film-carousel__progress {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 8px);
+  width: 100%;
+  height: 2px;
+  overflow: hidden;
+  border-radius: 0;
+  background: rgb(0 0 0 / 18%);
+  pointer-events: none;
+  transform-origin: left center;
+  transition: transform 250ms var(--reel-ease);
+}
+
+.film-carousel__progress > span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #d2d5cd;
+  transform-origin: left;
+  transition: transform 250ms linear;
+}
+
+html[data-reel-active] [data-bottombar] {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+@media (max-width: 767px) {
+  .film-carousel {
+    --reel-card-width: min(80vw, calc((100svh - 240px) * 16 / 9));
+    --reel-center: 50%;
+    --reel-gap: 6px;
+    --reel-caption-height: 68px;
+  }
+  .film-carousel__caption h4 { font-size: 13px; line-height: 1.35; text-wrap: balance; }
+  .film-carousel__caption p { font-size: 12px; line-height: 1.4; }
+  .film-carousel__rail { top: calc(52% - var(--reel-card-width) * 9 / 32 - var(--reel-caption-height)); }
+  .film-carousel__backdrop { opacity: calc(0.28 * var(--reel-background, 1)); }
+  .film-carousel__frame { touch-action: pan-y pinch-zoom; }
+  .film-carousel__arrows { left: 16px; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); gap: 8px; }
+  .film-carousel__arrows button::before { inset: 0; }
+  .film-carousel__arrows svg { width: 20px; height: 20px; }
+  .film-carousel__count { display: block; }
+  .film-carousel__item[data-position="2"] { visibility: hidden; }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .film-carousel__item { transition: opacity 150ms ease; }
+  .film-carousel__arrows button:active { transform: none; }
+  .film-carousel__progress > span { transition: none; }
+}
+
+.film-carousel__placeholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #d8d7d2, #eae9e5);
+  color: #777770;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 8%);
+}
+.film-carousel__count {
+  position: absolute;
+  right: max(24px, env(safe-area-inset-right, 0px));
+  bottom: calc(39px + env(safe-area-inset-bottom, 0px));
+  font: 500 12px/1 var(--font-h4);
+  letter-spacing: 0.12em;
+  font-variant-numeric: tabular-nums;
+  color: #222;
+}
+@media (min-width: 768px) { .film-carousel__count { display: none; } }

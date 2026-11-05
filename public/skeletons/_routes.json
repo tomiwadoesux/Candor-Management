@@ -1,15 +1,24 @@
 {
   "routes": {
     "/": "_root.json",
-    "/about": "about.json",
-    "/about-new": "about-new.json",
+    "/001": "001.json",
     "/agency": "agency.json",
+    "/archive": "archive.json",
     "/contact": "contact.json",
     "/creatives": "creatives.json",
     "/get-scouted": "get-scouted.json",
+    "/grid": "grid.json",
+    "/logo-animation": "logo-animation.json",
     "/models": "models.json",
     "/models/[id]": "models__[id].json",
+    "/NewsTest": "NewsTest.json",
+    "/photography": "photography.json",
+    "/photography2": "photography2.json",
     "/privacy": "privacy.json",
+    "/prototypes/editorial-footer": "prototypes__editorial-footer.json",
+    "/prototypes/footers": "prototypes__footers.json",
+    "/sphere": "sphere.json",
+    "/sphere2": "sphere2.json",
     "/talents": "talents.json",
     "/word-paint": "word-paint.json"
   }

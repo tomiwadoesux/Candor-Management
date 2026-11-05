@@ -9,7 +9,7 @@
 // WHEN IT MEASURES — three moments, and only these:
 //
 //   arrival   a route is shown, by a load or a navigation
-//   resize    the window crosses into another breakpoint
+//   resize    the window changes size, including within a breakpoint
 //   edit      Next applies a code change: Fast Refresh swaps a component
 //             ($RefreshHelpers$.scheduleUpdate), a stylesheet is replaced in
 //             <head>, or a server component re-renders (Next moves the
@@ -82,7 +82,8 @@ export function startRecorder({ getRoute, isBusy, isOwnNode }) {
   let tries = 0;
   let pristine = true;
   let running = false;
-  let lastBucket = bucketFor(window.innerWidth);
+  let stopped = false;
+  let lastSize = `${window.innerWidth}x${window.innerHeight}`;
   const sent = new Map(); // "route|bucket" → signature last written
 
   const arm = (delay) => {
@@ -98,6 +99,7 @@ export function startRecorder({ getRoute, isBusy, isOwnNode }) {
   };
 
   const arrive = () => {
+    document.documentElement.removeAttribute("data-skeleton-recorded");
     pristine = true;
     owe("arrive");
   };
@@ -107,7 +109,7 @@ export function startRecorder({ getRoute, isBusy, isOwnNode }) {
   };
 
   async function run() {
-    if (!due) return;
+    if (stopped || !due) return;
     if (running || isBusy() || document.hidden) return arm(600);
     if (window.scrollY > 2) return; // picked up again by onScroll at the top
     if (!pristine) return void (due = null);
@@ -118,14 +120,15 @@ export function startRecorder({ getRoute, isBusy, isOwnNode }) {
 
     running = true;
     try {
-      await document.fonts?.ready;
+      await Promise.race([document.fonts?.ready, sleep(IMAGE_WAIT_MS)]);
       await viewportMediaLoaded();
-      if (isBusy() || window.scrollY > 2 || getRoute() !== route) return;
+      if (stopped || !pristine || isBusy() || window.scrollY > 2 || getRoute() !== route) return;
 
       const first = captureLayout({ exclude: isOwnNode });
       await sleep(STABLE_GAP_MS);
-      if (isBusy() || window.scrollY > 2 || getRoute() !== route) return;
+      if (stopped || !pristine || isBusy() || window.scrollY > 2 || getRoute() !== route) return;
       const second = captureLayout({ exclude: isOwnNode });
+      if (first.vw !== second.vw || first.vh !== second.vh) return arm(SETTLE_MS);
 
       const signature = layoutSignature(second);
       const atRest = layoutSignature(first) === signature;
@@ -134,8 +137,10 @@ export function startRecorder({ getRoute, isBusy, isOwnNode }) {
       due = null;
       const bucket = bucketFor(second.vw);
       const key = `${route}|${bucket}`;
-      if (sent.get(key) === signature) return;
-      sent.set(key, signature);
+      if (sent.get(key) === signature) {
+        document.documentElement.setAttribute("data-skeleton-recorded", `${route}|${second.vw}x${second.vh}`);
+        return;
+      }
 
       const res = await fetch("/api/skeletons", {
         method: "POST",
@@ -150,6 +155,9 @@ export function startRecorder({ getRoute, isBusy, isOwnNode }) {
         }),
       });
       const out = await res.json().catch(() => null);
+      if (!res.ok) return owe(kind, SETTLE_MS);
+      sent.set(key, signature);
+      document.documentElement.setAttribute("data-skeleton-recorded", `${route}|${second.vw}x${second.vh}`);
       if (out?.written) {
         console.debug(
           `[skeleton] mapped ${route} @ ${bucket} — ${second.blocks.length} blocks (${kind}${atRest ? "" : ", page still moving"})`
@@ -159,6 +167,7 @@ export function startRecorder({ getRoute, isBusy, isOwnNode }) {
       console.debug("[skeleton] measure failed", err);
     } finally {
       running = false;
+      if (!stopped && due && pristine) arm(SETTLE_MS);
     }
   }
 
@@ -245,16 +254,21 @@ export function startRecorder({ getRoute, isBusy, isOwnNode }) {
     else if (window.scrollY <= 2 && due) arm(600);
   };
   const onResize = () => {
-    const bucket = bucketFor(window.innerWidth);
-    if (bucket === lastBucket) return;
-    lastBucket = bucket;
-    if (pristine) owe("arrive");
+    const size = `${window.innerWidth}x${window.innerHeight}`;
+    if (size === lastSize) return;
+    lastSize = size;
+    if (pristine) {
+      document.documentElement.removeAttribute("data-skeleton-recorded");
+      owe("arrive");
+    }
   };
+  const onVisible = () => { if (!document.hidden && due) arm(SETTLE_MS); };
 
   window.addEventListener("pointerdown", dirty, true);
   window.addEventListener("keydown", dirty, true);
   window.addEventListener("scroll", onScroll, { passive: true });
   window.addEventListener("resize", onResize);
+  document.addEventListener("visibilitychange", onVisible);
 
   self.__skeleton = { capture: () => captureLayout({ exclude: isOwnNode }) };
 
@@ -263,6 +277,7 @@ export function startRecorder({ getRoute, isBusy, isOwnNode }) {
   return {
     arrive,
     stop() {
+      stopped = true;
       clearTimeout(timer);
       clearInterval(cookieWatch);
       observer.disconnect();
@@ -270,10 +285,12 @@ export function startRecorder({ getRoute, isBusy, isOwnNode }) {
       if (helpers?.scheduleUpdate === onRefresh) helpers.scheduleUpdate = scheduleUpdate;
       if (self.__NEXT_HMR_LATENCY_CB === onHmr) self.__NEXT_HMR_LATENCY_CB = priorHmr;
       delete self.__skeleton;
+      document.documentElement.removeAttribute("data-skeleton-recorded");
       window.removeEventListener("pointerdown", dirty, true);
       window.removeEventListener("keydown", dirty, true);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
+      document.removeEventListener("visibilitychange", onVisible);
     },
   };
 }

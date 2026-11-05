@@ -1,20 +1,18 @@
 "use client";
 
+import "../styles/landing.css";
+
 import useLogoDock from "../hooks/useLogoDock";
-import SphereFooter from "../components/SphereFooter";
 import Header from "../components/header";
 import Hero2, { NUMBER_CARDS } from "../components/Hero2";
 import LogoAnimation from "../components/LogoAnimation";
-import Body from "../components/body";
-// The showreel is the /video player, placed inline — same component, same
-// data/films.js, so the section and the film page can never drift apart.
-// Showcase2 is still on disk if this needs to go back.
-import FilmPlayer from "../components/FilmPlayer";
+// import Body from "../components/body"; // see the commented-out <Body /> below
+// Selena's look and the showreel, as one pinned scene. Showcase2 is still on
+// disk if the showreel needs to go back.
+import LookReel from "../components/LookReel";
 import JoinCandor from "../components/JoinCandor";
 import { films } from "../../data/films";
-import "../styles/film-player.css";
 import Choose from "../components/Choose";
-import Look from "@/components/Look";
 import SectionSnap from "../components/SectionSnap";
 // The intro. Same component /hero3 uses, so the two pages cannot drift apart.
 import CandorLine, { CandorFloatingLogo, SEEN_KEY } from "./hero3/CandorLine";
@@ -781,13 +779,13 @@ export default function Home() {
   //   }, []);
 
   return (
-    <section className="relative">
+    <section className="landing relative">
       {/* The bottom search island is held back through the intro and then
           arrives WITH the rest of the furniture.
-          1930ms is --at-furniture / --at-cards from styles/candor-intro.css —
+          1530ms is --at-furniture / --at-cards from styles/candor-intro.css —
           the single moment the wordmark, the corner chrome and the two cards
           all begin coming in, just before CANDOR finishes forming.
-          The cards finish appearing at 2130ms, before the letters fall.
+          The cards finish appearing at 1730ms, before the letters fall.
           These are two separate clocks — a CSS animation delay and a JS
           timeout — so they are kept in step by hand; if the intro's timeline
           moves, this moves with it.
@@ -796,7 +794,7 @@ export default function Home() {
           holding off for an animation that is not running.
           <Header /> must stay ABOVE <CandorLine /> for that check to work —
           it reads the flag in an effect, and the intro writes it in one. */}
-      <Header delayMs={1930} skipWhenSeen={SEEN_KEY} />
+      <Header delayMs={1530} skipWhenSeen={SEEN_KEY} />
 
       {/* THE INTRO, from /hero3.
           Rides position:sticky at the top of the viewport and STAYS pinned;
@@ -820,7 +818,7 @@ export default function Home() {
         </span>
       </CandorFloatingLogo>
 
-      <div className="sticky top-0 h-screen w-full overflow-hidden px-3 py-5 md:px-5">
+      <div className="landing-hero sticky top-0 h-[100svh] w-full overflow-hidden px-3 py-5 md:px-5">
         <CandorLine floatingLogo />
       </div>
 
@@ -830,19 +828,22 @@ export default function Home() {
           stay pinned through the sequence.
           Transparent and pointer-events-none, so the pinned intro shows
           through and stays interactive underneath. */}
-      <div className="h-[60vh]" aria-hidden="true" />
+      <div className="landing-intro-travel h-[60svh]" aria-hidden="true" />
 
       {/* The rest of the page. Opaque and a layer up, which is what makes it
           cover the pinned intro rather than push it.
           data-snap-container marks its children as SectionSnap targets. */}
       <div className="relative z-10 bg-white" data-snap-container>
-        <Look />
-        <Body />
-        <section className="pt-14 md:pt-28 lg:pt-20">
-          <div className="px-4">
-            <FilmPlayer films={films} inline bar="index" />
-          </div>
-        </section>
+        {/* Selena's look pins, and turns into the showreel on the spot: the
+            left-hand photo opens out into the film's frame while her name,
+            project and credits fly into its title block. */}
+        <LookReel films={films} />
+        {/* Commented out for now: the model board (the MODELS heading that
+            docks beside CANDOR, and the board under it, currently the
+            ModelBoardOptions switcher). useLogoDock no-ops without it. It
+            used to sit between the look and the showreel, which are now one
+            scene, so it would come back after it. */}
+        {/* <Body /> */}
 
         {/* The invitation to apply, last before the footer. It sits here
             rather than higher up because it asks the reader for something,
@@ -851,7 +852,6 @@ export default function Home() {
             to do about it. */}
         <JoinCandor />
 
-        <SphereFooter />
       </div>
 
       {/* Observer-driven section snapping (post-intro only). */}

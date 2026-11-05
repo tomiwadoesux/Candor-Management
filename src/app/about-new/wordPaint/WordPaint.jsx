@@ -16,18 +16,58 @@ import "./wordPaint.css";
 // section stirs it too, since the word moves under it. On arrival the word is
 // revealed behind one scripted stroke, which is also all a phone sees.
 //
-// `faces`: one photo to span the word, or several dealt one per letter.
+// `faces`: one photo to span the word, or several dealt one per letter; under
+// Spectrum the photograph changes every few seconds (see framesFor).
+// `look`: "spectrum" (the default: outlined letters the paint colours, the
+// photograph faint inside the colour) or one of wordPaintGL's LOOKS, which
+// compose the photograph under the paint.
+//
+// For a word set inside a line of other words (/agency's PEOPLE):
+// `as` makes the section another element (a span, inside a heading); `fit`
+// false leaves the word at the size its own CSS sets instead of fitting it to
+// the width, and the word may be split into spans; `reveal` "drawn" draws it
+// from the start, for a page that covers it and uncovers it itself, and
+// strokes across it only when the page dispatches STROKE_EVENT on the
+// section; `clear` (Spectrum) makes the canvas see-through off the letters,
+// so it never paints over its neighbours; `rest` (Spectrum), { light, dark },
+// is how much of the photograph shows in the letters untouched, on each
+// ground, for a page that wants the faces plainer than the study's.
 
 // Through the image optimiser, wide enough to span a word on a 2x screen.
-const photo = (src, w = 1920) => `/_next/image?url=${encodeURIComponent(src)}&w=${w}&q=70`;
-export const PORTRAIT = [photo("/photos/img12.jpeg")];
-export const FACES = ["/photos/img12.jpeg", "/photos/img7.jpeg", "/photos/img25.jpeg", "/photos/img14.jpeg"].map(
-  (src) => photo(src, 828)
-);
+export const photo = (src, w = 1920) => `/_next/image?url=${encodeURIComponent(src)}&w=${w}&q=70`;
+const SITTERS = ["/photos/img12.jpeg", "/photos/img7.jpeg", "/photos/img25.jpeg", "/photos/img14.jpeg"];
+export const PORTRAIT = [photo(SITTERS[0])];
+export const FACES = SITTERS.map((src) => photo(src, 828));
+
+// What Spectrum turns through over time: a word-wide portrait goes through
+// each sitter in turn; letters with a face each pass the faces along by one.
+const PORTRAITS = SITTERS.map((src) => [photo(src)]);
+function framesFor(faces) {
+  if (faces === PORTRAIT) return PORTRAITS;
+  if (faces.length < 2) return [faces];
+  return faces.map((_, i) => [...faces.slice(i), ...faces.slice(0, i)]);
+}
 
 // How far outside the section a pointer still counts, in px: enough for a
 // stroke to start just off the edge and sweep in.
 const REACH = 160;
+
+// Dispatch this on window after changing a page's background, and every
+// Spectrum word re-reads its ground.
+export const GROUND_EVENT = "wordpaint:ground";
+
+// Dispatch this on a `reveal="drawn"` section to send a stroke across it.
+export const STROKE_EVENT = "wordpaint:stroke";
+
+// The colour behind the section: the first ancestor that paints a background,
+// [r, g, b] 0–255; white if none does, as the browser would show.
+function groundOf(el) {
+  for (let node = el.parentElement; node; node = node.parentElement) {
+    const m = getComputedStyle(node).backgroundColor.match(/[\d.]+/g);
+    if (m && (m[3] === undefined || +m[3] > 0)) return m.slice(0, 3).map(Number);
+  }
+  return [255, 255, 255];
+}
 
 // `wordClassName`
 // and `fitClassName` dress the word's box and its fitted span, so other pages
@@ -36,8 +76,15 @@ export default function WordPaint({
   word,
   className = "",
   faces = PORTRAIT,
+  look = "spectrum",
   wordClassName = "an-big-word an-pad",
   fitClassName = "an-big-fit",
+  as: Tag = "section",
+  fit = true,
+  reveal: revealMode = "arrive",
+  clear = false,
+  rest,
+  preloadMargin = "100% 0px",
   children,
 }) {
   const rootRef = useRef(null);
@@ -64,7 +111,10 @@ export default function WordPaint({
     let lastReal = -Infinity; // when it last moved
     let scripted = null; // the scripted stroke, section px, while it runs
     let lastSource = null;
+    let strokeWanted = false; // asked for before the canvas was ready
     let resizeTimer = 0;
+    let idleTimer = 0;
+    let lastLayout = "";
     const tweens = [];
 
     // Feed the brush, draw, and keep going only while there's something to
@@ -94,10 +144,18 @@ export default function WordPaint({
       lastSource = source;
       gl.point(at?.x ?? null, at?.y);
       gl.step(now / 1000);
-      if (visible && (gl.busy(now / 1000) || now < awakeUntil)) frame = requestAnimationFrame(loop);
+      if (!visible) return;
+      if (gl.busy(now / 1000) || now < awakeUntil) {
+        frame = requestAnimationFrame(loop);
+      } else {
+        // Settled; sleep until the next thing the look has scheduled.
+        const due = gl.due(now / 1000);
+        if (due != null) idleTimer = setTimeout(() => wake(), due * 1000);
+      }
     };
 
     const wake = (ms = 0) => {
+      clearTimeout(idleTimer);
       awakeUntil = Math.max(awakeUntil, performance.now() + ms);
       if (!frame && visible && gl) frame = requestAnimationFrame(loop);
     };
@@ -105,24 +163,37 @@ export default function WordPaint({
     // Where the DOM put each letter, handed to the canvas to set the word in
     // the same places.
     const measure = () => {
-      const text = wordEl.firstChild;
       const box = root.getBoundingClientRect();
-      if (!gl || !text || !box.width || !box.height) return;
+      if (!gl || !box.width || !box.height) return;
       const style = getComputedStyle(wordEl);
       const range = document.createRange();
       const glyphs = [];
-      for (let i = 0; i < text.length; i++) {
-        range.setStart(text, i);
-        range.setEnd(text, i + 1);
-        const r = range.getBoundingClientRect();
-        glyphs.push({ ch: text.data[i], left: r.left - box.left, top: r.top - box.top, width: r.width, height: r.height });
+      // Every character, through whatever spans the word is set in.
+      const walker = document.createTreeWalker(wordEl, NodeFilter.SHOW_TEXT);
+      for (let text = walker.nextNode(); text; text = walker.nextNode()) {
+        for (let i = 0; i < text.length; i++) {
+          range.setStart(text, i);
+          range.setEnd(text, i + 1);
+          const r = range.getBoundingClientRect();
+          const rounded = (value) => Math.round(value * 100) / 100;
+          glyphs.push({ ch: text.data[i], left: rounded(r.left - box.left), top: rounded(r.top - box.top), width: rounded(r.width), height: rounded(r.height) });
+        }
       }
-      gl.setLayout({
+      if (!glyphs.length) return;
+      const layout = {
         width: box.width,
         height: box.height,
         font: { style: style.fontStyle, weight: style.fontWeight, family: style.fontFamily, size: parseFloat(style.fontSize) },
         glyphs,
-      });
+      };
+      const signature = JSON.stringify(layout);
+      // ResizeObserver also fires on initial observation. Do not rebuild the
+      // distance field and every photo atlas for an unchanged word layout.
+      if (signature !== lastLayout) {
+        gl.setLayout(layout);
+        lastLayout = signature;
+      }
+      if (look === "spectrum") gl.setGround(groundOf(root));
       wake(100);
     };
 
@@ -172,20 +243,25 @@ export default function WordPaint({
         .then(([{ createWordPaint }]) => {
           if (disposed) return;
           try {
-            gl = createWordPaint(canvas, { faces, onChange: () => wake(100) });
+            gl = createWordPaint(canvas, { faces, frames: framesFor(faces), look, clear, rest, onChange: () => wake(100) });
           } catch {
             return;
           }
           measure();
           apiRef.current = { gl, wake, strokeAcross, revealed: () => revealed };
           setLive(true);
+          if (revealMode === "drawn") {
+            revealed = true;
+            gl.uniforms.uReveal.value = 1;
+            if (strokeWanted) strokeAcross();
+          }
           if (seenEnough && !revealed) reveal();
         })
         .catch(() => {});
     };
 
     // Load a screen ahead; draw only while on screen; reveal once a third is in.
-    const near = new IntersectionObserver(([e]) => e.isIntersecting && load(), { rootMargin: "100% 0px" });
+    const near = new IntersectionObserver(([e]) => e.isIntersecting && load(), { rootMargin: preloadMargin });
     const seen = new IntersectionObserver(
       ([e]) => {
         visible = e.isIntersecting;
@@ -218,6 +294,19 @@ export default function WordPaint({
     };
     // The page moving under a still pointer is a stroke as well.
     const scrolled = () => pointer && wake();
+    // A page that changes its ground (a theme switch) says so with this event.
+    const regrounded = () => {
+      if (!gl || look !== "spectrum") return;
+      gl.setGround(groundOf(root));
+      wake(100);
+    };
+    // A page that reveals the word itself asks for its stroke with this one.
+    const stroke = () => {
+      if (gl) strokeAcross();
+      else strokeWanted = true;
+    };
+    window.addEventListener(GROUND_EVENT, regrounded);
+    root.addEventListener(STROKE_EVENT, stroke);
     window.addEventListener("pointermove", move, { passive: true });
     window.addEventListener("pointerdown", move, { passive: true });
     window.addEventListener("pointerup", lift, { passive: true });
@@ -229,6 +318,7 @@ export default function WordPaint({
       disposed = true;
       cancelAnimationFrame(frame);
       clearTimeout(resizeTimer);
+      clearTimeout(idleTimer);
       near.disconnect();
       seen.disconnect();
       resized.disconnect();
@@ -238,23 +328,29 @@ export default function WordPaint({
       window.removeEventListener("pointercancel", lift);
       document.documentElement.removeEventListener("pointerleave", leave);
       window.removeEventListener("scroll", scrolled);
+      window.removeEventListener(GROUND_EVENT, regrounded);
+      root.removeEventListener(STROKE_EVENT, stroke);
       tweens.forEach((t) => t.kill());
       gl?.dispose();
       apiRef.current = null;
     };
   }, []);
 
+  const Box = Tag === "span" ? "span" : "div";
+  const wordSpan = (
+    <span ref={wordRef} className="wp-word">
+      {word}
+    </span>
+  );
   return (
-    <section ref={rootRef} className={`${className} wp`} data-wp-live={live ? "" : undefined}>
+    <Tag
+      ref={rootRef}
+      className={`${className} wp${look === "spectrum" ? " wp-clear" : ""}`}
+      data-wp-live={live ? "" : undefined}
+    >
       <canvas ref={canvasRef} className="wp-canvas" aria-hidden="true" />
-      <div className={wordClassName}>
-        <FitText className={fitClassName}>
-          <span ref={wordRef} className="wp-word">
-            {word}
-          </span>
-        </FitText>
-      </div>
+      <Box className={wordClassName}>{fit ? <FitText className={fitClassName}>{wordSpan}</FitText> : wordSpan}</Box>
       {children}
-    </section>
+    </Tag>
   );
 }

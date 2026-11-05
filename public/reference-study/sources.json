@@ -1,0 +1,604 @@
+{
+  "purpose": "Local visual and interaction reference studies for Candor. Original creative work remains credited to its respective creators.",
+  "sources": {
+    "alicia": "https://aliciadubuis.com/",
+    "sam": "https://samthies.com/projects/",
+    "sort": "https://sort-office.com/",
+    "studio": "https://www.noth.in/#studio",
+    "getty": "https://www.getty.edu/tracingart/"
+  },
+  "assets": [
+    {
+      "file": "alicia-0-0.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/c122e3385f1a82d722f443c199d64d99a67a0783-2250x3000.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-0-1.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/b6bb48f6008f5afd697354772db840dc69ceddeb-2250x3000.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-0-2.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/505d09b9331f6aec096a707de20243e8369a8574-2250x3000.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-0-3.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/db24bb57de49d068a21750d9d809cfa13917dff1-2250x3000.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-0-4.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/64ea501a6009a635b46a4ec4c8cb5e1c9ea718e7-2250x3000.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-0-5.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/bc8785bbb3a1f731cf1faa21db890eca1588e71c-2250x3000.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-0-6.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/20f0095e907bc09c5d8857d83423f1767a5e0786-2250x3000.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-0-7.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/412b3d7d092a8749af2316d5a92173f078bd9922-1875x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-0-8.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/29427e5703d43889872a6d8eecf04e9162038253-1875x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-0-9.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/8584d35a1f9732df7664b84ac6e7c66a0beb2b88-2250x3000.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-1-0.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/f0523374f43ea7de1d52fa604a3cb2b667d3f5aa-2160x2860.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-1-1.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/5c4566bb568c34a3467b7117f605ca5c7e7d8912-1875x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-1-2.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/36b2e5e0c1c9a7dd4a96a21f3c8036bc0277c928-1875x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-1-3.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/e22e3af81bffb004541678080643a30246131fb7-2160x2860.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-1-4.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/c8d56c9d1af8d05dd9760168131ecf0b398a5afb-2500x1875.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-1-5.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/5ba0fb9c5689aacf8c7a8855dc53071d512b96c0-1875x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-2-0.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/5b53e80ffcde72ed63be287a4a2c295d9ee4c2d1-2500x1875.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-2-1.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/ad28e86c973e6188d6b7658bbad99d9c15873335-1875x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-2-2.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/2aa8bddc243d30199bfae12ad931fdfc241f5625-1875x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-2-3.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/58a76fd5a0ca63efed5a1f81927f65cc0c805bdd-1875x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-2-4.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/f9b0fef84f5c33feecc32784edc9983f02485cdf-2250x3000.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-2-5.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/31a18356831f596f23c75a2c08481a4c559f04a0-1875x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-2-6.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/0b00fe40c90765357ecbe0507b3d7dfc0a8e9606-1875x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-2-7.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/3af6b42cd3cfd473bb3a07de8c4190823e9f96ee-2250x3000.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-2-8.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/2a1fc80c73b4ad16fa4a248872e43ccf17753d9e-1875x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-2-9.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/b3c5a678f43ab40abe978a8b4ca3f90e0da31ceb-1875x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-2-10.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/b21bbaa7adc2ae20f28ac5288461f2a8e1966247-1875x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-3-0.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/d95fd4bec60ee2978b73e49bbc900587a8b7a127-2400x3000.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-3-1.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/4a134d45dcc2cc14a642a1d491cbb148b1948598-2000x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-3-2.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/30d0c0dcfa623542f1585a91af906b205f204e3f-2400x3000.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-3-3.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/2793ae9f39d186c3e9ba836e14787641f1115caa-2400x3000.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-3-4.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/d6ecadf3451f4284a6f64997e817388722072d11-2250x2813.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-3-5.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/115bdcb65a5d1a2669ae53ed8c886529c290dd90-2400x3000.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-3-6.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/45a8cd8a6bf6f333f7d094cb76f7eb134b64c841-2000x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-3-7.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/bf947e4802aa8f1bd6b80648fd430f3453d75742-3000x3750.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-3-8.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/aaab19f7403b9363c7d834637064f542c2bf6bd1-2250x3000.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-3-9.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/2f8470481c8798e27ab4c2d35a9d1b81aa1a3e2a-2400x3000.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-3-10.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/9fe8fe214f9652b297180fad25b811b18a7133d8-2400x3000.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-3-11.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/c9d39c7a77012b48dd1c49b1d2e9937503e52b57-2250x3000.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-3-12.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/a0467aec3178e1eaf94435a2021b578ef3598ccb-2400x3000.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-3-13.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/2890cf7ea4f5657473b1dc3cf8a874f1975cbd5a-1600x2000.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-3-14.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/2da2ba48394d4ff8828ebf749d54108b69458282-2000x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-3-15.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/51427f34ba0e12420af1b793de1ba1044792ebc5-2250x2813.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-3-16.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/ad7bd70a798f0c0dfa956efd8f2b7d57b82941fb-2250x2813.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-3-17.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/9c3b37b36b1d050df370bbbfe97f88ef18828244-2250x2813.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-3-18.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/f0273b8ef1d8ffc2687a97573881bc58a47d2bab-2500x1874.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-4-0.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/8f1f43d6a0a5c000463abf9cafa456fd46ffdfde-2000x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-4-1.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/7ded66e10ca489ad35890b8d8fba64240740404d-2000x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-4-2.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/1222088ffb1aaf9a37ba86cb35abe87af99c214e-2000x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-4-3.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/20b03cb82964b8b578036953886dc0efcfbe0bbf-1875x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-4-4.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/cda06280668f74c8634d45fc73f4d38fc06e1ca3-2000x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-5-0.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/b21ddd51165ca8fbfaa2bff538ff673710d84e2e-3000x3750.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-5-1.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/02fa219119d80bb9aa82eb4b659136ff929e944c-3000x3750.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-5-2.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/cd11b1e53826107cd6569df5d39a5c7b7bbebc83-3000x3750.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-5-3.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/30302aa9559d85ab83263fc8ed8947899e2b29db-3000x3750.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-5-4.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/a26e07a88016526be51ac136b4895e0b6c33b42b-3000x3750.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-6-0.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/c964e58f6dc397db95575b7009cac4233e855eaf-2000x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-6-1.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/5dcd724db8597f8d8314898be8a66828ef9610b1-2000x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-6-2.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/ccf2df53f47de6472b1d7a700a79171bb3588222-2000x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-7-0.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/61b7a00a97081a8b2951dbfc9bacd0e68189ecae-2400x3000.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-7-1.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/ea041840fab051359e882ebcf727be162d2416a7-2400x3000.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-8-0.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/286712bc5184eee949c6da849042062f8e90bc46-2000x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-8-1.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/2206faf4e429bf2a88964059f6bf5b4751f5e9c8-2000x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-8-2.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/9f8c69203ef5042d02c8f87a92a009deadbfa205-2000x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-8-3.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/702189cc6184017a3153bdbc4bb72c2e14dbc9ae-2000x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-8-4.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/7faca94b7a3018e617ecf6743b0d65fa15f2e30e-2000x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-8-5.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/85ea02cf7746c98a1682d29b7abeee2cc8e1681b-2000x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-8-6.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/1352a744b1ffc2f9a5c9557472cf548d31d6eac2-2000x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-8-7.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/05a63105a2e236afbf7f8be7f221de3a76eb0a42-2000x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-9-0.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/eb5ecdfc55fa5bed0a873667497cd540213ea7eb-1899x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-9-1.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/11942bfce8ef3adaab485570d431574e278093f3-1899x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-9-2.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/63973316a5d9a7ce48ac7cadb2fe353430068004-2000x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-9-3.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/d8a07da0792ce54b2946c81d3ec49def4143ec00-2000x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-9-4.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/c1b7d62dfcd43afe49e7e94cedcb1e3717a6eb23-2000x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-9-5.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/373bb50038b02b96149a50f319575a804a7d9adc-1899x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-9-6.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/9835d5a64715e1817d07d4aa55676fdc9d2bcc7f-2000x2500.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-10-0.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/df3aa6445b82d960a9105c554ed66c3312490bc3-2250x2813.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-10-1.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/7ca1b1a8e62d36f1671d6315c2ba5df0aae7be2a-2250x2813.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-10-2.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/4bf20c5dedcef5e208589f00ffec6b4a3d6d6eae-2250x2813.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-10-3.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/91ce2e2fdf98a0dd22d07be585459f06f63ecb61-2250x2813.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "alicia-10-4.jpg",
+      "source": "https://cdn.sanity.io/images/e8a7hjy6/production/e8ea9a354bae9aab28794a449d3406cebd673d00-2250x2813.jpg?w=1000&fit=max&auto=format"
+    },
+    {
+      "file": "sam-0-0.jpg",
+      "source": "https://www.datocms-assets.com/198132/1779330325-nebula_5468_lr.jpg?auto=format&w=1000"
+    },
+    {
+      "file": "sam-0-1.jpg",
+      "source": "https://www.datocms-assets.com/198132/1777932208-veil_obscura_1073416_lr.jpg?auto=format&w=1000"
+    },
+    {
+      "file": "sam-0-2.jpg",
+      "source": "https://www.datocms-assets.com/198132/1777858626-synapse_1072807_lr.jpg?auto=format&w=1000"
+    },
+    {
+      "file": "sam-0-3.jpg",
+      "source": "https://www.datocms-assets.com/198132/1779330326-strata_1072748.jpg?auto=format&w=1000"
+    },
+    {
+      "file": "sam-1-0.jpg",
+      "source": "https://www.datocms-assets.com/198132/1777864458-st_0379.jpg?auto=format&w=1000"
+    },
+    {
+      "file": "sam-1-1.jpg",
+      "source": "https://www.datocms-assets.com/198132/1777864606-st_8057.jpg?auto=format&w=1000"
+    },
+    {
+      "file": "sam-1-2.jpg",
+      "source": "https://www.datocms-assets.com/198132/1777864607-st_1028.jpg?auto=format&w=1000"
+    },
+    {
+      "file": "sam-1-3.jpg",
+      "source": "https://www.datocms-assets.com/198132/1777864603-st_7317.jpg?auto=format&w=1000"
+    },
+    {
+      "file": "sam-2-0.jpg",
+      "source": "https://www.datocms-assets.com/198132/1775953194-st_9377-2_2000px.jpg?auto=format&w=1000"
+    },
+    {
+      "file": "sam-2-1.jpg",
+      "source": "https://www.datocms-assets.com/198132/1775953167-st_5140_2000px.jpg?auto=format&w=1000"
+    },
+    {
+      "file": "sam-2-2.jpg",
+      "source": "https://www.datocms-assets.com/198132/1775953167-st_5530_2000px.jpg?auto=format&w=1000"
+    },
+    {
+      "file": "sam-3-0.jpg",
+      "source": "https://www.datocms-assets.com/198132/1779329369-st_0320.jpg?auto=format&w=1000"
+    },
+    {
+      "file": "sam-3-1.jpg",
+      "source": "https://www.datocms-assets.com/198132/1779329468-st_3022.jpg?auto=format&w=1000"
+    },
+    {
+      "file": "sam-3-2.jpg",
+      "source": "https://www.datocms-assets.com/198132/1779331957-095a5400.jpg?auto=format&w=1000"
+    },
+    {
+      "file": "sam-3-3.jpg",
+      "source": "https://www.datocms-assets.com/198132/1775966090-st_3197.jpg?auto=format&w=1000"
+    },
+    {
+      "file": "sam-4-0.jpg",
+      "source": "https://www.datocms-assets.com/198132/1779322574-p0009965.jpg?auto=format&w=1000"
+    },
+    {
+      "file": "sam-4-1.jpg",
+      "source": "https://www.datocms-assets.com/198132/1779322579-p0004936.jpg?auto=format&w=1000"
+    },
+    {
+      "file": "sam-4-2.jpg",
+      "source": "https://www.datocms-assets.com/198132/1779322574-p0004087v2.jpg?auto=format&w=1000"
+    },
+    {
+      "file": "sam-4-3.jpg",
+      "source": "https://www.datocms-assets.com/198132/1779322577-p0009632.jpg?auto=format&w=1000"
+    },
+    {
+      "file": "sam-4-4.jpg",
+      "source": "https://www.datocms-assets.com/198132/1779322581-p0007392.jpg?auto=format&w=1000"
+    },
+    {
+      "file": "sam-4-5.jpg",
+      "source": "https://www.datocms-assets.com/198132/1779322582-cf104282.jpg?auto=format&w=1000"
+    },
+    {
+      "file": "sam-4-6.jpg",
+      "source": "https://www.datocms-assets.com/198132/1779322575-p0003284.jpg?auto=format&w=1000"
+    },
+    {
+      "file": "sam-5-0.jpg",
+      "source": "https://www.datocms-assets.com/198132/1775950026-australian_platypus03.jpg?auto=format&w=1000"
+    },
+    {
+      "file": "sam-5-1.jpg",
+      "source": "https://www.datocms-assets.com/198132/1775950026-white_throated_snapping_turtle01.jpg?auto=format&w=1000"
+    },
+    {
+      "file": "sam-5-2.jpg",
+      "source": "https://www.datocms-assets.com/198132/1775950025-australian_platypus01.jpg?auto=format&w=1000"
+    },
+    {
+      "file": "sam-5-3.jpg",
+      "source": "https://www.datocms-assets.com/198132/1775950025-australian_lungfish01.jpg?auto=format&w=1000"
+    },
+    {
+      "file": "sam-6-0.jpg",
+      "source": "https://www.datocms-assets.com/198132/1781751084-0a5a1200.jpg?auto=format&w=1000"
+    },
+    {
+      "file": "sam-6-1.jpg",
+      "source": "https://www.datocms-assets.com/198132/1781751084-pearl-diver.jpg?auto=format&w=1000"
+    },
+    {
+      "file": "sam-6-2.jpg",
+      "source": "https://www.datocms-assets.com/198132/1781751085-a52i3813.jpg?auto=format&w=1000"
+    },
+    {
+      "file": "sam-6-3.jpg",
+      "source": "https://www.datocms-assets.com/198132/1781751085-a52i3171.jpg?auto=format&w=1000"
+    },
+    {
+      "file": "sort-0.jpg",
+      "source": "https://i-p.rmcdn.net/5d9bda01f6a8df00a5590433/4576252/image-4b0bbb6e-eb91-41a0-8a34-3144abb9737e.jpg?w=1400"
+    },
+    {
+      "file": "sort-1.png",
+      "source": "https://i-p.rmcdn.net/5d9bda01f6a8df00a5590433/4576252/image-540344ce-fe6a-49ee-ab02-a657ae51440d.png?w=1400"
+    },
+    {
+      "file": "sort-2.jpg",
+      "source": "https://i-p.rmcdn.net/5d9bda01f6a8df00a5590433/4576252/image-b31c4841-e658-474e-804d-fc416a171c98.jpg?w=1400"
+    },
+    {
+      "file": "sort-3.webp",
+      "source": "https://i-p.rmcdn.net/5d9bda01f6a8df00a5590433/4576252/image-71015c48-43ad-41ae-8c28-deda5e24af4f.webp?w=1400"
+    },
+    {
+      "file": "sort-4.jpg",
+      "source": "https://i-p.rmcdn.net/5d9bda01f6a8df00a5590433/4576252/image-cad583e2-49bd-4ed3-a58e-ebb6b6194c74.jpg?w=1400"
+    },
+    {
+      "file": "sort-5.png",
+      "source": "https://i-p.rmcdn.net/5d9bda01f6a8df00a5590433/4576252/image-41407ca3-27e2-4f73-a367-0fcd42d6979f.png?w=1400"
+    },
+    {
+      "file": "sort-6.png",
+      "source": "https://i-p.rmcdn.net/5d9bda01f6a8df00a5590433/4576252/image-9faa1737-0c8d-409e-b90f-2a526872bbcc.png?w=1400"
+    },
+    {
+      "file": "sort-7.jpg",
+      "source": "https://i-p.rmcdn.net/5d9bda01f6a8df00a5590433/4576252/image-fe28d52d-5c39-4202-aa4d-619c24f8efe3.jpg?w=1400"
+    },
+    {
+      "file": "sort-8.png",
+      "source": "https://i-p.rmcdn.net/5d9bda01f6a8df00a5590433/4576252/image-0bd455df-25d5-4c39-b124-ad93d616d20c.png?w=1400"
+    },
+    {
+      "file": "studio-0.webp",
+      "source": "https://cdn.prod.website-files.com/6a0c501c42b9751b78a9d1a7/6a3171d9fb2a39d8054e9252_beton-plastic-V2.webp"
+    },
+    {
+      "file": "studio-1.webp",
+      "source": "https://cdn.prod.website-files.com/6a0c501c42b9751b78a9d1a7/6a317205d7b275b2d2985000_boule-chelou-coline-V2.webp"
+    },
+    {
+      "file": "getty-painting.webp",
+      "source": "https://www.getty.edu/tracingart/images/section-1/zoom-img@lg.webp"
+    },
+    {
+      "file": "getty-ledger.webp",
+      "source": "https://www.getty.edu/tracingart/images/section-1/ledger@lg.webp"
+    },
+    {
+      "file": "getty-0.webp",
+      "source": "https://www.getty.edu/tracingart/images/getty/intro/Starry-Night@sm.webp"
+    },
+    {
+      "file": "getty-1.webp",
+      "source": "https://www.getty.edu/tracingart/images/getty/intro/Fly-or-Blister-Beetle_Willow-Bellflower_Gourd_and-Bindweed@sm.webp"
+    },
+    {
+      "file": "getty-2.webp",
+      "source": "https://www.getty.edu/tracingart/images/getty/intro/Madonna-of-the-Cherries@sm.webp"
+    },
+    {
+      "file": "getty-3.webp",
+      "source": "https://www.getty.edu/tracingart/images/getty/intro/StagRhyton@sm.webp"
+    },
+    {
+      "file": "getty-4.webp",
+      "source": "https://www.getty.edu/tracingart/images/getty/intro/View-of-the-Grand-Canal@sm.webp"
+    },
+    {
+      "file": "getty-5.webp",
+      "source": "https://www.getty.edu/tracingart/images/getty/intro/LansdowneHerakles@sm.webp"
+    },
+    {
+      "file": "getty-6.webp",
+      "source": "https://www.getty.edu/tracingart/images/getty/intro/Still-Life-with-Apples@sm.webp"
+    },
+    {
+      "file": "getty-7.webp",
+      "source": "https://www.getty.edu/tracingart/images/getty/intro/The-Battle-Between-Arnault-de-Lorraine-and-His-Wife-Lydia@sm.webp"
+    },
+    {
+      "file": "getty-8.webp",
+      "source": "https://www.getty.edu/tracingart/images/getty/intro/Mummy-Portrait-of-a-Woman@sm.webp"
+    },
+    {
+      "file": "getty-9.webp",
+      "source": "https://www.getty.edu/tracingart/images/getty/intro/StelaFragment@sm.webp"
+    },
+    {
+      "file": "getty-10.webp",
+      "source": "https://www.getty.edu/tracingart/images/getty/intro/Nataraja@sm.webp"
+    },
+    {
+      "file": "getty-11.webp",
+      "source": "https://www.getty.edu/tracingart/images/getty/intro/Pitcher-Goryeo@sm.webp"
+    },
+    {
+      "file": "getty-12.webp",
+      "source": "https://www.getty.edu/tracingart/images/getty/intro/The-Investiture-of-Sinchi-Roca-by-Manco-Capac@sm.webp"
+    },
+    {
+      "file": "getty-13.webp",
+      "source": "https://www.getty.edu/tracingart/images/getty/intro/Attic-Black-Figure-Neck-Amphora@sm.webp"
+    },
+    {
+      "file": "getty-14.webp",
+      "source": "https://www.getty.edu/tracingart/images/getty/intro/Votive-Checkerboard-Tunic@sm.webp"
+    },
+    {
+      "file": "getty-15.webp",
+      "source": "https://www.getty.edu/tracingart/images/getty/intro/Study-of-the-Model-Joseph@sm.webp"
+    },
+    {
+      "file": "getty-16.webp",
+      "source": "https://www.getty.edu/tracingart/images/getty/intro/Saint-John@sm.webp"
+    },
+    {
+      "file": "getty-17.webp",
+      "source": "https://www.getty.edu/tracingart/images/getty/intro/TheWadeCupwithAnimatedScript@sm.webp"
+    },
+    {
+      "file": "getty-18.webp",
+      "source": "https://www.getty.edu/tracingart/images/getty/intro/Portrait-of-a-Man@sm.webp"
+    },
+    {
+      "file": "getty-19.webp",
+      "source": "https://www.getty.edu/tracingart/images/getty/intro/The-Drawing-Lesson@sm.webp"
+    },
+    {
+      "file": "getty-20.webp",
+      "source": "https://www.getty.edu/tracingart/images/getty/intro/GardenGathering@sm.webp"
+    },
+    {
+      "file": "getty-21.webp",
+      "source": "https://www.getty.edu/tracingart/images/getty/intro/An-Old-Man-in-Military-Costume@sm.webp"
+    },
+    {
+      "file": "getty-22.webp",
+      "source": "https://www.getty.edu/tracingart/images/getty/intro/The-Vicomtesse-de-Vaudreuil@sm.webp"
+    },
+    {
+      "file": "getty-23.webp",
+      "source": "https://www.getty.edu/tracingart/images/getty/intro/The-Italian-Comedians@sm.webp"
+    }
+  ]
+}

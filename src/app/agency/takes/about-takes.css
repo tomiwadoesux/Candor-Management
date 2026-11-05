@@ -1,0 +1,234 @@
+/* The agency page in four takes behind a switcher (AboutTakes.jsx). One block
+   per take; keep the chosen one's block, delete the rest. The site's globals
+   zero margins on text elements, so every gap here is padding or gap. */
+
+.at-switch { position: fixed; z-index: 80; top: 14px; left: 50%; translate: -50% 0; display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: rgb(255 255 255 / 0.1); backdrop-filter: blur(8px); font-size: 11px; }
+.at-switch button { padding: 6px 12px; border-radius: 999px; color: rgb(255 255 255 / 0.65); transition: background 200ms ease, color 200ms ease; }
+.at-switch button[aria-pressed="true"] { background: #faf9f6; color: #0c0c0c; }
+.at-switch button:not([aria-pressed="true"]):hover { color: #faf9f6; }
+/* On paper takes the pill inverts. The current page opens on paper too. */
+.at--index .at-switch, .at--current .at-switch { background: rgb(0 0 0 / 0.07); }
+.at--index .at-switch button, .at--current .at-switch button { color: rgb(0 0 0 / 0.55); }
+.at--index .at-switch button[aria-pressed="true"], .at--current .at-switch button[aria-pressed="true"] { background: #111; color: #faf9f6; }
+.at--index .at-switch button:not([aria-pressed="true"]):hover, .at--current .at-switch button:not([aria-pressed="true"]):hover { color: #111; }
+.at--current:has(.candor-agency[data-services-view="true"]) .at-switch { visibility:hidden; }
+.at--current:has(.candor-agency[data-theme="dark"]) .at-switch { background:rgb(255 255 255 / .08); }
+.at--current:has(.candor-agency[data-theme="dark"]) .at-switch button { color:#d5d2cd; }
+.at--current:has(.candor-agency[data-theme="dark"]) .at-switch button[aria-pressed="true"] { background:#d5d2cd; color:#141414; }
+.at-switch button { touch-action:manipulation; }
+.at-switch button:focus-visible { outline:2px solid currentColor; outline-offset:2px; }
+@media (max-width:540px) {
+  .at--current .at-switch { top:58px; max-width:calc(100% - 24px); }
+  .at--current .at-switch button { min-height:40px; padding-inline:16px; }
+}
+
+/* ———————————————————————————————————————————————— Reel —
+   The chapter list is the nav; the photography is the canvas. Pointing at a
+   line swaps the full-bleed picture behind it (a slow crossfade while the
+   frame settles out of its drift); opening a line unfolds its text in place.
+   The chrome is pinned to the corners in small print. */
+
+.rl { position: relative; isolation: isolate; min-height: 100svh; background: #0b0b0c; color: #f2f0ea; }
+.rl-stage { position: fixed; inset: 0; z-index: 0; }
+.rl-still { position: absolute; inset: 0; opacity: 0; transform: scale(1.06); transition: opacity 900ms ease, transform 1400ms cubic-bezier(0.22, 1, 0.36, 1); }
+.rl-still img { object-fit: cover; }
+.rl-still--on { opacity: 1; transform: none; }
+.rl-veil { position: absolute; inset: 0; background: linear-gradient(rgb(8 8 9 / 0.62), rgb(8 8 9 / 0.38) 40%, rgb(8 8 9 / 0.72)); }
+
+.rl-chrome { position: fixed; left: 0; right: 0; z-index: 2; display: flex; align-items: start; justify-content: space-between; gap: 16px; padding: 20px clamp(16px, 4vw, 48px); font-family: var(--font-body); font-size: 11px; line-height: 1.5; letter-spacing: 0.1em; text-transform: uppercase; color: rgb(242 240 234 / 0.72); }
+.rl-chrome--top { top: 0; }
+.rl-chrome--top p { text-align: right; }
+.rl-chrome--foot { bottom: 0; align-items: end; }
+.rl-chrome a { transition: color 250ms ease; }
+.rl-chrome a:hover { color: #fff; }
+.rl-mark { display: block; color: #f2f0ea; }
+.rl-mark svg { display: block; width: 104px; height: auto; }
+
+.rl-list { position: relative; z-index: 1; display: flex; flex-direction: column; justify-content: center; min-height: 100svh; width: min(1060px, 100%); margin-inline: auto; padding: 16vh clamp(16px, 4vw, 48px); }
+.rl-row h2 button { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; align-items: baseline; gap: 16px; width: 100%; padding: 14px 0; text-align: left; border-bottom: 1px solid rgb(242 240 234 / 0.22); transition: opacity 500ms ease; }
+/* The line being read stays lit; the rest step back. */
+.rl-list:hover .rl-row:not(:hover) h2 button, .rl-list:focus-within .rl-row:not(:focus-within) h2 button { opacity: 0.35; }
+.rl-row__num { font-family: var(--font-body); font-size: 11px; font-variant-numeric: tabular-nums; color: rgb(242 240 234 / 0.55); }
+.rl-row__mask { display: block; overflow: hidden; }
+.rl-row__title { display: block; font-family: var(--font-h1); font-size: clamp(38px, 6.4vw, 84px); font-weight: 400; line-height: 1.02; letter-spacing: -0.03em; transform: translateY(112%); transition: transform 900ms cubic-bezier(0.19, 1, 0.22, 1) calc(var(--i) * 90ms + 120ms); }
+.rl[data-in] .rl-row__title { transform: none; }
+.rl-row--open .rl-row__title { font-style: italic; }
+.rl-row__cue { font-family: var(--font-body); font-size: 18px; color: rgb(242 240 234 / 0.55); transition: transform 500ms cubic-bezier(0.22, 1, 0.36, 1); }
+.rl-row h2 button:hover .rl-row__cue { transform: rotate(90deg); }
+
+.rl-panel { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 700ms cubic-bezier(0.22, 1, 0.2, 1); }
+.rl-panel__inner { overflow: hidden; min-height: 0; }
+.rl-row--open .rl-panel { grid-template-rows: 1fr; }
+.rl-panel__inner > * { padding: 10px 0 30px 68px; }
+.rl-panel p { max-width: 54ch; font-family: var(--font-h4); font-size: clamp(16px, 1.4vw, 19px); line-height: 1.45; letter-spacing: -0.01em; color: rgb(242 240 234 / 0.88); }
+.rl-quote { font-family: var(--font-h1); font-style: italic; font-size: clamp(19px, 1.8vw, 24px); }
+.rl-sign { display: flex; flex-wrap: wrap; gap: 8px 28px; padding-top: 10px; font-family: var(--font-body); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: rgb(242 240 234 / 0.6); }
+.rl-sign a { text-decoration: underline; text-underline-offset: 0.2em; text-decoration-color: rgb(242 240 234 / 0.35); }
+.rl-sign a:hover { color: #fff; }
+.rl-beliefs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 36px; padding: 10px 0 30px 68px; max-width: 760px; }
+.rl-beliefs dt { font-family: var(--font-h4); font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
+.rl-beliefs dd { padding-top: 6px; font-size: 13.5px; line-height: 1.5; color: rgb(242 240 234 / 0.62); }
+
+@media (max-width: 760px) {
+  .rl-chrome--top p { display: none; }
+  .rl-row h2 button { grid-template-columns: 36px minmax(0, 1fr) auto; }
+  .rl-panel__inner > * { padding-left: 0; }
+  .rl-beliefs { grid-template-columns: 1fr; padding-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rl-still, .rl-row__title, .rl-panel, .rl-row h2 button { transition: none; }
+  .rl-row__title { transform: none; }
+}
+
+/* ———————————————————————————————————————————————— Index —
+   Print discipline on paper: ruled rows, mono numbers, grain. The manifesto
+   is set in Gwyner at paper-filling size and leans with the speed of the
+   scroll (TakeIndex's useVelocitySkew); a belt of the agency's four words
+   runs between sections. The brand blue appears only as punctuation. */
+
+.ix { position: relative; isolation: isolate; background: #faf9f6; color: #121210; --ix-inset: clamp(16px, 4.5vw, 64px); --ix-rule: rgb(18 18 16 / 0.9); --ix-dim: #76736c; --ix-blue: #00749e; --ix-ease: cubic-bezier(0.22, 1, 0.36, 1); padding-inline: var(--ix-inset); }
+.ix::after { content: ""; position: fixed; inset: 0; z-index: 5; pointer-events: none; opacity: 0.5; mix-blend-mode: multiply; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
+.ix [data-arrive] { opacity: 0; translate: 0 26px; transition: opacity 700ms ease, transform 0s, translate 800ms var(--ix-ease); }
+.ix [data-arrive][data-in] { opacity: 1; translate: 0 0; }
+
+.ix-mast { display: grid; grid-template-columns: auto 1fr auto; align-items: end; gap: 24px; padding: 18px 0 16px; border-bottom: 1px solid var(--ix-rule); font-family: var(--font-body); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; }
+.ix-mast p:first-of-type { justify-self: center; }
+.ix-mast p:last-of-type { text-align: right; line-height: 1.6; }
+.ix-mast p span { padding-left: 10px; color: var(--ix-dim); }
+.ix-mark { color: #121210; }
+.ix-mark svg { display: block; width: 112px; height: auto; }
+
+.ix-manifesto { padding: 9vh 0 2vh; transform-origin: 0 50%; will-change: transform; }
+.ix-manifesto h1 span { display: block; overflow: hidden; white-space: nowrap; font-family: "Gwyner Condensed", var(--font-h1); font-weight: 400; font-size: 12.5vw; line-height: 0.86; letter-spacing: -0.015em; text-transform: uppercase; }
+.ix-manifesto h1 span:nth-child(3) { padding-left: 8vw; }
+.ix-manifesto h1 em { font-style: normal; color: var(--ix-blue); }
+/* The lines rise out of their own rows; clip-path keeps the row's height. */
+.ix-manifesto h1 span[data-arrive] { opacity: 1; translate: 0 0; clip-path: inset(0 0 100% 0); transform: translateY(30%); transition: clip-path 900ms var(--ix-ease), transform 900ms var(--ix-ease); }
+.ix-manifesto h1 span:nth-child(2)[data-arrive] { transition-delay: 90ms; }
+.ix-manifesto h1 span:nth-child(3)[data-arrive] { transition-delay: 180ms; }
+.ix-manifesto h1 span[data-arrive][data-in] { clip-path: inset(0 0 -8% 0); transform: none; }
+.ix-manifesto__note { max-width: 44ch; padding: 10px 0 7vh; font-family: var(--font-body); font-size: 12.5px; line-height: 1.6; letter-spacing: 0.02em; color: var(--ix-dim); }
+.ix-manifesto__note i { font-family: var(--font-h1); font-style: italic; }
+
+.ix-ticker { overflow: hidden; border-block: 1px solid var(--ix-rule); padding: 9px 0; margin-inline: calc(-1 * var(--ix-inset)); }
+.ix-ticker__belt { display: flex; width: max-content; animation: ix-run 30s linear infinite; }
+.ix-ticker__half { display: flex; white-space: nowrap; font-family: "Gwyner Condensed", var(--font-h1); font-size: 22px; letter-spacing: 0.04em; text-transform: uppercase; }
+.ix-ticker__half em { font-style: normal; padding-inline: 0.9em; color: var(--ix-dim); }
+@keyframes ix-run { to { transform: translateX(-50%); } }
+
+.ix-row { display: grid; grid-template-columns: 64px 220px minmax(0, 1fr); gap: 16px 32px; padding: 64px 0; border-bottom: 1px solid rgb(18 18 16 / 0.28); }
+.ix-row__num { font-family: var(--font-body); font-size: 11px; font-variant-numeric: tabular-nums; color: var(--ix-dim); }
+.ix-row__label { font-family: var(--font-h4); font-size: 13px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; }
+.ix-row__text { font-family: var(--font-h1); font-size: clamp(25px, 2.9vw, 42px); line-height: 1.18; letter-spacing: -0.012em; max-width: 26ch; }
+
+.ix-beliefs { grid-column: 3; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 44px 36px; }
+.ix-beliefs li { padding-top: 10px; border-top: 1px solid var(--ix-rule); }
+.ix-beliefs__num { font-family: var(--font-body); font-size: 11px; color: var(--ix-dim); }
+.ix-beliefs h3 { padding: 12px 0 6px; font-family: var(--font-h4); font-size: 16px; font-weight: 500; letter-spacing: -0.01em; }
+.ix-beliefs p { font-size: 14px; line-height: 1.55; color: #45433e; max-width: 36ch; }
+
+.ix-founder { grid-column: 3; display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 11fr); gap: 40px; align-items: end; }
+.ix-founder img { display: block; width: 100%; height: auto; filter: grayscale(1) contrast(1.04); }
+.ix-founder figcaption { padding-top: 10px; font-family: var(--font-body); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ix-dim); }
+.ix-founder blockquote p { font-family: var(--font-h1); font-style: italic; font-size: clamp(21px, 2.3vw, 33px); line-height: 1.3; letter-spacing: -0.01em; }
+
+.ix-offices { grid-column: 3; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; }
+.ix-offices li { padding-top: 10px; border-top: 1px solid var(--ix-rule); }
+.ix-offices h3 { font-family: "Gwyner Condensed", var(--font-h1); font-weight: 400; font-size: clamp(34px, 3.6vw, 52px); line-height: 1; text-transform: uppercase; }
+.ix-offices p { padding-top: 6px; font-family: var(--font-body); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ix-dim); }
+.ix-offices__time { font-variant-numeric: tabular-nums; }
+
+.ix-foot { padding: 9vh 0 10vh; }
+.ix-foot__line { font-family: "Gwyner Condensed", var(--font-h1); font-weight: 400; font-size: 11vw; line-height: 0.82; letter-spacing: -0.01em; text-transform: uppercase; white-space: nowrap; }
+.ix-foot__line em { font-style: normal; color: var(--ix-blue); }
+.ix-foot__cols { display: flex; flex-wrap: wrap; gap: 28px 64px; padding-top: 48px; }
+.ix-foot__cols p { display: flex; flex-direction: column; gap: 7px; }
+.ix-foot__cols span { font-family: var(--font-body); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ix-dim); }
+.ix-foot__cols a { font-family: var(--font-h4); font-size: clamp(17px, 1.7vw, 22px); letter-spacing: -0.01em; text-decoration: underline; text-underline-offset: 0.2em; text-decoration-color: rgb(18 18 16 / 0.3); transition: text-decoration-color 250ms ease; }
+.ix-foot__cols a:hover { text-decoration-color: var(--ix-blue); }
+
+@media (max-width: 860px) {
+  .ix-row { grid-template-columns: 44px minmax(0, 1fr); }
+  .ix-row__text, .ix-beliefs, .ix-founder, .ix-offices { grid-column: 2; }
+  .ix-founder { grid-template-columns: 1fr; align-items: start; }
+  .ix-beliefs { grid-template-columns: 1fr; gap: 32px; }
+  .ix-offices { grid-template-columns: 1fr; }
+  .ix-mast p:first-of-type { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ix [data-arrive], .ix-manifesto h1 span[data-arrive] { opacity: 1; translate: 0 0; clip-path: none; transform: none; transition: none; }
+  .ix-ticker__belt { animation: none; }
+}
+
+/* ———————————————————————————————————————————————— Frame —
+   One owned GL moment on near-black: the name, painted (WordPaint), the
+   pointer developing the faces inside the letters. Everything else is
+   austere — mono labels, masked line reveals at an unhurried pace — until
+   the footer, which is a destination: the wordmark at full width over a
+   slow belt of the agency's four words. */
+
+.fr { background: #0b0b0c; color: #edebe4; --fr-inset: clamp(16px, 4.5vw, 64px); --fr-dim: #8f8d85; --fr-rule: rgb(237 235 228 / 0.18); --fr-blue: #4aaad2; --fr-ease: cubic-bezier(0.19, 1, 0.22, 1); padding-inline: var(--fr-inset); }
+
+.fr [data-arrive]:not(.fr-rise__mask) { opacity: 0; translate: 0 22px; transition: opacity 800ms ease calc(var(--i, 0) * 110ms), translate 900ms var(--fr-ease) calc(var(--i, 0) * 110ms); }
+.fr [data-arrive][data-in]:not(.fr-rise__mask) { opacity: 1; translate: 0 0; }
+
+.fr-chrome { display: grid; grid-template-columns: auto 1fr auto; align-items: end; gap: 24px; padding: 20px 0 14px; border-bottom: 1px solid var(--fr-rule); font-family: var(--font-body); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: rgb(237 235 228 / 0.7); }
+.fr-chrome p:first-of-type { justify-self: center; }
+.fr-mark { color: #edebe4; }
+.fr-mark svg { display: block; width: 112px; height: auto; }
+
+.fr-hero { padding: 7vh 0 4vh; }
+.fr-paint { display: block; width: 100%; }
+/* The painted word: the serif display face, fitted to the page's width.
+   The padding makes room inside the fitted width for the italic lean and
+   the cap tops; the margins give the room back (as /agency's PEOPLE does). */
+.fr-paint__word { position: relative; display: block; }
+.fr-paint__fit { font-family: var(--font-h1); font-weight: 400; font-style: italic; line-height: 0.92; letter-spacing: -0.04em; padding: 0.1em 0.2em 0.06em 0.08em; }
+.fr-paint:not([data-wp-live]) .fr-paint__fit { color: #edebe4; }
+.fr-hero__sub { display: flex; justify-content: space-between; gap: 16px; padding-top: 18px; font-family: var(--font-body); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; }
+.fr-hero__sub span { color: var(--fr-dim); }
+
+.fr-section { padding-top: 15vh; }
+.fr-label { padding-bottom: 30px; font-family: var(--font-body); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fr-dim); }
+.fr-rise__mask { display: block; overflow: hidden; }
+.fr-rise__line { display: block; transform: translateY(114%); transition: transform 950ms var(--fr-ease) calc(var(--i) * 110ms); }
+.fr-rise__mask[data-in] .fr-rise__line { transform: none; }
+.fr-statement { font-family: var(--font-h4); font-weight: 500; font-size: clamp(30px, 4.6vw, 76px); line-height: 1.04; letter-spacing: -0.035em; }
+.fr-statement--serif { font-family: var(--font-h1); font-weight: 400; font-style: italic; letter-spacing: -0.02em; }
+
+.fr-beliefs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 56px 44px; }
+.fr-beliefs li { padding-top: 14px; border-top: 1px solid var(--fr-rule); }
+.fr-beliefs__num { font-family: var(--font-body); font-size: 11px; color: var(--fr-dim); }
+.fr-beliefs h3 { padding: 14px 0 8px; font-family: var(--font-h4); font-size: 18px; font-weight: 500; letter-spacing: -0.01em; }
+.fr-beliefs p { font-size: 14px; line-height: 1.55; color: rgb(237 235 228 / 0.62); max-width: 34ch; }
+
+.fr-founder blockquote p { font-family: var(--font-h1); font-style: italic; font-size: clamp(23px, 3vw, 44px); line-height: 1.26; letter-spacing: -0.015em; max-width: 26ch; }
+.fr-founder blockquote footer { padding-top: 22px; font-family: var(--font-body); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fr-dim); }
+
+.fr-foot { padding-top: 17vh; }
+.fr-ticker { overflow: hidden; border-block: 1px solid var(--fr-rule); padding: 11px 0; margin-inline: calc(-1 * var(--fr-inset)); }
+.fr-ticker__belt { display: flex; width: max-content; animation: fr-run 38s linear infinite; }
+.fr-ticker__half { display: flex; white-space: nowrap; font-family: var(--font-h4); font-size: 13px; letter-spacing: 0.22em; text-transform: uppercase; color: rgb(237 235 228 / 0.75); }
+.fr-ticker__half em { font-style: normal; padding-inline: 1.4em; color: var(--fr-blue); }
+@keyframes fr-run { to { transform: translateX(-50%); } }
+.fr-foot__cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; padding: 64px 0 9vh; }
+.fr-foot__cols p { display: flex; flex-direction: column; gap: 9px; }
+.fr-foot__cols span { font-family: var(--font-body); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--fr-dim); }
+.fr-foot__cols a { font-family: var(--font-h4); font-size: clamp(17px, 1.6vw, 23px); letter-spacing: -0.015em; text-decoration: underline; text-underline-offset: 0.22em; text-decoration-color: rgb(237 235 228 / 0.3); transition: text-decoration-color 250ms ease, color 250ms ease; }
+.fr-foot__cols a:hover { color: #fff; text-decoration-color: var(--fr-blue); }
+.fr-foot__mark { overflow: hidden; color: #edebe4; }
+.fr-foot__mark svg { display: block; width: 100%; height: auto; }
+.fr-foot__colophon { display: flex; justify-content: space-between; gap: 16px; padding: 22px 0 26px; border-top: 1px solid var(--fr-rule); font-family: var(--font-body); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #6f6d66; }
+
+@media (max-width: 760px) {
+  .fr-chrome p:first-of-type { display: none; }
+  .fr-beliefs { grid-template-columns: 1fr; gap: 36px; }
+  .fr-foot__cols { grid-template-columns: 1fr; gap: 28px; }
+  .fr-hero__sub { flex-direction: column; gap: 6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fr [data-arrive]:not(.fr-rise__mask) { opacity: 1; translate: 0 0; transition: none; }
+  .fr-rise__line { transform: none; transition: none; }
+  .fr-ticker__belt { animation: none; }
+}
